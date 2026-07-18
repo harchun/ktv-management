@@ -1,0 +1,286 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #0c0c1d;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0c0c1d 0%, #1a1a2e 50%, #16213e 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ===== Responsive Base Styles ===== */
+
+/* Mobile-first: small screens (< 768px) */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  /* Hide Sider on mobile by default */
+  .ant-layout-sider {
+    position: fixed !important;
+    z-index: 1000 !important;
+  }
+
+  /* Make tables scrollable horizontally */
+  .ant-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Compact cards */
+  .ant-card {
+    margin-bottom: 12px !important;
+  }
+
+  /* Modal full screen on mobile */
+  .ant-modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+  }
+
+  .ant-modal-content {
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  /* Stack form items vertically */
+  .ant-form-item {
+    margin-bottom: 16px !important;
+  }
+
+  /* Compact header */
+  .ant-layout-header {
+    padding: 0 12px !important;
+  }
+
+  /* Stats cards stacked */
+  .ant-row {
+    margin: 0 -6px !important;
+  }
+
+  .ant-col {
+    padding: 0 6px !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* Page title smaller */
+  h2 {
+    font-size: 18px !important;
+  }
+
+  h1 {
+    font-size: 24px !important;
+  }
+
+  /* Search bar full width */
+  .ant-space-compact {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Action buttons compact */
+  .ant-btn-icon-only {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+  }
+
+  /* Control bar: stack vertically on mobile */
+  .control-bar-mobile {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .control-bar-mobile > * {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Stat cards: 2 columns grid on mobile */
+  .stat-cards-mobile .ant-col {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Page content padding */
+  .page-content {
+    padding: 12px !important;
+  }
+
+  /* Header title compact */
+  .page-title {
+    font-size: 16px !important;
+  }
+}
+
+/* Tablet (768px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ant-col {
+    margin-bottom: 12px;
+  }
+
+  .ant-table-wrapper {
+    overflow-x: auto;
+  }
+
+  /* Stat cards: 3 columns on tablet */
+  .stat-cards-tablet .ant-col {
+    flex: 0 0 33.333% !important;
+    max-width: 33.333% !important;
+  }
+}
+
+/* Desktop (> 1024px) */
+@media (min-width: 1025px) {
+  .ant-table-wrapper {
+    overflow-x: visible;
+  }
+}
+
+/* ===== Custom Responsive Utilities ===== */
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Hide on desktop */
+@media (min-width: 769px) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+/* Full width on mobile */
+@media (max-width: 768px) {
+  .mobile-full-width {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Scrollable table wrapper */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -24px;
+  padding: 0 24px;
+}
+
+@media (max-width: 768px) {
+  .table-responsive {
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+}
+
+/* Responsive grid for stat cards */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+/* Responsive chart height */
+.chart-container {
+  width: 100%;
+  height: 250px;
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 200px;
+  }
+}
+
+/* Responsive modal form */
+@media (max-width: 768px) {
+  .ant-modal-body {
+    padding: 16px !important;
+  }
+
+  .ant-modal-footer {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .ant-modal-footer .ant-btn {
+    width: 100%;
+  }
+}
+
+/* Touch-friendly button sizes on mobile */
+@media (max-width: 768px) {
+  .ant-btn {
+    min-height: 36px !important;
+    font-size: 14px !important;
+  }
+
+  .ant-btn-icon-only {
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
+
+/* Anti-flash white */
+@media (prefers-color-scheme: light) {
+  :root {
+    background-color: #0c0c1d;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .ant-layout-sider,
+  .ant-layout-header {
+    display: none !important;
+  }
+
+  .ant-layout-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
