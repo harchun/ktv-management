@@ -126,7 +126,7 @@ app.get('/api/customers/:id/visits', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const [visits] = await pool.execute(
-      'SELECT * FROM daily_sales WHERE `客戶編號` = ? ORDER BY `日期` DESC',
+      'SELECT ds.*, cad.`姓名` as 幹部姓名 FROM daily_sales ds LEFT JOIN cadres cad ON ds.`幹部編號` = cad.`幹部編號` WHERE ds.`客戶編號` = ? ORDER BY ds.`日期` DESC',
       [id]
     );
     const lastVisit = visits[0]?.日期 || null;

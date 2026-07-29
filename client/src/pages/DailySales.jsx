@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Table, Button, Input, Modal, Form, DatePicker, Select, InputNumber, Tag, Space, message, Popconfirm, Card, Row, Col } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -22,6 +22,8 @@ export default function DailySales() {
   const [dateRange, setDateRange] = useState([null, null]);
   const [form] = Form.useForm();
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -56,6 +58,10 @@ export default function DailySales() {
   useEffect(() => { fetchData(); fetchOptions(); }, []);
 
   const handleSave = async (values) => {
+    // Prevent concurrent submissions
+    if (submitLock.current) return;
+    submitLock.current = true;
+    setSubmitting(true);
     try {
       const payload = {
         ...values,
@@ -89,6 +95,9 @@ export default function DailySales() {
       fetchData();
     } catch (err) {
       message.error(err.response?.data?.error || '操作失敗');
+    } finally {
+      submitLock.current = false;
+      setSubmitting(false);
     }
   };
 
@@ -133,24 +142,29 @@ export default function DailySales() {
     )},
   ];
 
-  const filteredData = searchText
-    ? dataSource.filter(r =>
-        (r.客戶姓名 || '').toLowerCase().includes(searchText.toLowerCase()) ||
-        (r.幹部姓名 || '').toLowerCase().includes(searchText.toLowerCase()) ||
-        (r.房號 || '').includes(searchText)
-      )
-    : dataSource;
+  // Memoized filtered data to prevent re-compute on every render
+  const filteredData = useMemo(() => {
+    return searchText
+      ? dataSource.filter(r =>
+          (r.客戶姓名 || '').toLowerCase().includes(searchText.toLowerCase()) ||
+          (r.幹部姓名 || '').toLowerCase().includes(searchText.toLowerCase()) ||
+          (r.房號 || '').includes(searchText)
+        )
+      : dataSource;
+  }, [dataSource, searchText]);
 
-  // Summary totals
-  const totals = filteredData.reduce((acc, r) => {
-    acc.業績 += Number(r.業績) || 0;
-    acc.現金 += Number(r.現金) || 0;
-    acc.信用 += Number(r.信用) || 0;
-    acc.簽帳 += Number(r.簽帳) || 0;
-    acc.餐酒 += Number(r.餐酒) || 0;
-    acc.包廂費 += Number(r.包廂費) || 0;
-    return acc;
-  }, { 業績: 0, 現金: 0, 信用: 0, 簽帳: 0, 餐酒: 0, 包廂費: 0 });
+  // Memoized totals to prevent re-calculation on every render
+  const totals = useMemo(() => {
+    return filteredData.reduce((acc, r) => {
+      acc.業績 += Number(r.業績) || 0;
+      acc.現金 += Number(r.現金) || 0;
+      acc.信用 += Number(r.信用) || 0;
+      acc.簽帳 += Number(r.簽帳) || 0;
+      acc.餐酒 += Number(r.餐酒) || 0;
+      acc.包廂費 += Number(r.包廂費) || 0;
+      return acc;
+    }, { 業績: 0, 現金: 0, 信用: 0, 簽帳: 0, 餐酒: 0, 包廂費: 0 });
+  }, [filteredData]);
 
   return (
     <div>
@@ -233,8 +247,8 @@ export default function DailySales() {
 
       <Modal
         title={editing ? '編輯營業紀錄' : '新增營業紀錄'}
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
+        open={modalVisible && !submitting}
+        onCancel={() => { setModalVisible(false); setSubmitting(false); }}
         footer={null}
         width={isMobile ? '100%' : 900}
         style={{ top: isMobile ? 0 : 20 }}
@@ -315,7 +329,7 @@ export default function DailySales() {
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right', marginTop: 16 }}>
             <Button style={{ marginRight: 8 }} onClick={() => setModalVisible(false)}>取消</Button>
-            <Button type="primary" htmlType="submit" style={{ background: '#2ecc71', border: 'none' }}>{editing ? '更新' : '新增'}</Button>
+            <Button type="primary" htmlType="submit" style={{ background: '#2ecc71', border: 'none' }} disabled={submitting}>{editing ? '更新' : '新增'}{submitting ? '著...' : ''}</Button>
           </Form.Item>
         </Form>
       </Modal>

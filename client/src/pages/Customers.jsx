@@ -175,6 +175,7 @@ export default function Customers() {
               rowKey="營業編號"
               scroll={{ x: isMobile ? 600 : undefined, y: 400 }}
             >
+              <Table.Column title="幹部" dataIndex="幹部姓名" width={80} />
               <Table.Column title="日期" dataIndex="日期" width={100} render={formatDate} />
               <Table.Column title="房號" dataIndex="房號" width={80} />
               <Table.Column title="人數" dataIndex="人數" width={60} />
