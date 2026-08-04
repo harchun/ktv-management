@@ -269,44 +269,41 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
   try {
     const sql = `
       SELECT 
-        ds.客戶名,
         ds.幹部,
+        ds.客戶名,
         COUNT(*) as visit_count,
         SUM(ds.人數) as total_people
       FROM daily_sales ds
       WHERE ds.客戶名 IS NOT NULL AND ds.客戶名 != ''
-      GROUP BY ds.客戶名, ds.幹部
-      ORDER BY ds.客戶名, visit_count DESC
+      GROUP BY ds.幹部, ds.客戶名
+      ORDER BY ds.幹部, visit_count DESC
     `;
     const [rows] = await pool.execute(sql);
     
-    // Group by customer and find primary cadre
-    const customerMap = {};
+    // Group by cadre
+    const cadreMap = {};
     rows.forEach(row => {
-      const name = row.客戶名;
-      if (!customerMap[name]) {
-        customerMap[name] = {
-          客戶名: name,
-          幹部: row.幹部,
+      const cadre = row.幹部;
+      if (!cadreMap[cadre]) {
+        cadreMap[cadre] = {
+          幹部: cadre,
+          客戶名: row.客戶名,
           來訪次數: row.visit_count,
           總人數: row.total_people,
-          幹部列表: [{ 幹部: row.幹部, 來訪次數: row.visit_count, 總人數: row.total_people }]
+          客戶列表: [{ 客戶名: row.客戶名, 來訪次數: row.visit_count, 總人數: row.total_people }]
         };
       } else {
-        customerMap[name].幹部列表.push({
-          幹部: row.幹部,
+        cadreMap[cadre].客戶列表.push({
+          客戶名: row.客戶名,
           來訪次數: row.visit_count,
           總人數: row.total_people
         });
-        customerMap[name].來訪次數 += row.visit_count;
-        customerMap[name].總人數 += row.total_people;
+        cadreMap[cadre].來訪次數 += row.visit_count;
+        cadreMap[cadre].總人數 += row.total_people;
       }
     });
     
-    const result = Object.values(customerMap).map(c => ({
-      ...c,
-      主要幹部: c.幹部列表[0]?.幹部 || c.幹部
-    })).sort((a, b) => b.來訪次數 - a.來訪次數);
+    const result = Object.values(cadreMap).sort((a, b) => b.來訪次數 - a.來訪次數);
     
     res.json(result);
   } catch (e) {

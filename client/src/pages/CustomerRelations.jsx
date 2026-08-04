@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Table, Input, Card, Statistic, Row, Col, Tag, Space } from 'antd';
-import { SearchOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
+import { Table, Input, Card, Statistic, Row, Col, Tag, Typography } from 'antd';
+import { SearchOutlined, TrophyOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
 import api from '../utils/api';
-import { formatDate } from '../utils/formatDate';
 
 const cardStyle = {
   background: 'rgba(26, 26, 46, 0.8)',
@@ -16,6 +15,7 @@ export default function CustomerRelations() {
   const [searchText, setSearchText] = useState('');
   const [stats, setStats] = useState({ totalCustomers: 0, totalCadres: 0, totalVisits: 0 });
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
+  const { Title } = Typography;
 
   const fetchData = async () => {
     setLoading(true);
@@ -25,15 +25,15 @@ export default function CustomerRelations() {
       setDataSource(data);
       
       // Calculate stats
-      const uniqueCadres = new Set();
+      const uniqueCustomers = new Set();
       let totalVisits = 0;
       data.forEach(item => {
-        uniqueCadres.add(item.主要幹部);
+        item.客戶列表?.forEach(c => uniqueCustomers.add(c.客戶名));
         totalVisits += item.來訪次數;
       });
       setStats({
-        totalCustomers: data.length,
-        totalCadres: uniqueCadres.size,
+        totalCustomers: uniqueCustomers.size,
+        totalCadres: data.length,
         totalVisits: totalVisits
       });
     } catch (err) {
@@ -51,32 +51,34 @@ export default function CustomerRelations() {
 
   const filteredData = searchText
     ? dataSource.filter(item => 
-        (item.客戶名 || '').toLowerCase().includes(searchText.toLowerCase()) ||
-        (item.主要幹部 || '').toLowerCase().includes(searchText.toLowerCase())
+        (item.幹部 || '').toLowerCase().includes(searchText.toLowerCase()) ||
+        item.客戶列表?.some(c => (c.客戶名 || '').toLowerCase().includes(searchText.toLowerCase()))
       )
     : dataSource;
 
   const columns = [
     {
-      title: '客戶名',
-      dataIndex: '客戶名',
-      key: '客戶名',
+      title: '幹部名',
+      dataIndex: '幹部',
+      key: '幹部',
       width: 150,
       fixed: 'left',
       render: (name) => (
-        <span style={{ color: '#e74c3c', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <UserOutlined style={{ color: '#f39c12' }} />
+        <span style={{ color: '#f39c12', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <TrophyOutlined style={{ color: '#f39c12' }} />
           {name}
         </span>
       ),
     },
     {
-      title: '主要幹部',
-      dataIndex: '主要幹部',
-      key: '主要幹部',
-      width: 120,
+      title: '主要客戶',
+      dataIndex: '客戶名',
+      key: '客戶名',
+      width: 150,
       render: (name) => (
-        <Tag color="gold" style={{ fontSize: 13, padding: '2px 8px' }}>{name}</Tag>
+        <span style={{ color: '#e74c3c', fontWeight: 500 }}>
+          {name}
+        </span>
       ),
     },
     {
@@ -100,22 +102,26 @@ export default function CustomerRelations() {
       ),
     },
     {
-      title: '幹部列表',
-      dataIndex: '幹部列表',
-      key: '幹部列表',
-      width: 200,
+      title: '客戶列表',
+      dataIndex: '客戶列表',
+      key: '客戶列表',
       render: (list) => (
-        <Space direction="vertical" size={4} style={{ width: '100%' }}>
-          {list.slice(0, 3).map((item, idx) => (
-            <div key={idx} style={{ fontSize: 12, color: '#888', display: 'flex', justifyContent: 'space-between' }}>
-              <span>{item.幹部}</span>
-              <span>{item.來訪次數}次/{item.總人數}人</span>
+        <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+          {list.map((item, idx) => (
+            <div key={idx} style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '4px 8px',
+              background: idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
+              borderRadius: 4,
+              fontSize: 12,
+              marginBottom: 2,
+            }}>
+              <span style={{ color: '#fff' }}>{item.客戶名}</span>
+              <span style={{ color: '#888' }}>{item.來訪次數}次 / {item.總人數}人</span>
             </div>
           ))}
-          {list.length > 3 && (
-            <div style={{ fontSize: 12, color: '#666' }}>...等 {list.length} 位幹部</div>
-          )}
-        </Space>
+        </div>
       ),
     },
   ];
@@ -141,7 +147,7 @@ export default function CustomerRelations() {
                 <Statistic
                   title="幹部總數"
                   value={stats.totalCadres}
-                  prefix={<TeamOutlined style={{ color: '#f39c12' }} />}
+                  prefix={<TrophyOutlined style={{ color: '#f39c12' }} />}
                   valueStyle={{ color: '#f39c12' }}
                 />
               </Card>
@@ -167,11 +173,9 @@ export default function CustomerRelations() {
             flexDirection: isMobile ? 'column' : 'row',
             gap: isMobile ? 12 : 0,
           }}>
-            <h2 style={{ color: '#e74c3c', margin: 0, fontSize: isMobile ? 18 : undefined }} className="page-title">
-              👥 客戶關係表
-            </h2>
+            <Title level={4} style={{ color: '#e74c3c', margin: 0 }}>👥 客戶關係表（以幹部分類）</Title>
             <Input.Search
-              placeholder="搜尋客戶名或幹部..."
+              placeholder="搜尋幹部名或客戶名..."
               allowClear
               style={{ width: isMobile ? '100%' : 300 }}
               prefix={<SearchOutlined style={{ color: '#e74c3c' }} />}
@@ -185,10 +189,10 @@ export default function CustomerRelations() {
             <Table
               dataSource={filteredData}
               columns={columns}
-              rowKey="客戶名"
+              rowKey="幹部"
               loading={loading}
-              pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (t) => `共 ${t} 位客戶` }}
-              scroll={{ x: isMobile ? 700 : 800 }}
+              pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (t) => `共 ${t} 位幹部` }}
+              scroll={{ x: isMobile ? 700 : 900 }}
               size={isMobile ? 'small' : 'middle'}
             />
           </div>
