@@ -56,14 +56,14 @@ export default function DailySales() {
     }
   };
 
-  const [gossipOrders, setGossipOrders] = useState([]);
+  const [gossipPersons, setGossipPersons] = useState([]);
 
   const fetchOptions = async () => {
     try {
-      const [cadRes, custRes, gossipRes] = await Promise.all([api.get('/cadres'), api.get('/customers'), api.get('/gossip-orders')]);
+      const [cadRes, custRes, gossipRes] = await Promise.all([api.get('/cadres'), api.get('/customers'), api.get('/gossip')]);
       setCadres(cadRes.data || []);
       setCustomers(custRes.data || []);
-      setGossipOrders(gossipRes.data || []);
+      setGossipPersons(gossipRes.data || []);
     } catch (e) { /* ignore */ }
   };
 
@@ -134,9 +134,9 @@ export default function DailySales() {
     .sort((a, b) => (cadreLevelOrder[a.等級] || 9) - (cadreLevelOrder[b.等級] || 9))
     .map(c => ({ value: c['幹部編號'], label: `${c.姓名}${c.暱稱 ? ` (${c.暱稱})` : ''}` }));
   const customerOptions = customers.map(c => ({ value: c['客戶編號'], label: `${c.客戶姓名}${c.暱稱 ? ` (${c.暱稱})` : ''}` }));
-  const gossipOptions = gossipOrders.map(g => ({
-    value: g['訂桌編號'],
-    label: `${g.訂桌日期 ? g.訂桌日期.substring(5) : ''} - ${g.客戶姓名} (${g.公關姓名 || g.公關 || '公關'}) ${g.公關人數 ? `×${g.公關人數}` : ''}`
+  const gossipOptions = gossipPersons.map(g => ({
+    value: String(g['公關編號']),
+    label: `${g.姓名}${g.暱稱 ? ` (${g.暱稱})` : ''}${g.經紀人 ? ` [${g.經紀人}]` : ''}`
   }));
 
   const columns = [
@@ -344,15 +344,12 @@ export default function DailySales() {
                   options={gossipOptions}
                   showSearch
                   optionFilterProp="label"
-                  placeholder="選擇公關訂桌"
+                  placeholder="選擇公關"
                   onChange={(v) => {
-                    const selected = gossipOrders.find(g => g['訂桌編號'] === v);
+                    const selected = gossipPersons.find(g => String(g['公關編號']) === v);
                     if (selected) {
-                      form.setFieldValue('客戶編號', selected['客戶編號']);
-                      form.setFieldValue('客戶名', selected['客戶姓名']);
-                      form.setFieldValue('房號', selected['房號']);
-                      form.setFieldValue('公關費用', selected['消費金額'] || 0);
-                      form.setFieldValue('人數', selected['公關人數'] || 0);
+                      form.setFieldValue('公關', selected['姓名']);
+                      form.setFieldValue('公關費用', selected['手機'] || 0);
                     }
                   }}
                 />
