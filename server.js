@@ -336,6 +336,50 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
   }
 });
 
+// ==================== GOSSIP ORDERS ====================
+app.get('/api/gossip-orders', authenticate, async (req, res) => {
+  try {
+    const sql = 'SELECT * FROM gossip_orders ORDER BY 訂桌日期 DESC';
+    const [rows] = await pool.execute(sql);
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/gossip-orders', authenticate, async (req, res) => {
+  try {
+    const { 訂桌日期, 公關人數, 客戶編號, 客戶姓名, 公關, 公關姓名, 消費金額, 房號, 備註 } = req.body;
+    const sql = `INSERT INTO gossip_orders (訂桌日期, 公關人數, 客戶編號, 客戶姓名, 公關, 公關姓名, 消費金額, 房號, 備註) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const [result] = await pool.execute(sql, [訂桌日期, 公關人數, 客戶編號, 客戶姓名, 公關, 公關姓名, 消費金額, 房號, 備註]);
+    res.json({ id: result.insertId, 訂桌編號: `G${result.insertId}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put('/api/gossip-orders/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 訂桌日期, 公關人數, 客戶編號, 客戶姓名, 公關, 公關姓名, 消費金額, 房號, 備註 } = req.body;
+    const sql = `UPDATE gossip_orders SET 訂桌日期 = ?, 公關人數 = ?, 客戶編號 = ?, 客戶姓名 = ?, 公關 = ?, 公關姓名 = ?, 消費金額 = ?, 房號 = ?, 備註 = ? WHERE 訂桌編號 = ?`;
+    await pool.execute(sql, [訂桌日期, 公關人數, 客戶編號, 客戶姓名, 公關, 公關姓名, 消費金額, 房號, 備註, id]);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/gossip-orders/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.execute('DELETE FROM gossip_orders WHERE 訂桌編號 = ?', [id]);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ==================== USERS ====================
 app.get('/api/users', authenticate, async (req, res) => {
   try {

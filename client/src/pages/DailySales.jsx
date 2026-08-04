@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Table, Button, Input, Modal, Form, DatePicker, Select, InputNumber, Tag, Space, message, Popconfirm, Card, Row, Col } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import api from '../utils/api';
 import { formatDate } from '../utils/formatDate';
@@ -332,7 +332,7 @@ export default function DailySales() {
           </Row>
           <Row gutter={16}>
             <Col span={isMobile ? 24 : 8}>
-              <Form.Item name="備註" label="備註"><Input placeholder="備註" /></Form.Item>
+              <Form.Item name="公關訂桌" label="公關訂桌"><Input placeholder="公關訂桌" /></Form.Item>
             </Col>
             <Col span={isMobile ? 24 : 8}>
               <Form.Item name="人數" label="人數"><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
