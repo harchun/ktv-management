@@ -64,6 +64,7 @@ function AppContent() {
   const menuItems = [
     { key: '/daily-sales', icon: <FileTextOutlined />, label: '每日營業表' },
     { key: '/cadres', icon: <TrophyOutlined />, label: '幹部管理' },
+    { key: '/customers', icon: <ContactsOutlined />, label: '客戶管理' },
     { key: '/customer-relations', icon: <ContactsOutlined />, label: '客戶關係' },
     { key: '/gossip-management', icon: <UserOutlined />, label: '公關管理' },
     { key: '/settings', icon: <SettingOutlined />, label: '系統設定' },
@@ -172,6 +173,7 @@ function AppContent() {
             <Route path="/customer-relations" element={<CustomerRelations />} />
             <Route path="/gossip-management" element={<GossipManagement />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/customers" element={<Customers />} />
             <Route path="*" element={<Navigate to="/daily-sales" replace />} />
           </Routes>
         </Content>
