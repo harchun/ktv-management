@@ -56,11 +56,14 @@ export default function DailySales() {
     }
   };
 
+  const [gossipOrders, setGossipOrders] = useState([]);
+
   const fetchOptions = async () => {
     try {
-      const [cadRes, custRes] = await Promise.all([api.get('/cadres'), api.get('/customers')]);
+      const [cadRes, custRes, gossipRes] = await Promise.all([api.get('/cadres'), api.get('/customers'), api.get('/gossip-orders')]);
       setCadres(cadRes.data || []);
       setCustomers(custRes.data || []);
+      setGossipOrders(gossipRes.data || []);
     } catch (e) { /* ignore */ }
   };
 
@@ -131,6 +134,10 @@ export default function DailySales() {
     .sort((a, b) => (cadreLevelOrder[a.等級] || 9) - (cadreLevelOrder[b.等級] || 9))
     .map(c => ({ value: c['幹部編號'], label: `${c.姓名}${c.暱稱 ? ` (${c.暱稱})` : ''}` }));
   const customerOptions = customers.map(c => ({ value: c['客戶編號'], label: `${c.客戶姓名}${c.暱稱 ? ` (${c.暱稱})` : ''}` }));
+  const gossipOptions = gossipOrders.map(g => ({
+    value: g['訂桌編號'],
+    label: `${g.訂桌日期 ? g.訂桌日期.substring(5) : ''} - ${g.客戶姓名} (${g.公關姓名 || g.公關 || '公關'}) ${g.公關人數 ? `×${g.公關人數}` : ''}`
+  }));
 
   const columns = [
     { title: '編號', dataIndex: '營業編號', key: 'id', width: 60 },
@@ -332,7 +339,24 @@ export default function DailySales() {
           </Row>
           <Row gutter={16}>
             <Col span={isMobile ? 24 : 8}>
-              <Form.Item name="公關訂桌" label="公關訂桌"><Input placeholder="公關訂桌" /></Form.Item>
+              <Form.Item name="公關訂桌" label="公關訂桌">
+                <Select
+                  options={gossipOptions}
+                  showSearch
+                  optionFilterProp="label"
+                  placeholder="選擇公關訂桌"
+                  onChange={(v) => {
+                    const selected = gossipOrders.find(g => g['訂桌編號'] === v);
+                    if (selected) {
+                      form.setFieldValue('客戶編號', selected['客戶編號']);
+                      form.setFieldValue('客戶名', selected['客戶姓名']);
+                      form.setFieldValue('房號', selected['房號']);
+                      form.setFieldValue('公關費用', selected['消費金額'] || 0);
+                      form.setFieldValue('人數', selected['公關人數'] || 0);
+                    }
+                  }}
+                />
+              </Form.Item>
             </Col>
             <Col span={isMobile ? 24 : 8}>
               <Form.Item name="人數" label="人數"><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
