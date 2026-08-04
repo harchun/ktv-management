@@ -267,7 +267,7 @@ app.get('/api/stats/daily-summary', authenticate, async (req, res) => {
 // ==================== CUSTOMER RELATIONS ====================
 app.get('/api/customer-relations', authenticate, async (req, res) => {
   try {
-    // Get all customer-cadre relationships with counts
+    // Get all customer-cadre relationships with counts, only for '一線' cadres
     const sql = `
       SELECT 
         ds.幹部,
@@ -275,7 +275,8 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
         COUNT(*) as visit_count,
         SUM(ds.人數) as total_people
       FROM daily_sales ds
-      WHERE ds.客戶名 IS NOT NULL AND ds.客戶名 != ''
+      INNER JOIN cadres c ON ds.幹部編號 = c.幹部編號
+      WHERE ds.客戶名 IS NOT NULL AND ds.客戶名 != '' AND c.等級 = '一線'
       GROUP BY ds.幹部, ds.客戶名
       ORDER BY ds.客戶名, visit_count DESC
     `;
