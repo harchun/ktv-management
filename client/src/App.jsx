@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import DailySales from './pages/DailySales';
 import Cadres from './pages/Cadres';
 import Customers from './pages/Customers';
+import CustomerRelations from './pages/CustomerRelations';
 import Settings from './pages/Settings';
 
 const { Header, Sider, Content } = Layout;
@@ -62,6 +63,7 @@ function AppContent() {
   const menuItems = [
     { key: '/daily-sales', icon: <FileTextOutlined />, label: '每日營業表' },
     { key: '/cadres', icon: <TrophyOutlined />, label: '幹部管理' },
+    { key: '/customer-relations', icon: <ContactsOutlined />, label: '客戶關係' },
     { key: '/customers', icon: <ContactsOutlined />, label: '客戶管理' },
     { key: '/settings', icon: <SettingOutlined />, label: '系統設定' },
   ];
@@ -166,6 +168,7 @@ function AppContent() {
           <Routes>
             <Route path="/daily-sales" element={<DailySales />} />
             <Route path="/cadres" element={<Cadres />} />
+            <Route path="/customer-relations" element={<CustomerRelations />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/daily-sales" replace />} />
