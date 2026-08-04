@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Card, Typography, Collapse } from 'antd';
-import { UserOutlined, TeamOutlined } from '@ant-design/icons';
+import { Card, Typography, Row, Col, Statistic, Collapse } from 'antd';
+import { UserOutlined, TeamOutlined, DownOutlined } from '@ant-design/icons';
 import api from '../utils/api';
 
-const { Text } = Typography;
+const { Title, Text } = Typography;
 const { Panel } = Collapse;
 
 const cardStyle = {
@@ -13,11 +13,9 @@ const cardStyle = {
   marginBottom: 12,
 };
 
-export default function MobileCustomerRelations() {
+export default function MobileRelations() {
   const [dataSource, setDataSource] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filteredData, setFilteredData] = useState([]);
-  const [searchText, setSearchText] = useState('');
   const [stats, setStats] = useState({ totalCustomers: 0, totalCadres: 0, totalVisits: 0 });
 
   useEffect(() => {
@@ -30,7 +28,6 @@ export default function MobileCustomerRelations() {
       const res = await api.get('/customer-relations');
       const data = Array.isArray(res.data) ? res.data : [];
       setDataSource(data);
-      setFilteredData(data);
       
       const uniqueCustomers = new Set();
       data.forEach(item => {
@@ -48,107 +45,93 @@ export default function MobileCustomerRelations() {
     }
   };
 
-  const handleSearch = (value) => {
-    setSearchText(value);
-    if (!value) {
-      setFilteredData(dataSource);
-      return;
-    }
-    const filtered = dataSource.filter(item =>
-      (item.幹部 || '').toLowerCase().includes(value.toLowerCase()) ||
-      (item.客戶列表 || []).some(c => (c.客戶名 || '').toLowerCase().includes(value.toLowerCase()))
-    );
-    setFilteredData(filtered);
-  };
-
   return (
     <div style={{ padding: 16, background: '#0a0a1a', minHeight: '100vh' }}>
-      <Text style={{ color: '#9b59b6', fontSize: 20, fontWeight: 'bold', textAlign: 'center', display: 'block', marginBottom: 20 }}>
-        📊 客戶關係
-      </Text>
+      <Title level={3} style={{ color: '#9b59b6', textAlign: 'center', marginBottom: 20 }}>
+        📈 客戶關係
+      </Title>
 
       {/* 統計 */}
-      <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ textAlign: 'center', background: 'rgba(26,26,46,0.8)', padding: '8px 12px', borderRadius: 8 }}>
-          <div style={{ color: '#9b59b6', fontSize: 11 }}>客戶數</div>
-          <div style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>{stats.totalCustomers}</div>
-        </div>
-        <div style={{ textAlign: 'center', background: 'rgba(26,26,46,0.8)', padding: '8px 12px', borderRadius: 8 }}>
-          <div style={{ color: '#9b59b6', fontSize: 11 }}>幹部數</div>
-          <div style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>{stats.totalCadres}</div>
-        </div>
-        <div style={{ textAlign: 'center', background: 'rgba(26,26,46,0.8)', padding: '8px 12px', borderRadius: 8 }}>
-          <div style={{ color: '#9b59b6', fontSize: 11 }}>來訪次數</div>
-          <div style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>{stats.totalVisits}</div>
-        </div>
-      </div>
-
-      {/* 搜尋 */}
-      <input
-        type="text"
-        placeholder="搜尋幹部/客戶..."
-        value={searchText}
-        onChange={(e) => handleSearch(e.target.value)}
-        style={{
-          width: '100%',
-          padding: '12px 16px',
-          background: 'rgba(26, 26, 46, 0.8)',
-          border: '1px solid #333',
-          borderRadius: 8,
-          color: '#fff',
-          fontSize: 14,
-          marginBottom: 16,
-          boxSizing: 'border-box',
-        }}
-      />
+      <Row gutter={[12, 12]} style={{ marginBottom: 16 }}>
+        <Col span={8}>
+          <Card style={{ ...cardStyle, textAlign: 'center' }}>
+            <Statistic 
+              title={<Text style={{ color: '#888', fontSize: 10 }}>客戶</Text>} 
+              value={stats.totalCustomers}
+              valueStyle={{ color: '#fff', fontSize: 18 }}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card style={{ ...cardStyle, textAlign: 'center' }}>
+            <Statistic 
+              title={<Text style={{ color: '#888', fontSize: 10 }}>幹部</Text>} 
+              value={stats.totalCadres}
+              valueStyle={{ color: '#9b59b6', fontSize: 18 }}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card style={{ ...cardStyle, textAlign: 'center' }}>
+            <Statistic 
+              title={<Text style={{ color: '#888', fontSize: 10 }}>來訪</Text>} 
+              value={stats.totalVisits}
+              valueStyle={{ color: '#ffd700', fontSize: 18 }}
+            />
+          </Card>
+        </Col>
+      </Row>
 
       {/* 列表 */}
       <div style={{ marginBottom: 16 }}>
-        {filteredData.length === 0 ? (
+        {dataSource.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#666', padding: 40 }}>
             暫無客戶關係資料
           </div>
         ) : (
-          filteredData.map((item, idx) => (
-            <Collapse key={idx} ghost style={{ marginBottom: 8 }}>
+          dataSource.map((item, idx) => (
+            <Collapse 
+              key={idx} 
+              ghost 
+              style={{ marginBottom: 8 }}
+              expandIcon={({ isActive }) => (
+                <DownOutlined style={{ color: '#9b59b6', transform: isActive ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+              )}
+            >
               <Panel
                 header={
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                    <Text style={{ color: '#9b59b6', fontWeight: 'bold', fontSize: 15 }}>
+                    <Text style={{ color: '#9b59b6', fontWeight: 'bold', fontSize: 14 }}>
                       <UserOutlined style={{ marginRight: 8 }} />
                       {item.幹部}
                     </Text>
-                    <span style={{ color: '#fff', fontSize: 13 }}>
-                      {item.來訪次數} 次來訪
-                    </span>
+                    <Text style={{ color: '#ffd700', fontSize: 13 }}>
+                      {item.來訪次數} 次
+                    </Text>
                   </div>
                 }
                 key={item.幹部}
               >
                 <div style={{ padding: '8px 0' }}>
-                  {item.客戶列表?.map((client, cIdx) => (
+                  {item.客戶列表?.slice(0, 5).map((client, cIdx) => (
                     <div key={cIdx} style={{
                       background: 'rgba(26, 26, 46, 0.6)',
                       border: '1px solid #333',
                       borderRadius: 8,
-                      padding: '10px 12px',
-                      marginBottom: 8
+                      padding: '8px 10px',
+                      marginBottom: 6,
+                      display: 'flex',
+                      justifyContent: 'space-between',
                     }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <Text style={{ color: '#fff', fontWeight: '500' }}>
-                          {client.客戶名}
-                        </Text>
-                        <Text style={{ color: '#9b59b6', fontSize: 12 }}>
-                          {client.來訪次數} 次
-                        </Text>
-                      </div>
-                      {client.聯絡方式 && (
-                        <Text style={{ color: '#888', fontSize: 12 }}>
-                          {client.聯絡方式}
-                        </Text>
-                      )}
+                      <Text style={{ color: '#ccc', fontSize: 13 }}>{client.客戶名}</Text>
+                      <Text style={{ color: '#9b59b6', fontSize: 12 }}>{client.來訪次數}次</Text>
                     </div>
                   ))}
+                  {item.客戶列表?.length > 5 && (
+                    <Text style={{ color: '#666', fontSize: 11, display: 'block', textAlign: 'center' }}>
+                      還有 {item.客戶列表.length - 5} 位客戶...
+                    </Text>
+                  )}
                 </div>
               </Panel>
             </Collapse>

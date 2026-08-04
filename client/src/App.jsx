@@ -20,6 +20,7 @@ import MobileCustomers from './pages/MobileCustomers';
 import MobileRelations from './pages/MobileRelations';
 import MobileGossip from './pages/MobileGossip';
 import MobileBroker from './pages/MobileBroker';
+import MobileDashboard from './pages/MobileDashboard';
 
 const { Header, Sider, Content } = Layout;
 
@@ -189,7 +190,7 @@ function AppContent() {
             <Route path="/mobile/relations" element={<MobileRelations />} />
             <Route path="/mobile/gossip" element={<MobileGossip />} />
             <Route path="/mobile/broker" element={<MobileBroker />} />
-            <Route path="/mobile" element={<Navigate to="/mobile/daily-sales" replace />} />
+            <Route path="/mobile" element={<MobileDashboard />} />
             <Route path="*" element={<Navigate to="/daily-sales" replace />} />
           </Routes>
         </Content>
