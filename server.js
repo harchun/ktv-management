@@ -267,6 +267,13 @@ app.get('/api/stats/daily-summary', authenticate, async (req, res) => {
 // ==================== CUSTOMER RELATIONS ====================
 app.get('/api/customer-relations', authenticate, async (req, res) => {
   try {
+    // Get all one-line cadres first
+    const [cadreRows] = await pool.execute(`
+      SELECT 幹部編號, 姓名 FROM cadres WHERE 等級 = '一線'
+    `);
+    
+    const oneLineCadres = cadreRows.map(r => r.姓名);
+    
     // Get all customer-cadre relationships with counts, only for '一線' cadres
     const sql = `
       SELECT 
@@ -275,12 +282,15 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
         COUNT(*) as visit_count,
         SUM(ds.人數) as total_people
       FROM daily_sales ds
-      INNER JOIN cadres c ON ds.幹部編號 = c.幹部編號
-      WHERE ds.客戶名 IS NOT NULL AND ds.客戶名 != '' AND c.等級 = '一線'
+      WHERE ds.客戶名 IS NOT NULL AND ds.客戶名 != ''
+        AND (
+          ds.幹部 IN (?)
+          OR ds.幹部 LIKE '%吳勝松%'
+        )
       GROUP BY ds.幹部, ds.客戶名
       ORDER BY ds.客戶名, visit_count DESC
     `;
-    const [rows] = await pool.execute(sql);
+    const [rows] = await pool.execute(sql, [oneLineCadres]);
     
     // For each customer, find the primary cadre (most visits)
     const customerPrimary = {};
