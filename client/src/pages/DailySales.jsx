@@ -136,7 +136,7 @@ export default function DailySales() {
   const customerOptions = customers.map(c => ({ value: c['客戶編號'], label: `${c.客戶姓名}${c.暱稱 ? ` (${c.暱稱})` : ''}` }));
   const gossipOptions = gossipPersons.map(g => ({
     value: String(g['公關編號']),
-    label: `${g.姓名}${g.暱稱 ? ` (${g.暱稱})` : ''}${g.經紀人 ? ` [${g.經紀人}]` : ''}`
+    label: g.暱稱 || g.姓名
   }));
 
   const columns = [
@@ -349,7 +349,7 @@ export default function DailySales() {
                     const selected = gossipPersons.find(g => String(g['公關編號']) === v);
                     if (selected) {
                       form.setFieldValue('公關', selected['姓名']);
-                      form.setFieldValue('公關費用', selected['手機'] || 0);
+                      form.setFieldValue('公關費用', selected['公關費用'] || 0);
                     }
                   }}
                 />
