@@ -315,8 +315,8 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
     
     const result = Object.values(cadreMap).map(cadre => ({
       ...cadre,
-      來訪次數: cadre.客戶列表.reduce((sum, c) => sum + c.來訪次數, 0),
-      總人數: cadre.客戶列表.reduce((sum, c) => sum + c.總人數, 0)
+      來訪次數: cadre.客戶列表.reduce((sum, c) => sum + Number(c.來訪次數 || 0), 0),
+      總人數: cadre.客戶列表.reduce((sum, c) => sum + Number(c.總人數 || 0), 0)
     })).sort((a, b) => b.來訪次數 - a.來訪次數);
     
     res.json(result);
