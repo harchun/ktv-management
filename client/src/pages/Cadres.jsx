@@ -22,7 +22,9 @@ export default function Cadres() {
     setLoading(true);
     try {
       const res = await api.get('/cadres');
-      setDataSource(Array.isArray(res.data) ? res.data : []);
+      const raw = Array.isArray(res.data) ? res.data : [];
+      const levelOrder = { '一線': 1, '常董': 2, '管理層': 3, '行政': 4, '場部': 5, '一般': 6 };
+      setDataSource(raw.sort((a, b) => (levelOrder[a.等級] || 9) - (levelOrder[b.等級] || 9)));
     } catch (err) {
       message.error('取得幹部資料失敗');
     } finally {
@@ -146,7 +148,7 @@ export default function Cadres() {
           </Form.Item>
           <Form.Item name="暱稱" label="暱稱"><Input placeholder="請輸入暱稱" /></Form.Item>
           <Form.Item name="等級" label="等級" initialValue="一般">
-            <Select options={[{value:'一線',label:'一線'},{value:'常董',label:'常董'},{value:'一般',label:'一般'}]} />
+            <Select options={[{value:'一線',label:'一線'},{value:'常董',label:'常董'},{value:'公關',label:'公關'},{value:'管理層',label:'管理層'},{value:'行政',label:'行政'},{value:'場部',label:'場部'},{value:'一般',label:'一般'}]} />
           </Form.Item>
           <Form.Item name="聯絡方式" label="聯絡方式"><Input placeholder="請輸入聯絡方式" /></Form.Item>
           <Form.Item style={{ marginBottom: 0 }}>
