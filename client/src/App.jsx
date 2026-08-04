@@ -14,6 +14,12 @@ import CustomerRelations from './pages/CustomerRelations';
 import GossipManagement from './pages/GossipManagement';
 import BrokerManagement from './pages/BrokerManagement';
 import Settings from './pages/Settings';
+import MobileDailySales from './pages/MobileDailySales';
+import MobileCadres from './pages/MobileCadres';
+import MobileCustomers from './pages/MobileCustomers';
+import MobileRelations from './pages/MobileRelations';
+import MobileGossip from './pages/MobileGossip';
+import MobileBroker from './pages/MobileBroker';
 
 const { Header, Sider, Content } = Layout;
 
@@ -177,6 +183,13 @@ function AppContent() {
             <Route path="/broker-management" element={<BrokerManagement />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/customers" element={<Customers />} />
+            <Route path="/mobile/daily-sales" element={<MobileDailySales />} />
+            <Route path="/mobile/cadres" element={<MobileCadres />} />
+            <Route path="/mobile/customers" element={<MobileCustomers />} />
+            <Route path="/mobile/relations" element={<MobileRelations />} />
+            <Route path="/mobile/gossip" element={<MobileGossip />} />
+            <Route path="/mobile/broker" element={<MobileBroker />} />
+            <Route path="/mobile" element={<Navigate to="/mobile/daily-sales" replace />} />
             <Route path="*" element={<Navigate to="/daily-sales" replace />} />
           </Routes>
         </Content>
