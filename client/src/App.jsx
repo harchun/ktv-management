@@ -12,6 +12,7 @@ import Cadres from './pages/Cadres';
 import Customers from './pages/Customers';
 import CustomerRelations from './pages/CustomerRelations';
 import GossipManagement from './pages/GossipManagement';
+import BrokerManagement from './pages/BrokerManagement';
 import Settings from './pages/Settings';
 
 const { Header, Sider, Content } = Layout;
@@ -67,6 +68,7 @@ function AppContent() {
     { key: '/customers', icon: <ContactsOutlined />, label: '客戶管理' },
     { key: '/customer-relations', icon: <ContactsOutlined />, label: '客戶關係' },
     { key: '/gossip-management', icon: <UserOutlined />, label: '公關管理' },
+    { key: '/broker-management', icon: <UserOutlined />, label: '經紀人管理' },
     { key: '/settings', icon: <SettingOutlined />, label: '系統設定' },
   ];
 
@@ -172,6 +174,7 @@ function AppContent() {
             <Route path="/cadres" element={<Cadres />} />
             <Route path="/customer-relations" element={<CustomerRelations />} />
             <Route path="/gossip-management" element={<GossipManagement />} />
+            <Route path="/broker-management" element={<BrokerManagement />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="*" element={<Navigate to="/daily-sales" replace />} />

@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, Input, Modal, Form, Select, DatePicker, message, Card, Row, Col, Tag, Space } from 'antd';
+import { Table, Button, Input, Modal, Form, message, Card, Row, Col, Space } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import api from '../utils/api';
-import { formatDate } from '../utils/formatDate';
 
 const cardStyle = {
   background: 'rgba(26, 26, 46, 0.8)',
@@ -11,10 +9,9 @@ const cardStyle = {
   borderRadius: 12,
 };
 
-export default function GossipManagement() {
+export default function BrokerManagement() {
   const [dataSource, setDataSource] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [brokers, setBrokers] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState(null);
   const [searchText, setSearchText] = useState('');
@@ -31,14 +28,10 @@ export default function GossipManagement() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [gossipRes, brokerRes] = await Promise.all([
-        api.get('/gossip'),
-        api.get('/brokers')
-      ]);
-      setDataSource(Array.isArray(gossipRes.data) ? gossipRes.data : []);
-      setBrokers(brokerRes.data || []);
+      const res = await api.get('/brokers');
+      setDataSource(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      message.error('取得公關資料失敗');
+      message.error('取得經紀人資料失敗');
     } finally {
       setLoading(false);
     }
@@ -50,17 +43,11 @@ export default function GossipManagement() {
     if (submitting) return;
     setSubmitting(true);
     try {
-      const payload = {
-        ...values,
-        生日: values.生日 ? values.生日.format('YYYY-MM-DD') : null,
-        報到日期: values.報到日期 ? values.報到日期.format('YYYY-MM-DD') : null,
-      };
-
       if (editing) {
-        await api.put(`/gossip/${editing['公關編號']}`, payload);
+        await api.put(`/brokers/${editing['經紀人編號']}`, values);
         message.success('更新成功');
       } else {
-        await api.post('/gossip', payload);
+        await api.post('/brokers', values);
         message.success('新增成功');
       }
       setModalVisible(false);
@@ -75,7 +62,7 @@ export default function GossipManagement() {
 
   const handleDelete = async (id) => {
     try {
-      await api.delete(`/gossip/${id}`);
+      await api.delete(`/brokers/${id}`);
       message.success('刪除成功');
       fetchData();
     } catch (err) {
@@ -84,34 +71,24 @@ export default function GossipManagement() {
   };
 
   const columns = [
-    { title: '暱稱', dataIndex: '暱稱', key: 'nickname', width: 100 },
-    { title: '姓名', dataIndex: '姓名', key: 'name', width: 100 },
-    { title: '經紀人', dataIndex: '經紀人', key: 'broker', width: 100 },
-    { title: '手機', dataIndex: '手機', key: 'phone', width: 120 },
-    { title: 'LINE ID', dataIndex: 'LINE_ID', key: 'line', width: 120 },
-    { title: '生日', dataIndex: '生日', key: 'birthday', width: 100, render: formatDate },
-    { title: '報到日期', dataIndex: '報到日期', key: 'report_date', width: 100, render: formatDate },
+    { title: '經紀人', dataIndex: '經紀人', key: 'broker', width: 200 },
+    { title: '手機', dataIndex: '手機', key: 'phone', width: 150 },
     { title: '操作', key: 'actions', width: 120, render: (_, record) => (
       <Space>
         <Button type="link" icon={<EditOutlined />} onClick={() => {
           setEditing(record);
-          form.setFieldsValue({
-            ...record,
-            生日: record.生日 ? dayjs(record.生日) : null,
-            報到日期: record.報到日期 ? dayjs(record.報到日期) : null,
-          });
+          form.setFieldsValue(record);
           setModalVisible(true);
         }} />
-        <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record['公關編號'])} />
+        <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record['經紀人編號'])} />
       </Space>
     )},
   ];
 
   const filteredData = searchText
     ? dataSource.filter(r =>
-        (r.暱稱 || '').toLowerCase().includes(searchText.toLowerCase()) ||
-        (r.姓名 || '').toLowerCase().includes(searchText.toLowerCase()) ||
-        (r.經紀人 || '').toLowerCase().includes(searchText.toLowerCase())
+        (r.經紀人 || '').toLowerCase().includes(searchText.toLowerCase()) ||
+        (r.手機 || '').toLowerCase().includes(searchText.toLowerCase())
       )
     : dataSource;
 
@@ -119,7 +96,6 @@ export default function GossipManagement() {
     <div>
       <Card style={cardStyle} bodyStyle={{ padding: 0 }} className="page-content">
         <div style={{ padding: isMobile ? 12 : 20 }}>
-          {/* Control bar */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -128,7 +104,7 @@ export default function GossipManagement() {
             flexDirection: isMobile ? 'column' : 'row',
             gap: isMobile ? 12 : 0,
           }}>
-            <h2 style={{ color: '#9b59b6', margin: 0, fontSize: isMobile ? 18 : undefined }} className="page-title">👠 公關管理</h2>
+            <h2 style={{ color: '#9b59b6', margin: 0, fontSize: isMobile ? 18 : undefined }} className="page-title">👔 經紀人管理</h2>
             <div style={{
               display: 'flex',
               flexWrap: 'wrap',
@@ -136,7 +112,7 @@ export default function GossipManagement() {
               ...(isMobile ? { width: '100%' } : {}),
             }}>
               <Input.Search
-                placeholder="搜尋暱稱/姓名/經紀人..."
+                placeholder="搜尋經紀人/手機..."
                 allowClear
                 style={{ width: isMobile ? '100%' : 300 }}
                 prefix={<SearchOutlined style={{ color: '#9b59b6' }} />}
@@ -152,7 +128,7 @@ export default function GossipManagement() {
                 }}
                 onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}
               >
-                {isMobile ? '+ 新增' : '新增公關'}
+                {isMobile ? '+ 新增' : '新增經紀人'}
               </Button>
             </div>
           </div>
@@ -161,10 +137,10 @@ export default function GossipManagement() {
             <Table
               dataSource={filteredData}
               columns={columns}
-              rowKey="公關編號"
+              rowKey="經紀人編號"
               loading={loading}
               pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (t) => `共 ${t} 位` }}
-              scroll={{ x: isMobile ? 900 : undefined }}
+              scroll={{ x: isMobile ? 600 : undefined }}
               size={isMobile ? 'small' : 'middle'}
             />
           </div>
@@ -172,62 +148,30 @@ export default function GossipManagement() {
       </Card>
 
       <Modal
-        title={editing ? '編輯公關' : '新增公關'}
+        title={editing ? '編輯經紀人' : '新增經紀人'}
         open={modalVisible && !submitting}
         onCancel={() => { setModalVisible(false); setSubmitting(false); }}
         footer={null}
-        width={isMobile ? '100%' : 600}
+        width={isMobile ? '100%' : 500}
         style={{ top: isMobile ? 0 : 20 }}
       >
         <Form form={form} layout="vertical" onFinish={handleSave}>
           <Row gutter={16}>
-            <Col span={isMobile ? 24 : 12}>
-              <Form.Item name="暱稱" label="暱稱">
-                <Input placeholder="請輸入暱稱" />
-              </Form.Item>
-            </Col>
-            <Col span={isMobile ? 24 : 12}>
-              <Form.Item name="姓名" label="姓名">
-                <Input placeholder="請輸入姓名" />
+            <Col span={24}>
+              <Form.Item name="經紀人" label="經紀人" rules={[{ required: true, message: '請輸入經紀人姓名' }]}>
+                <Input placeholder="請輸入經紀人姓名" />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
-            <Col span={isMobile ? 24 : 12}>
-              <Form.Item name="經紀人" label="經紀人">
-                <Select
-                  placeholder="請選擇經紀人"
-                  options={brokers.map(b => ({ value: b.經紀人, label: b.經紀人 }))}
-                  showSearch
-                  allowClear
-                />
-              </Form.Item>
-            </Col>
-            <Col span={isMobile ? 24 : 12}>
+            <Col span={24}>
               <Form.Item name="手機" label="手機">
                 <Input placeholder="請輸入手機號碼" />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
-            <Col span={isMobile ? 24 : 12}>
-              <Form.Item name="LINE_ID" label="LINE ID">
-                <Input placeholder="請輸入LINE ID" />
-              </Form.Item>
-            </Col>
-            <Col span={isMobile ? 24 : 12}>
-              <Form.Item name="生日" label="生日">
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={isMobile ? 24 : 12}>
-              <Form.Item name="報到日期" label="報到日期">
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={isMobile ? 24 : 12}>
+            <Col span={24}>
               <Form.Item name="備註" label="備註">
                 <Input.TextArea rows={2} placeholder="備註" />
               </Form.Item>

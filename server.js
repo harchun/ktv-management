@@ -336,6 +336,50 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
   }
 });
 
+// ==================== BROKERS ====================
+app.get('/api/brokers', authenticate, async (req, res) => {
+  try {
+    const sql = 'SELECT * FROM brokers ORDER BY 經紀人';
+    const [rows] = await pool.execute(sql);
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/brokers', authenticate, async (req, res) => {
+  try {
+    const { 經紀人, 手機, 備註 } = req.body;
+    const sql = `INSERT INTO brokers (經紀人, 手機, 備註) VALUES (?, ?, ?)`;
+    const [result] = await pool.execute(sql, [經紀人, 手機, 備註]);
+    res.json({ success: true, 經紀人編號: `B${result.insertId}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put('/api/brokers/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 經紀人, 手機, 備註 } = req.body;
+    const sql = `UPDATE brokers SET 經紀人 = ?, 手機 = ?, 備註 = ? WHERE 經紀人編號 = ?`;
+    await pool.execute(sql, [經紀人, 手機, 備註, id]);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/brokers/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.execute('DELETE FROM brokers WHERE 經紀人編號 = ?', [id]);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ==================== GOSSIP MANAGEMENT ====================
 app.get('/api/gossip', authenticate, async (req, res) => {
   try {
