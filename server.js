@@ -351,7 +351,7 @@ app.post('/api/brokers', authenticate, async (req, res) => {
   try {
     const { 經紀人, 手機, 備註 } = req.body;
     const sql = `INSERT INTO brokers (經紀人, 手機, 備註) VALUES (?, ?, ?)`;
-    const [result] = await pool.execute(sql, [經紀人, 手機, 備註]);
+    const [result] = await pool.execute(sql, [經紀人 || null, 手機 || null, 備註 || null]);
     res.json({ success: true, 經紀人編號: `B${result.insertId}` });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -363,7 +363,7 @@ app.put('/api/brokers/:id', authenticate, async (req, res) => {
     const { id } = req.params;
     const { 經紀人, 手機, 備註 } = req.body;
     const sql = `UPDATE brokers SET 經紀人 = ?, 手機 = ?, 備註 = ? WHERE 經紀人編號 = ?`;
-    await pool.execute(sql, [經紀人, 手機, 備註, id]);
+    await pool.execute(sql, [經紀人 || null, 手機 || null, 備註 || null, id]);
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -395,7 +395,7 @@ app.post('/api/gossip', authenticate, async (req, res) => {
   try {
     const { 暱稱, 姓名, 經紀人, 手機, LINE_ID, 生日, 報到日期, 備註 } = req.body;
     const sql = `INSERT INTO gossip (暱稱, 姓名, 經紀人, 手機, LINE_ID, 生日, 報到日期, 備註) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-    const [result] = await pool.execute(sql, [暱稱, 姓名, 經紀人, 手機, LINE_ID, 生日, 報到日期, 備註]);
+    const [result] = await pool.execute(sql, [暱稱 || null, 姓名 || null, 經紀人 || null, 手機 || null, LINE_ID || null, 生日 || null, 報到日期 || null, 備註 || null]);
     res.json({ success: true, 公關編號: `G${result.insertId}` });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -407,7 +407,7 @@ app.put('/api/gossip/:id', authenticate, async (req, res) => {
     const { id } = req.params;
     const { 暱稱, 姓名, 經紀人, 手機, LINE_ID, 生日, 報到日期, 備註 } = req.body;
     const sql = `UPDATE gossip SET 暱稱 = ?, 姓名 = ?, 經紀人 = ?, 手機 = ?, LINE_ID = ?, 生日 = ?, 報到日期 = ?, 備註 = ? WHERE 公關編號 = ?`;
-    await pool.execute(sql, [暱稱, 姓名, 經紀人, 手機, LINE_ID, 生日, 報到日期, 備註, id]);
+    await pool.execute(sql, [暱稱 || null, 姓名 || null, 經紀人 || null, 手機 || null, LINE_ID || null, 生日 || null, 報到日期 || null, 備註 || null, id]);
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
