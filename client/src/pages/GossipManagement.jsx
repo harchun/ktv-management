@@ -111,7 +111,8 @@ export default function GossipManagement() {
     ? dataSource.filter(r =>
         (r.暱稱 || '').toLowerCase().includes(searchText.toLowerCase()) ||
         (r.姓名 || '').toLowerCase().includes(searchText.toLowerCase()) ||
-        (r.經紀人 || '').toLowerCase().includes(searchText.toLowerCase())
+        (r.經紀人 || '').toLowerCase().includes(searchText.toLowerCase()) ||
+        (brokers.find(b => b.經紀人 === r.經紀人)?.所屬公司 || '').toLowerCase().includes(searchText.toLowerCase())
       )
     : dataSource;
 
@@ -136,7 +137,7 @@ export default function GossipManagement() {
               ...(isMobile ? { width: '100%' } : {}),
             }}>
               <Input.Search
-                placeholder="搜尋暱稱/姓名/經紀人..."
+                placeholder="搜尋暱稱/姓名/經紀人/公司..."
                 allowClear
                 style={{ width: isMobile ? '100%' : 300 }}
                 prefix={<SearchOutlined style={{ color: '#9b59b6' }} />}
@@ -197,7 +198,10 @@ export default function GossipManagement() {
               <Form.Item name="經紀人" label="經紀人">
                 <Select
                   placeholder="請選擇經紀人"
-                  options={brokers.map(b => ({ value: b.經紀人, label: b.經紀人 }))}
+                  options={brokers.map(b => ({
+                    value: b.經紀人,
+                    label: b.所屬公司 ? `${b.所屬公司}/${b.經紀人}` : b.經紀人
+                  }))}
                   showSearch
                   allowClear
                 />
