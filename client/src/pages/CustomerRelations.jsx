@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Table, Input, Card, Statistic, Row, Col, Tag, Typography } from 'antd';
-import { SearchOutlined, TrophyOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
+import { Table, Input, Card, Statistic, Row, Col, Tag, Typography, Collapse } from 'antd';
+import { SearchOutlined, TrophyOutlined, UserOutlined, TeamOutlined, DownOutlined } from '@ant-design/icons';
 import api from '../utils/api';
 
 const cardStyle = {
@@ -8,6 +8,8 @@ const cardStyle = {
   border: '1px solid #333',
   borderRadius: 12,
 };
+
+const { Panel } = Collapse;
 
 export default function CustomerRelations() {
   const [dataSource, setDataSource] = useState([]);
@@ -26,15 +28,13 @@ export default function CustomerRelations() {
       
       // Calculate stats
       const uniqueCustomers = new Set();
-      let totalVisits = 0;
       data.forEach(item => {
         item.客戶列表?.forEach(c => uniqueCustomers.add(c.客戶名));
-        totalVisits += item.來訪次數;
       });
       setStats({
         totalCustomers: uniqueCustomers.size,
         totalCadres: data.length,
-        totalVisits: totalVisits
+        totalVisits: data.reduce((sum, item) => sum + item.來訪次數, 0)
       });
     } catch (err) {
       console.error('取得客戶關係資料失敗', err);
@@ -56,22 +56,9 @@ export default function CustomerRelations() {
       )
     : dataSource;
 
-  const columns = [
+  const customerColumns = [
     {
-      title: '幹部名',
-      dataIndex: '幹部',
-      key: '幹部',
-      width: 150,
-      fixed: 'left',
-      render: (name) => (
-        <span style={{ color: '#f39c12', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <TrophyOutlined style={{ color: '#f39c12' }} />
-          {name}
-        </span>
-      ),
-    },
-    {
-      title: '主要客戶',
+      title: '客戶名',
       dataIndex: '客戶名',
       key: '客戶名',
       width: 150,
@@ -101,30 +88,19 @@ export default function CustomerRelations() {
         <span style={{ color: '#2ecc71', fontWeight: 500 }}>{count} 人</span>
       ),
     },
-    {
-      title: '客戶列表',
-      dataIndex: '客戶列表',
-      key: '客戶列表',
-      render: (list) => (
-        <div style={{ maxHeight: 200, overflowY: 'auto' }}>
-          {list.map((item, idx) => (
-            <div key={idx} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '4px 8px',
-              background: idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
-              borderRadius: 4,
-              fontSize: 12,
-              marginBottom: 2,
-            }}>
-              <span style={{ color: '#fff' }}>{item.客戶名}</span>
-              <span style={{ color: '#888' }}>{item.來訪次數}次 / {item.總人數}人</span>
-            </div>
-          ))}
-        </div>
-      ),
-    },
   ];
+
+  const renderCustomerTable = (customerList) => (
+    <Table
+      dataSource={customerList}
+      columns={customerColumns}
+      rowKey="客戶名"
+      pagination={false}
+      size="small"
+      scroll={{ y: 300 }}
+      className="customer-table"
+    />
+  );
 
   return (
     <div>
@@ -164,16 +140,8 @@ export default function CustomerRelations() {
             </Col>
           </Row>
 
-          {/* Search and Actions */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 16,
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: isMobile ? 12 : 0,
-          }}>
-            <Title level={4} style={{ color: '#e74c3c', margin: 0 }}>👥 客戶關係表（以幹部分類）</Title>
+          {/* Search */}
+          <div style={{ marginBottom: 16 }}>
             <Input.Search
               placeholder="搜尋幹部名或客戶名..."
               allowClear
@@ -184,18 +152,34 @@ export default function CustomerRelations() {
             />
           </div>
 
-          {/* Table */}
-          <div className="table-responsive">
-            <Table
-              dataSource={filteredData}
-              columns={columns}
-              rowKey="幹部"
-              loading={loading}
-              pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (t) => `共 ${t} 位幹部` }}
-              scroll={{ x: isMobile ? 700 : 900 }}
-              size={isMobile ? 'small' : 'middle'}
-            />
-          </div>
+          {/* Customer List by Cadre */}
+          <Title level={4} style={{ color: '#e74c3c', margin: '0 0 12px 0' }}>
+            👥 客戶關係表（以幹部分類）
+          </Title>
+
+          <Collapse
+            defaultActiveKey={[0]}
+            accordion
+            style={{ background: 'transparent' }}
+          >
+            {filteredData.map((cadre, idx) => (
+              <Panel
+                key={idx}
+                header={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
+                    <TrophyOutlined style={{ color: '#f39c12', fontSize: 18 }} />
+                    <span style={{ color: '#f39c12', fontWeight: 600, fontSize: 16 }}>{cadre.幹部}</span>
+                    <span style={{ color: '#3498db', fontSize: 13 }}>
+                      {cadre.客戶列表.length} 位客戶 · {cadre.來訪次數} 次 · {cadre.總人數} 人
+                    </span>
+                  </div>
+                }
+                style={{ background: 'rgba(26, 26, 46, 0.6)', marginBottom: 8, borderRadius: 8 }}
+              >
+                {renderCustomerTable(cadre.客戶列表)}
+              </Panel>
+            ))}
+          </Collapse>
         </div>
       </Card>
     </div>

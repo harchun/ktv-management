@@ -267,6 +267,7 @@ app.get('/api/stats/daily-summary', authenticate, async (req, res) => {
 // ==================== CUSTOMER RELATIONS ====================
 app.get('/api/customer-relations', authenticate, async (req, res) => {
   try {
+    // Get all customer-cadre relationships with counts
     const sql = `
       SELECT 
         ds.幹部,
@@ -276,34 +277,47 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
       FROM daily_sales ds
       WHERE ds.客戶名 IS NOT NULL AND ds.客戶名 != ''
       GROUP BY ds.幹部, ds.客戶名
-      ORDER BY ds.幹部, visit_count DESC
+      ORDER BY ds.客戶名, visit_count DESC
     `;
     const [rows] = await pool.execute(sql);
     
-    // Group by cadre
-    const cadreMap = {};
+    // For each customer, find the primary cadre (most visits)
+    const customerPrimary = {};
     rows.forEach(row => {
-      const cadre = row.幹部;
-      if (!cadreMap[cadre]) {
-        cadreMap[cadre] = {
-          幹部: cadre,
-          客戶名: row.客戶名,
-          來訪次數: row.visit_count,
-          總人數: row.total_people,
-          客戶列表: [{ 客戶名: row.客戶名, 來訪次數: row.visit_count, 總人數: row.total_people }]
-        };
-      } else {
-        cadreMap[cadre].客戶列表.push({
-          客戶名: row.客戶名,
+      const name = row.客戶名;
+      if (!customerPrimary[name] || row.visit_count > customerPrimary[name].visit_count) {
+        customerPrimary[name] = {
+          客戶名: name,
+          幹部: row.幹部,
           來訪次數: row.visit_count,
           總人數: row.total_people
-        });
-        cadreMap[cadre].來訪次數 += row.visit_count;
-        cadreMap[cadre].總人數 += row.total_people;
+        };
       }
     });
     
-    const result = Object.values(cadreMap).sort((a, b) => b.來訪次數 - a.來訪次數);
+    // Group by cadre
+    const cadreMap = {};
+    Object.values(customerPrimary).forEach(customer => {
+      const cadre = customer.幹部;
+      if (!cadreMap[cadre]) {
+        cadreMap[cadre] = {
+          幹部: cadre,
+          客戶列表: []
+        };
+      }
+      cadreMap[cadre].客戶列表.push(customer);
+    });
+    
+    // Sort each cadre's customers by visit count, then sort cadres by total visits
+    Object.values(cadreMap).forEach(cadre => {
+      cadre.客戶列表.sort((a, b) => b.來訪次數 - a.來訪次數);
+    });
+    
+    const result = Object.values(cadreMap).map(cadre => ({
+      ...cadre,
+      來訪次數: cadre.客戶列表.reduce((sum, c) => sum + c.來訪次數, 0),
+      總人數: cadre.客戶列表.reduce((sum, c) => sum + c.總人數, 0)
+    })).sort((a, b) => b.來訪次數 - a.來訪次數);
     
     res.json(result);
   } catch (e) {
