@@ -71,8 +71,9 @@ export default function BrokerManagement() {
   };
 
   const columns = [
-    { title: '經紀人', dataIndex: '經紀人', key: 'broker', width: 200 },
-    { title: '手機', dataIndex: '手機', key: 'phone', width: 150 },
+    { title: '經紀人', dataIndex: '經紀人', key: 'broker', width: 150 },
+    { title: '手機', dataIndex: '手機', key: 'phone', width: 130 },
+    { title: '所屬公司', dataIndex: '所屬公司', key: 'company', width: 150 },
     { title: '操作', key: 'actions', width: 120, render: (_, record) => (
       <Space>
         <Button type="link" icon={<EditOutlined />} onClick={() => {
@@ -113,7 +114,7 @@ export default function BrokerManagement() {
               ...(isMobile ? { width: '100%' } : {}),
             }}>
               <Input.Search
-                placeholder="搜尋經紀人/手機..."
+                placeholder="搜尋經紀人/手機/公司..."
                 allowClear
                 style={{ width: isMobile ? '100%' : 300 }}
                 prefix={<SearchOutlined style={{ color: '#9b59b6' }} />}
