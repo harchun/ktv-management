@@ -336,6 +336,50 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
   }
 });
 
+// ==================== GOSSIP MANAGEMENT ====================
+app.get('/api/gossip', authenticate, async (req, res) => {
+  try {
+    const sql = 'SELECT * FROM gossip ORDER BY 報到日期 DESC';
+    const [rows] = await pool.execute(sql);
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/gossip', authenticate, async (req, res) => {
+  try {
+    const { 暱稱, 姓名, 經紀人, 手機, LINE_ID, 生日, 報到日期, 備註 } = req.body;
+    const sql = `INSERT INTO gossip (暱稱, 姓名, 經紀人, 手機, LINE_ID, 生日, 報到日期, 備註) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    const [result] = await pool.execute(sql, [暱稱, 姓名, 經紀人, 手機, LINE_ID, 生日, 報到日期, 備註]);
+    res.json({ success: true, 公關編號: `G${result.insertId}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put('/api/gossip/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 暱稱, 姓名, 經紀人, 手機, LINE_ID, 生日, 報到日期, 備註 } = req.body;
+    const sql = `UPDATE gossip SET 暱稱 = ?, 姓名 = ?, 經紀人 = ?, 手機 = ?, LINE_ID = ?, 生日 = ?, 報到日期 = ?, 備註 = ? WHERE 公關編號 = ?`;
+    await pool.execute(sql, [暱稱, 姓名, 經紀人, 手機, LINE_ID, 生日, 報到日期, 備註, id]);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/gossip/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.execute('DELETE FROM gossip WHERE 公關編號 = ?', [id]);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ==================== GOSSIP ORDERS ====================
 app.get('/api/gossip-orders', authenticate, async (req, res) => {
   try {
