@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Typography, Row, Col, Statistic } from 'antd';
-import { UserOutlined, PhoneOutlined, BuildingOutlined } from '@ant-design/icons';
+import { UserOutlined, PhoneOutlined, EnvironmentOutlined } from '@ant-design/icons';
 import api from '../utils/api';
 
 const { Title, Text } = Typography;
@@ -92,7 +92,7 @@ export default function MobileBroker() {
               </div>
               {item.所屬公司 && (
                 <div style={{ marginTop: 6, fontSize: 12, color: '#888' }}>
-                  <BuildingOutlined style={{ color: '#9b59b6', marginRight: 4 }} />
+                  <EnvironmentOutlined style={{ color: '#9b59b6', marginRight: 4 }} />
                   {item.所屬公司}
                 </div>
               )}
