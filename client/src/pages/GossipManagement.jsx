@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, Input, Modal, Form, Select, message, Card, Row, Col, Tag, Space } from 'antd';
+import { Table, Button, Input, Modal, Form, Select, InputNumber, message, Card, Row, Col, Tag, Space } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import api from '../utils/api';
 import { formatDate } from '../utils/formatDate';
