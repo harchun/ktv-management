@@ -349,9 +349,9 @@ app.get('/api/brokers', authenticate, async (req, res) => {
 
 app.post('/api/brokers', authenticate, async (req, res) => {
   try {
-    const { 經紀人, 手機, 備註 } = req.body;
-    const sql = `INSERT INTO brokers (經紀人, 手機, 備註) VALUES (?, ?, ?)`;
-    const [result] = await pool.execute(sql, [經紀人 || null, 手機 || null, 備註 || null]);
+    const { 經紀人, 手機, 備註, 所屬公司 } = req.body;
+    const sql = `INSERT INTO brokers (經紀人, 手機, 備註, 所屬公司) VALUES (?, ?, ?, ?)`;
+    const [result] = await pool.execute(sql, [經紀人 || null, 手機 || null, 備註 || null, 所屬公司 || null]);
     res.json({ success: true, 經紀人編號: String(result.insertId) });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -361,9 +361,9 @@ app.post('/api/brokers', authenticate, async (req, res) => {
 app.put('/api/brokers/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const { 經紀人, 手機, 備註 } = req.body;
-    const sql = `UPDATE brokers SET 經紀人 = ?, 手機 = ?, 備註 = ? WHERE 經紀人編號 = ?`;
-    await pool.execute(sql, [經紀人 || null, 手機 || null, 備註 || null, id]);
+    const { 經紀人, 手機, 備註, 所屬公司 } = req.body;
+    const sql = `UPDATE brokers SET 經紀人 = ?, 手機 = ?, 備註 = ?, 所屬公司 = ? WHERE 經紀人編號 = ?`;
+    await pool.execute(sql, [經紀人 || null, 手機 || null, 備註 || null, 所屬公司 || null, id]);
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });

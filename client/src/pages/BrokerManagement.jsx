@@ -88,7 +88,8 @@ export default function BrokerManagement() {
   const filteredData = searchText
     ? dataSource.filter(r =>
         (r.經紀人 || '').toLowerCase().includes(searchText.toLowerCase()) ||
-        (r.手機 || '').toLowerCase().includes(searchText.toLowerCase())
+        (r.手機 || '').toLowerCase().includes(searchText.toLowerCase()) ||
+        (r.所屬公司 || '').toLowerCase().includes(searchText.toLowerCase())
       )
     : dataSource;
 
@@ -167,6 +168,13 @@ export default function BrokerManagement() {
             <Col span={24}>
               <Form.Item name="手機" label="手機">
                 <Input placeholder="請輸入手機號碼" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item name="所屬公司" label="所屬公司">
+                <Input placeholder="請輸入所屬公司" />
               </Form.Item>
             </Col>
           </Row>
