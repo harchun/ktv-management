@@ -25,7 +25,6 @@ export default function DailySales() {
   ]);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [quickSubmitting, setQuickSubmitting] = useState(false);
   const [form] = Form.useForm();
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
   const [submitting, setSubmitting] = useState(false);
@@ -131,8 +130,6 @@ export default function DailySales() {
   const [cadreQuickVisible, setCadreQuickVisible] = useState(false);
   const [quickForm] = Form.useForm();
   const [cadreQuickForm] = Form.useForm();
-  const [quickSubmitting, setQuickSubmitting] = useState(false);
-  const [cadreQuickSubmitting, setCadreQuickSubmitting] = useState(false);
   const cadreLevelOrder = { '一線': 1, '常董': 2, '公關': 3, '管理層': 4, '行政': 5, '場部': 6, '一般': 7 };
   const cadreOptions = [...cadres]
     .sort((a, b) => (cadreLevelOrder[a.等級] || 9) - (cadreLevelOrder[b.等級] || 9))
@@ -415,8 +412,8 @@ export default function DailySales() {
         width={isMobile ? '100%' : 450}
       >
         <Form form={quickForm} layout="vertical" onFinish={async (values) => {
-          if (quickSubmitting) return;
-          setQuickSubmitting(true);
+          if (submitting) return;
+          setSubmitting(true);
           try {
             const payload = {
               客戶姓名: values.姓名,
@@ -438,7 +435,7 @@ export default function DailySales() {
           } catch (err) {
             message.error(err.response?.data?.error || '新增失敗');
           } finally {
-            setQuickSubmitting(false);
+            setSubmitting(false);
           }
         }}>
           <Form.Item name="姓名" label="客戶姓名" rules={[{ required: true, message: '請輸入姓名' }]}>
@@ -449,7 +446,7 @@ export default function DailySales() {
           <Form.Item name="手機" label="手機"><Input placeholder="手機" /></Form.Item>
           <Form.Item name="LINE" label="LINE ID"><Input placeholder="LINE ID" /></Form.Item>
           <Form.Item style={{ marginBottom: 0 }}>
-            <Button type="primary" htmlType="submit" style={{ background: '#2ecc71', border: 'none' }} loading={quickSubmitting}>新增並填入</Button>
+            <Button type="primary" htmlType="submit" style={{ background: '#2ecc71', border: 'none' }} loading={submitting}>新增並填入</Button>
           </Form.Item>
         </Form>
       </Modal>
@@ -463,8 +460,8 @@ export default function DailySales() {
         width={isMobile ? '100%' : 450}
       >
         <Form form={cadreQuickForm} layout="vertical" onFinish={async (values) => {
-          if (cadreQuickSubmitting) return;
-          setCadreQuickSubmitting(true);
+          if (submitting) return;
+          setSubmitting(true);
           try {
             const payload = {
               幹部編號: String(Date.now()),
@@ -485,7 +482,7 @@ export default function DailySales() {
           } catch (err) {
             message.error(err.response?.data?.error || '新增失敗');
           } finally {
-            setCadreQuickSubmitting(false);
+            setSubmitting(false);
           }
         }}>
           <Form.Item name="姓名" label="幹部姓名" rules={[{ required: true, message: '請輸入姓名' }]}>
@@ -506,7 +503,7 @@ export default function DailySales() {
           <Form.Item name="電子信箱" label="電子信箱"><Input placeholder="電子信箱" /></Form.Item>
           <Form.Item name="備註" label="備註"><Input.TextArea placeholder="備註" rows={2} /></Form.Item>
           <Form.Item style={{ marginBottom: 0 }}>
-            <Button type="primary" htmlType="submit" style={{ background: '#9b59b6', border: 'none' }} loading={cadreQuickSubmitting}>新增並填入</Button>
+            <Button type="primary" htmlType="submit" style={{ background: '#9b59b6', border: 'none' }} loading={submitting}>新增並填入</Button>
           </Form.Item>
         </Form>
       </Modal>
