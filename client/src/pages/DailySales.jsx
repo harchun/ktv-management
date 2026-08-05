@@ -314,7 +314,7 @@ export default function DailySales() {
                   form.setFieldValue('幹部', selected?.姓名 || '');
                 }} />
               </Form.Item>
-              <Button size="small" type="dashed" onClick={() => { cadreQuickForm.resetFields(); setCadreQuickVisible(true); }} style={{ marginTop: 4 }}>+ 快速新增幹部</Button>
+              <Button size="small" type="dashed" onClick={() => { cadreQuickForm.resetFields(); setCadreQuickVisible(true); }} style={{ marginTop: 4, width: 110 }}>+ 快速新增幹部</Button>
             </Col>
             <Col span={isMobile ? 24 : 8}>
               <Form.Item name="幹部" label="幹部姓名" hidden>
@@ -333,7 +333,7 @@ export default function DailySales() {
                   form.setFieldValue('客戶名', selected?.客戶姓名 || '');
                 }} />
               </Form.Item>
-              <Button size="small" type="dashed" onClick={() => { quickForm.resetFields(); setCustomerQuickVisible(true); }}>+ 快速新增</Button>
+              <Button size="small" type="dashed" onClick={() => { quickForm.resetFields(); setCustomerQuickVisible(true); }} style={{ width: 110 }}>+ 快速新增</Button>
             </Col>
             <Col span={isMobile ? 24 : 8}>
               <Form.Item name="客戶名" label="客戶名" hidden><Input /></Form.Item>
