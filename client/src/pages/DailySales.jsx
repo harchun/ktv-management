@@ -128,7 +128,11 @@ export default function DailySales() {
   };
 
   const [customerQuickVisible, setCustomerQuickVisible] = useState(false);
+  const [cadreQuickVisible, setCadreQuickVisible] = useState(false);
   const [quickForm] = Form.useForm();
+  const [cadreQuickForm] = Form.useForm();
+  const [quickSubmitting, setQuickSubmitting] = useState(false);
+  const [cadreQuickSubmitting, setCadreQuickSubmitting] = useState(false);
   const cadreLevelOrder = { '一線': 1, '常董': 2, '公關': 3, '管理層': 4, '行政': 5, '場部': 6, '一般': 7 };
   const cadreOptions = [...cadres]
     .sort((a, b) => (cadreLevelOrder[a.等級] || 9) - (cadreLevelOrder[b.等級] || 9))
@@ -313,6 +317,7 @@ export default function DailySales() {
                   form.setFieldValue('幹部', selected?.姓名 || '');
                 }} />
               </Form.Item>
+              <Button size="small" type="dashed" onClick={() => { cadreQuickForm.resetFields(); setCadreQuickVisible(true); }} style={{ marginTop: 4 }}>+ 快速新增幹部</Button>
             </Col>
             <Col span={isMobile ? 24 : 8}>
               <Form.Item name="幹部" label="幹部姓名" hidden>
@@ -445,6 +450,63 @@ export default function DailySales() {
           <Form.Item name="LINE" label="LINE ID"><Input placeholder="LINE ID" /></Form.Item>
           <Form.Item style={{ marginBottom: 0 }}>
             <Button type="primary" htmlType="submit" style={{ background: '#2ecc71', border: 'none' }} loading={quickSubmitting}>新增並填入</Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Quick Add Cadre Modal */}
+      <Modal
+        title="快速新增幹部"
+        open={cadreQuickVisible}
+        onCancel={() => setCadreQuickVisible(false)}
+        footer={null}
+        width={isMobile ? '100%' : 450}
+      >
+        <Form form={cadreQuickForm} layout="vertical" onFinish={async (values) => {
+          if (cadreQuickSubmitting) return;
+          setCadreQuickSubmitting(true);
+          try {
+            const payload = {
+              幹部編號: String(Date.now()),
+              姓名: values.姓名,
+              暱稱: values.暱稱 || null,
+              等級: values.等級 || '一般',
+              聯絡方式: values.聯絡方式 || null,
+              電子信箱: values.電子信箱 || null,
+              備註: values.備註 || null,
+            };
+            const res = await api.post('/cadres', payload);
+            const newCadre = res.data;
+            setCadres(prev => [...prev, newCadre]);
+            setCadreQuickVisible(false);
+            form.setFieldValue('幹部編號', newCadre['幹部編號']);
+            form.setFieldValue('幹部', newCadre.姓名);
+            message.success('已新增並填入');
+          } catch (err) {
+            message.error(err.response?.data?.error || '新增失敗');
+          } finally {
+            setCadreQuickSubmitting(false);
+          }
+        }}>
+          <Form.Item name="姓名" label="幹部姓名" rules={[{ required: true, message: '請輸入姓名' }]}>
+            <Input placeholder="請輸入幹部姓名" />
+          </Form.Item>
+          <Form.Item name="暱稱" label="暱稱"><Input placeholder="暱稱" /></Form.Item>
+          <Form.Item name="等級" label="等級">
+            <Select placeholder="請選擇等級" options={[
+              { value: '一線', label: '一線' },
+              { value: '常董', label: '常董' },
+              { value: '管理層', label: '管理層' },
+              { value: '行政', label: '行政' },
+              { value: '場部', label: '場部' },
+              { value: '一般', label: '一般' },
+            ]} />
+          </Form.Item>
+          <Form.Item name="聯絡方式" label="聯絡方式"><Input placeholder="聯絡方式" /></Form.Item>
+          <Form.Item name="電子信箱" label="電子信箱"><Input placeholder="電子信箱" /></Form.Item>
+          <Form.Item name="備註" label="備註"><Input.TextArea placeholder="備註" rows={2} /></Form.Item>
+          <Form.Item style={{ marginBottom: 0 }}>
+            <Button type="primary" htmlType="submit" style={{ background: '#9b59b6', border: 'none' }} loading={cadreQuickSubmitting}>新增並填入</Button>
           </Form.Item>
         </Form>
       </Modal>
