@@ -59,7 +59,16 @@ app.post('/api/cadres', authenticate, async (req, res) => {
       'INSERT INTO cadres (`幹部編號`, `姓名`, `暱稱`, `等級`, `聯絡方式`, `電子信箱`, `地址`, `備註`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [幹部編號, 姓名, 暱稱 || null, 等級 || '一般', 聯絡方式 || null, 電子信箱 || null, 地址 || null, 備註 || null]
     );
-    res.json({ success: true });
+    res.json({
+      幹部編號,
+      姓名,
+      暱稱: 暱稱 || null,
+      等級: 等級 || '一般',
+      聯絡方式: 聯絡方式 || null,
+      電子信箱: 電子信箱 || null,
+      地址: 地址 || null,
+      備註: 備註 || null,
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Table, Button, Input, Modal, Form, DatePicker, Select, InputNumber, Tag, Space, message, Popconfirm, Card, Row, Col } from 'antd';
+import zhTW from 'antd/locale/zh_TW';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import api from '../utils/api';
@@ -15,6 +16,7 @@ export default function DailySales() {
   const [dataSource, setDataSource] = useState([]);
   const [cadres, setCadres] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [brokers, setBrokers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -27,6 +29,7 @@ export default function DailySales() {
   const [currentPage, setCurrentPage] = useState(1);
   const [form] = Form.useForm();
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  const [gossipPersons, setGossipPersons] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const submitLock = useRef(false);
 
@@ -38,8 +41,11 @@ export default function DailySales() {
 
   const dateRangeRef = useRef(dateRange);
   dateRangeRef.current = dateRange;
+  const fetchingRef = useRef(false);
 
   const fetchData = async () => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     setLoading(true);
     try {
       const [start, end] = dateRangeRef.current || [null, null];
@@ -52,17 +58,17 @@ export default function DailySales() {
       message.error('取得營業資料失敗');
     } finally {
       setLoading(false);
+      fetchingRef.current = false;
     }
   };
 
-  const [gossipPersons, setGossipPersons] = useState([]);
-
   const fetchOptions = async () => {
     try {
-      const [cadRes, custRes, gossipRes] = await Promise.all([api.get('/cadres'), api.get('/customers'), api.get('/gossip')]);
+      const [cadRes, custRes, gossipRes, brokerRes] = await Promise.all([api.get('/cadres'), api.get('/customers'), api.get('/gossip'), api.get('/brokers')]);
       setCadres(cadRes.data || []);
       setCustomers(custRes.data || []);
       setGossipPersons(gossipRes.data || []);
+      setBrokers(brokerRes.data || []);
     } catch (e) { /* ignore */ }
   };
 
@@ -128,17 +134,22 @@ export default function DailySales() {
 
   const [customerQuickVisible, setCustomerQuickVisible] = useState(false);
   const [cadreQuickVisible, setCadreQuickVisible] = useState(false);
+  const [gossipQuickVisible, setGossipQuickVisible] = useState(false);
   const [quickForm] = Form.useForm();
   const [cadreQuickForm] = Form.useForm();
+  const [gossipQuickForm] = Form.useForm();
   const cadreLevelOrder = { '一線': 1, '常董': 2, '公關': 3, '管理層': 4, '行政': 5, '場部': 6, '一般': 7 };
   const cadreOptions = [...cadres]
     .sort((a, b) => (cadreLevelOrder[a.等級] || 9) - (cadreLevelOrder[b.等級] || 9))
     .map(c => ({ value: c['幹部編號'], label: `${c.姓名}${c.暱稱 ? ` (${c.暱稱})` : ''}` }));
   const customerOptions = customers.map(c => ({ value: c['客戶編號'], label: `${c.客戶姓名}${c.暱稱 ? ` (${c.暱稱})` : ''}` }));
-  const gossipOptions = gossipPersons.map(g => ({
-    value: String(g['公關編號']),
-    label: g.暱稱 || g.姓名
-  }));
+  const gossipOptions = [
+    { value: '', label: '—— 請選擇 ——' },
+    ...gossipPersons.map(g => ({
+      value: String(g['公關編號']),
+      label: g.暱稱 || g.姓名
+    }))
+  ];
 
   const columns = [
     { title: '編號', dataIndex: '營業編號', key: 'id', width: 60 },
@@ -217,19 +228,44 @@ export default function DailySales() {
               ...(isMobile ? { width: '100%' } : {}),
             }}>
               <DatePicker.RangePicker
+                locale={zhTW}
                 onChange={(dates) => {
                   setDateRange(dates);
-                  if (dates && dates[0] && dates[1]) {
+                }}
+                onCalendarChange={(dates) => {
+                  if (dates && dates[0] && dates[1] && !fetchingRef.current) {
+                    const range = [dates[0], dates[1]];
+                    dateRangeRef.current = range;
+                    setDateRange(range);
                     fetchData();
                   }
                 }}
                 allowClear={false}
                 style={{ ...(isMobile ? { width: '100%' } : { width: 220 }) }}
               />
-              <Button size="small" onClick={() => { setDateRange([dayjs().startOf('month'), dayjs().endOf('month')]); fetchData(); }} style={isMobile ? { width: '100%', marginBottom: 4 } : {}}>本月</Button>
-              <Button size="small" onClick={() => { setDateRange([dayjs().subtract(1, 'month').startOf('month'), dayjs().subtract(1, 'month').endOf('month')]); fetchData(); }} style={isMobile ? { width: '100%', marginBottom: 4 } : {}}>上月</Button>
-              <Button size="small" onClick={() => { setDateRange([dayjs().startOf('year'), dayjs().endOf('year')]); fetchData(); }} style={isMobile ? { width: '100%', marginBottom: 4 } : {}}>今年</Button>
-              <Button size="small" onClick={() => { setDateRange([null, null]); fetchData(); }} style={isMobile ? { width: '100%' } : {}}>全部</Button>
+              <Button size="small" onClick={() => {
+                const range = [dayjs().startOf('month'), dayjs().endOf('month')];
+                dateRangeRef.current = range;
+                setDateRange(range);
+                fetchData();
+              }} style={isMobile ? { width: '100%', marginBottom: 4 } : {}}>本月</Button>
+              <Button size="small" onClick={() => {
+                const range = [dayjs().subtract(1, 'month').startOf('month'), dayjs().subtract(1, 'month').endOf('month')];
+                dateRangeRef.current = range;
+                setDateRange(range);
+                fetchData();
+              }} style={isMobile ? { width: '100%', marginBottom: 4 } : {}}>上月</Button>
+              <Button size="small" onClick={() => {
+                const range = [dayjs().startOf('year'), dayjs().endOf('year')];
+                dateRangeRef.current = range;
+                setDateRange(range);
+                fetchData();
+              }} style={isMobile ? { width: '100%', marginBottom: 4 } : {}}>今年</Button>
+              <Button size="small" onClick={() => {
+                dateRangeRef.current = [null, null];
+                setDateRange([null, null]);
+                fetchData();
+              }} style={isMobile ? { width: '100%' } : {}}>全部</Button>
               <Input.Search
                 placeholder="搜尋客戶/幹部/房號..."
                 allowClear
@@ -304,7 +340,7 @@ export default function DailySales() {
           <Row gutter={16}>
             <Col span={isMobile ? 24 : 8}>
               <Form.Item name="日期" label="日期" rules={[{ required: true, message: '請選擇日期' }]}>
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker style={{ width: '100%' }} locale={zhTW} />
               </Form.Item>
             </Col>
             <Col span={isMobile ? 24 : 8}>
@@ -351,16 +387,21 @@ export default function DailySales() {
                     const selected = gossipPersons.find(g => String(g['公關編號']) === v);
                     if (selected) {
                       form.setFieldValue('公關', selected['姓名']);
-                      form.setFieldValue('公關費用', selected['公關費用'] || 0);
+                    } else {
+                      // 清空公關時也清空公關
+                      form.setFieldValue('公關', '');
                     }
                   }}
                 />
               </Form.Item>
+              <Button size="small" type="dashed" onClick={() => { gossipQuickForm.resetFields(); setGossipQuickVisible(true); }} style={{ marginTop: 4, width: 110, background: '#e91e63', borderColor: '#e91e63', color: '#fff' }}>+ 快速新增</Button>
+            </Col>
+            <Col span={isMobile ? 24 : 8}>
+              <Form.Item name="公關" label="公關姓名" hidden><Input /></Form.Item>
             </Col>
             <Col span={isMobile ? 24 : 8}>
               <Form.Item name="人數" label="人數"><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
             </Col>
-            <Col span={isMobile ? 24 : 8}></Col>
           </Row>
 
           <div style={{ borderTop: '1px solid #333', paddingTop: 12, marginTop: 12, marginBottom: 12 }}>
@@ -375,7 +416,7 @@ export default function DailySales() {
           </Row>
           <Row gutter={16}>
             <Col span={isMobile ? 24 : 6}><Form.Item name="坐檯費" label="坐檯費"><InputNumber style={{ width: '100%' }} prefix="NT$" /></Form.Item></Col>
-            <Col span={isMobile ? 24 : 6}><Form.Item name="公關費用" label="公關費用"><InputNumber style={{ width: '100%' }} prefix="NT$" /></Form.Item></Col>
+            <Col span={isMobile ? 24 : 6}><Form.Item name="公關費用" label="幹訪費用"><InputNumber style={{ width: '100%' }} prefix="NT$" /></Form.Item></Col>
             <Col span={isMobile ? 24 : 6}><Form.Item name="進出全" label="進出全"><InputNumber style={{ width: '100%' }} prefix="NT$" /></Form.Item></Col>
             <Col span={isMobile ? 24 : 6}><Form.Item name="小潔" label="小潔"><InputNumber style={{ width: '100%' }} prefix="NT$" /></Form.Item></Col>
           </Row>
@@ -451,6 +492,62 @@ export default function DailySales() {
         </Form>
       </Modal>
 
+      {/* Quick Add Gossip Modal */}
+      <Modal
+        title="快速新增公關"
+        open={gossipQuickVisible}
+        onCancel={() => setGossipQuickVisible(false)}
+        footer={null}
+        width={isMobile ? '100%' : 450}
+      >
+        <Form form={gossipQuickForm} layout="vertical" onFinish={async (values) => {
+          if (submitting) return;
+          setSubmitting(true);
+          try {
+            const payload = {
+              暱稱: values.暱稱 || null,
+              姓名: values.姓名,
+              經紀人: values.經紀人 || null,
+              公關費用: Number(values.公關費用) || 0,
+              手機: values.手機 || null,
+              LINE_ID: values.LINE || null,
+              生日: values.生日 ? values.生日.format('YYYY-MM-DD') : null,
+              報到日期: values.報到日期 ? values.報到日期.format('YYYY-MM-DD') : null,
+              備註: values.備註 || null,
+            };
+            const res = await api.post('/gossip', payload);
+            const newGossip = res.data;
+            setGossipPersons(prev => [...prev, newGossip]);
+            setGossipQuickVisible(false);
+            gossipQuickForm.resetFields();
+            form.setFieldValue('公關訂桌', newGossip['公關編號']);
+            // 不自動填入公關費用，讓使用者自己輸入
+            message.success('已新增並填入公關');
+          } catch (err) {
+            message.error(err.response?.data?.error || '新增失敗');
+          } finally {
+            setSubmitting(false);
+          }
+        }}>
+          <Form.Item name="姓名" label="公關姓名" rules={[{ required: true, message: '請輸入姓名' }]}>
+            <Input placeholder="請輸入姓名" />
+          </Form.Item>
+          <Form.Item name="暱稱" label="暱稱"><Input placeholder="暱稱" /></Form.Item>
+          <Form.Item name="經紀人" label="經紀人">
+            <Select placeholder="請選擇經紀人" options={brokers.map(b => ({
+              value: b.經紀人,
+              label: b.所屬公司 ? `${b.所屬公司}/${b.經紀人}` : b.經紀人
+            }))} showSearch allowClear />
+          </Form.Item>
+          <Form.Item name="公關費用" label="幹訪費用"><InputNumber min={0} style={{ width: '100%' }} prefix="NT$" /></Form.Item>
+          <Form.Item name="手機" label="手機"><Input placeholder="手機" /></Form.Item>
+          <Form.Item name="LINE" label="LINE ID"><Input placeholder="LINE ID" /></Form.Item>
+          <Form.Item style={{ marginBottom: 0 }}>
+            <Button type="primary" htmlType="submit" style={{ background: '#e91e63', border: 'none' }} loading={submitting}>新增並填入</Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
       {/* Quick Add Cadre Modal */}
       <Modal
         title="快速新增幹部"
@@ -464,7 +561,6 @@ export default function DailySales() {
           setSubmitting(true);
           try {
             const payload = {
-              幹部編號: String(Date.now()),
               姓名: values.姓名,
               暱稱: values.暱稱 || null,
               等級: values.等級 || '一般',
@@ -475,9 +571,20 @@ export default function DailySales() {
             const res = await api.post('/cadres', payload);
             const newCadre = res.data;
             setCadres(prev => [...prev, newCadre]);
+            // Close quick modal first
             setCadreQuickVisible(false);
-            form.setFieldValue('幹部編號', newCadre['幹部編號']);
-            form.setFieldValue('幹部', newCadre.姓名);
+            // Reset main modal except date
+            const currentDate = form.getFieldValue('日期');
+            setEditing(null);
+            form.resetFields();
+            if (currentDate) form.setFieldValue('日期', currentDate);
+            // Open main modal with new cadre filled
+            setModalVisible(true);
+            // Set cadre after modal is open
+            setTimeout(() => {
+              form.setFieldValue('幹部編號', newCadre['幹部編號']);
+              form.setFieldValue('幹部', newCadre.姓名);
+            }, 100);
             message.success('已新增並填入');
           } catch (err) {
             message.error(err.response?.data?.error || '新增失敗');
@@ -493,6 +600,7 @@ export default function DailySales() {
             <Select placeholder="請選擇等級" options={[
               { value: '一線', label: '一線' },
               { value: '常董', label: '常董' },
+              { value: '公關', label: '公關' },
               { value: '管理層', label: '管理層' },
               { value: '行政', label: '行政' },
               { value: '場部', label: '場部' },

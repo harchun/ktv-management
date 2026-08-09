@@ -179,10 +179,8 @@ export default function Customers() {
               <Table.Column title="日期" dataIndex="日期" width={100} render={formatDate} />
               <Table.Column title="房號" dataIndex="房號" width={80} />
               <Table.Column title="人數" dataIndex="人數" width={60} />
-              <Table.Column title="業績" dataIndex="業績" width={100} render={(v) => `NT$ ${Number(v).toLocaleString()}`} />
-              <Table.Column title="現金" dataIndex="現金" width={80} />
-              <Table.Column title="信用" dataIndex="信用" width={80} />
-              <Table.Column title="簽帳" dataIndex="簽帳" width={80} />
+              <Table.Column title="營業額" width={120} render={(row) => `NT$ ${(Number(row.現金) + Number(row.信用) + Number(row.簽帳) + Number(row.其它)).toLocaleString()}`} />
+              <Table.Column title="訂桌公關" dataIndex="公關暱稱" width={100} render={(v, row) => v || row.公關姓名 || ''} />
             </Table>
           </>
         )}

@@ -1,4 +1,7 @@
 import { ConfigProvider, theme } from 'antd';
+import zhTW from 'antd/locale/zh_TW';
+import dayjs from 'dayjs';
+import 'dayjs/locale/zh-tw';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -7,6 +10,7 @@ import './index.css';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ConfigProvider
+      locale={zhTW}
       theme={{
         algorithm: theme.darkAlgorithm,
         token: {

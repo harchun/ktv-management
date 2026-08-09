@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Input, Modal, Form, Select, Space, message, InputNumber, DatePicker, Tabs } from 'antd';
+import zhTW from 'antd/locale/zh_TW';
 import { CalculatorOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import api from '../utils/api';

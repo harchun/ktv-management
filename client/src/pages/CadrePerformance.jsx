@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Table, Card, Button, DatePicker, Space, message, Modal, Form, Input, InputNumber, Select } from 'antd';
+import zhTW from 'antd/locale/zh_TW';
 import { PlusOutlined, EditOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';

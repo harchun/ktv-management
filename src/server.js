@@ -59,7 +59,8 @@ app.post('/api/cadres', authenticate, async (req, res) => {
       'INSERT INTO cadres (`幹部編號`, `姓名`, `暱稱`, `等級`, `聯絡方式`, `電子信箱`, `地址`, `備註`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [幹部編號, 姓名, 暱稱 || null, 等級 || '一般', 聯絡方式 || null, 電子信箱 || null, 地址 || null, 備註 || null]
     );
-    res.json({ success: true });
+    const [rows] = await pool.execute('SELECT * FROM cadres WHERE `幹部編號` = ?', [幹部編號]);
+    res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -126,7 +127,7 @@ app.get('/api/customers/:id/visits', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const [visits] = await pool.execute(
-      'SELECT ds.*, cad.`姓名` as 幹部姓名 FROM daily_sales ds LEFT JOIN cadres cad ON ds.`幹部編號` = cad.`幹部編號` WHERE ds.`客戶編號` = ? ORDER BY ds.`日期` DESC',
+      'SELECT ds.*, cad.`姓名` as 幹部姓名, g.`暱稱` as 公關暱稱, g.`姓名` as 公關姓名 FROM daily_sales ds LEFT JOIN cadres cad ON ds.`幹部編號` = cad.`幹部編號` LEFT JOIN gossip g ON ds.`公關訂桌` = g.`公關編號` WHERE ds.`客戶編號` = ? ORDER BY ds.`日期` DESC',
       [id]
     );
     const lastVisit = visits[0]?.日期 || null;
@@ -159,13 +160,14 @@ app.post('/api/daily-sales', authenticate, async (req, res) => {
   try {
     const {
       日期, 幹部編號, 幹部, 房號, 客戶編號, 客戶名, 人數,
-      公司吸收額, 幹部吸收額, 餐酒, 包廂費, 坐檯費, 公關費用,
+      公司吸收額, 幹部吸收額, 餐酒, 包廂費, 坐檯費, 公關費用, 公關訂桌,
       進出全, 小潔, 服務費, 稅額, 業績, 現金, 信用, 簽帳, 其它, 備註
     } = req.body;
     const 營業編號 = 'DS' + Date.now().toString().slice(-8);
     await pool.execute(
-      'INSERT INTO daily_sales (`營業編號`, `日期`, `幹部編號`, `幹部`, `房號`, `客戶編號`, `客戶名`, `人數`, `公司吸收額`, `幹部吸收額`, `餐酒`, `包廂費`, `坐檯費`, `公關費用`, `進出全`, `小潔`, `服務費`, `稅額`, `業績`, `現金`, `信用`, `簽帳`, `其它`, `備註`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO daily_sales (`營業編號`, `日期`, `幹部編號`, `幹部`, `房號`, `客戶編號`, `客戶名`, `人數`, `公關訂桌`, `公司吸收額`, `幹部吸收額`, `餐酒`, `包廂費`, `坐檯費`, `公關費用`, `進出全`, `小潔`, `服務費`, `稅額`, `業績`, `現金`, `信用`, `簽帳`, `其它`, `備註`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [營業編號, 日期, 幹部編號 || null, 幹部 || null, 房號 || null, 客戶編號 || null, 客戶名 || null, 人數 !== undefined && 人數 !== null ? 人數 : 1,
+       公關訂桌 || null,
        Number(公司吸收額) || 0, Number(幹部吸收額) || 0, Number(餐酒) || 0, Number(包廂費) || 0, Number(坐檯費) || 0,
        Number(公關費用) || 0, Number(進出全) || 0, Number(小潔) || 0, Number(服務費) || 0, Number(稅額) || 0,
        Number(業績) || 0, Number(現金) || 0, Number(信用) || 0, Number(簽帳) || 0, Number(其它) || 0, 備註 || null]
@@ -179,12 +181,13 @@ app.put('/api/daily-sales/:id', authenticate, async (req, res) => {
     const { id } = req.params;
     const {
       日期, 幹部編號, 幹部, 房號, 客戶編號, 客戶名, 人數,
-      公司吸收額, 幹部吸收額, 餐酒, 包廂費, 坐檯費, 公關費用,
+      公司吸收額, 幹部吸收額, 餐酒, 包廂費, 坐檯費, 公關費用, 公關訂桌,
       進出全, 小潔, 服務費, 稅額, 業績, 現金, 信用, 簽帳, 其它, 備註
     } = req.body;
     await pool.execute(
-      'UPDATE daily_sales SET `日期`=?, `幹部編號`=?, `幹部`=?, `房號`=?, `客戶編號`=?, `客戶名`=?, `人數`=?, `公司吸收額`=?, `幹部吸收額`=?, `餐酒`=?, `包廂費`=?, `坐檯費`=?, `公關費用`=?, `進出全`=?, `小潔`=?, `服務費`=?, `稅額`=?, `業績`=?, `現金`=?, `信用`=?, `簽帳`=?, `其它`=?, `備註`=? WHERE `營業編號`=?',
+      'UPDATE daily_sales SET `日期`=?, `幹部編號`=?, `幹部`=?, `房號`=?, `客戶編號`=?, `客戶名`=?, `人數`=?, `公關訂桌`=?, `公司吸收額`=?, `幹部吸收額`=?, `餐酒`=?, `包廂費`=?, `坐檯費`=?, `公關費用`=?, `進出全`=?, `小潔`=?, `服務費`=?, `稅額`=?, `業績`=?, `現金`=?, `信用`=?, `簽帳`=?, `其它`=?, `備註`=? WHERE `營業編號`=?',
       [日期, 幹部編號 || null, 幹部 || null, 房號 || null, 客戶編號 || null, 客戶名 || null, 人數 !== undefined && 人數 !== null ? 人數 : 1,
+       公關訂桌 || null,
        Number(公司吸收額) || 0, Number(幹部吸收額) || 0, Number(餐酒) || 0, Number(包廂費) || 0, Number(坐檯費) || 0,
        Number(公關費用) || 0, Number(進出全) || 0, Number(小潔) || 0, Number(服務費) || 0, Number(稅額) || 0,
        Number(業績) || 0, Number(現金) || 0, Number(信用) || 0, Number(簽帳) || 0, Number(其它) || 0, 備註 || null, id]
@@ -344,6 +347,119 @@ app.put('/api/settings', authenticate, async (req, res) => {
         [key, String(value), String(value)]
       );
     }
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== CUSTOMER RELATIONS ====================
+app.get('/api/customer-relations', authenticate, async (req, res) => {
+  try {
+    // Get cadre summary (only 一線)
+    const [cadres] = await pool.execute("SELECT cad.`幹部編號`, cad.`姓名`, COUNT(ds.`營業編號`) as 來訪次數, SUM(ds.`人數`) as 總人數 FROM daily_sales ds LEFT JOIN cadres cad ON ds.`幹部` = cad.`姓名` WHERE cad.`等級` = '一線' GROUP BY cad.`幹部編號`, cad.`姓名` ORDER BY 來訪次數 DESC");
+
+    if (cadres.length === 0) {
+      return res.json([]);
+    }
+
+    const cadreNames = cadres.map(c => c.姓名);
+    const placeholders = cadreNames.map(() => '?').join(',');
+
+    // Get all customers in one query (optimized)
+    const [customers] = await pool.execute(
+      `SELECT \`幹部\`, \`客戶名\`, COUNT(*) as 來訪次數, SUM(\`人數\`) as 總人數
+       FROM daily_sales
+       WHERE \`幹部\` IN (${placeholders})
+       GROUP BY \`幹部\`, \`客戶名\`
+       ORDER BY \`幹部\`, 來訪次數 DESC`,
+      cadreNames
+    );
+
+    // Build result
+    const result = cadres.map(cadre => ({
+      幹部編號: cadre.幹部編號,
+      幹部: cadre.姓名 || '未知',
+      來訪次數: cadre.來訪次數,
+      總人數: cadre.總人數,
+      客戶列表: customers.filter(c => c.幹部 === cadre.姓名)
+    }));
+
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== BROKERS ====================
+app.get('/api/brokers', authenticate, async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM brokers ORDER BY 經紀人編號');
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/brokers', authenticate, async (req, res) => {
+  try {
+    const { 經紀人, 手機, 備註, 所屬公司 } = req.body;
+    const [result] = await pool.execute(
+      'INSERT INTO brokers (`經紀人`, `手機`, `備註`, `所屬公司`) VALUES (?, ?, ?, ?)',
+      [經紀人 || null, 手機 || null, 備註 || null, 所屬公司 || null]
+    );
+    res.json({ 經紀人編號: result.insertId, 經紀人, 手機, 備註, 所屬公司 });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/brokers/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 經紀人, 手機, 備註, 所屬公司 } = req.body;
+    await pool.execute(
+      'UPDATE brokers SET `經紀人`=?, `手機`=?, `備註`=?, `所屬公司`=? WHERE `經紀人編號`=?',
+      [經紀人 || null, 手機 || null, 備註 || null, 所屬公司 || null, id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/brokers/:id', authenticate, async (req, res) => {
+  try {
+    await pool.execute('DELETE FROM brokers WHERE `經紀人編號` = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== GOSSIP ====================
+app.get('/api/gossip', authenticate, async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM gossip ORDER BY 公關編號');
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/gossip', authenticate, async (req, res) => {
+  try {
+    const { 暱稱, 姓名, 經紀人, 公關費用, 手機, LINE_ID, 生日, 報到日期, 備註 } = req.body;
+    const [result] = await pool.execute(
+      'INSERT INTO gossip (`暱稱`, `姓名`, `經紀人`, `公關費用`, `手機`, `LINE_ID`, `生日`, `報到日期`, `備註`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [暱稱 || null, 姓名 || null, 經紀人 || null, 公關費用 || null, 手機 || null, LINE_ID || null, 生日 || null, 報到日期 || null, 備註 || null]
+    );
+    const [rows] = await pool.execute('SELECT * FROM gossip WHERE `公關編號` = ?', [result.insertId]);
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/gossip/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 暱稱, 姓名, 經紀人, 公關費用, 手機, LINE_ID, 生日, 報到日期, 備註 } = req.body;
+    await pool.execute(
+      'UPDATE gossip SET `暱稱`=?, `姓名`=?, `經紀人`=?, `公關費用`=?, `手機`=?, `LINE_ID`=?, `生日`=?, `報到日期`=?, `備註`=? WHERE `公關編號`=?',
+      [暱稱 || null, 姓名 || null, 經紀人 || null, 公關費用 || null, 手機 || null, LINE_ID || null, 生日 || null, 報到日期 || null, 備註 || null, id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/gossip/:id', authenticate, async (req, res) => {
+  try {
+    await pool.execute('DELETE FROM gossip WHERE `公關編號` = ?', [req.params.id]);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

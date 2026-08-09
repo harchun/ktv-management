@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Table, Button, DatePicker, Space, message, Card, Statistic, Row, Col, Typography,
 } from 'antd';
+import zhTW from 'antd/locale/zh_TW';
 import { DownloadOutlined } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import api from '../utils/api';
@@ -172,6 +173,7 @@ export default function Revenue() {
             value={selectedMonth}
             onChange={setSelectedMonth}
             format="YYYY/MM"
+            locale={zhTW}
           />
           <Button icon={<DownloadOutlined />} onClick={handleExport}>
             匯出報表

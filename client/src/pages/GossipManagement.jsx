@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Input, Modal, Form, Select, DatePicker, message, Card, Row, Col, Tag, Space } from 'antd';
+import zhTW from 'antd/locale/zh_TW';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import api from '../utils/api';
@@ -221,14 +222,14 @@ export default function GossipManagement() {
             </Col>
             <Col span={isMobile ? 24 : 12}>
               <Form.Item name="生日" label="生日">
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker style={{ width: '100%' }} locale={zhTW} />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={isMobile ? 24 : 12}>
               <Form.Item name="報到日期" label="報到日期">
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker style={{ width: '100%' }} locale={zhTW} />
               </Form.Item>
             </Col>
             <Col span={isMobile ? 24 : 12}>
