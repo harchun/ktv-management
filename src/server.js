@@ -354,8 +354,8 @@ app.put('/api/settings', authenticate, async (req, res) => {
 // ==================== CUSTOMER RELATIONS ====================
 app.get('/api/customer-relations', authenticate, async (req, res) => {
   try {
-    // Get cadre summary (only 一線)
-    const [cadres] = await pool.execute("SELECT cad.`幹部編號`, cad.`姓名`, COUNT(ds.`營業編號`) as 來訪次數, SUM(ds.`人數`) as 總人數 FROM daily_sales ds LEFT JOIN cadres cad ON ds.`幹部` = cad.`姓名` WHERE cad.`等級` = '一線' GROUP BY cad.`幹部編號`, cad.`姓名` ORDER BY 來訪次數 DESC");
+    // Get cadre summary (only 一線, last 60 days)
+    const [cadres] = await pool.execute("SELECT cad.`幹部編號`, cad.`姓名`, COUNT(ds.`營業編號`) as 來訪次數, SUM(ds.`人數`) as 總人數 FROM daily_sales ds LEFT JOIN cadres cad ON ds.`幹部` = cad.`姓名` WHERE cad.`等級` = '一線' AND ds.`日期` >= DATE_SUB(CURDATE(), INTERVAL 60 DAY) GROUP BY cad.`幹部編號`, cad.`姓名` ORDER BY 來訪次數 DESC");
 
     if (cadres.length === 0) {
       return res.json([]);
