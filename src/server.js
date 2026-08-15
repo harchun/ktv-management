@@ -365,17 +365,21 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
     const placeholders = cadreNames.map(() => '?').join(',');
 
     // Get all customers in one query (last 60 days, min 3 visits)
+    // JOIN customer_contacts to resolve null 客戶名 from 客戶編號
     const [customers] = await pool.execute(
-      `SELECT \`幹部\`, \`客戶名\`, COUNT(*) as 來訪次數, SUM(\`人數\`) as 總人數,
-        MAX(\`日期\`) as 最後來訪, MAX(\`公關訂桌\`) as 公關訂桌編號,
+      `SELECT ds.\`幹部\`,
+        COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`) as 客戶名,
+        COUNT(*) as 來訪次數, SUM(ds.\`人數\`) as 總人數,
+        MAX(ds.\`日期\`) as 最後來訪, MAX(ds.\`公關訂桌\`) as 公關訂桌編號,
         MAX(g.\`姓名\`) as 公關訂桌
-       FROM daily_sales
-       LEFT JOIN gossip g ON daily_sales.\`公關訂桌\` = g.\`公關編號\`
-       WHERE \`幹部\` IN (${placeholders})
-         AND \`日期\` >= DATE_SUB(CURDATE(), INTERVAL 60 DAY)
-       GROUP BY \`幹部\`, \`客戶名\`
+       FROM daily_sales ds
+       LEFT JOIN customer_contacts cc ON ds.\`客戶編號\` = cc.\`客戶編號\`
+       LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
+       WHERE ds.\`幹部\` IN (${placeholders})
+         AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 60 DAY)
+       GROUP BY ds.\`幹部\`, COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`)
        HAVING COUNT(*) >= 3
-       ORDER BY \`幹部\`, 來訪次數 DESC`,
+       ORDER BY ds.\`幹部\`, 來訪次數 DESC`,
       cadreNames
     );
 
