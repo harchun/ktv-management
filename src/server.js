@@ -364,25 +364,62 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
     const cadreNames = cadres.map(c => c.姓名);
     const placeholders = cadreNames.map(() => '?').join(',');
 
-    // Get all customers in one query (optimized)
+    // Get all customers in one query (last 60 days, min 3 visits)
     const [customers] = await pool.execute(
-      `SELECT \`幹部\`, \`客戶名\`, COUNT(*) as 來訪次數, SUM(\`人數\`) as 總人數
+      `SELECT \`幹部\`, \`客戶名\`, COUNT(*) as 來訪次數, SUM(\`人數\`) as 總人數,
+        MAX(\`日期\`) as 最後來訪, MAX(\`公關訂桌\`) as 公關訂桌編號,
+        MAX(g.\`姓名\`) as 公關訂桌
        FROM daily_sales
+       LEFT JOIN gossip g ON daily_sales.\`公關訂桌\` = g.\`公關編號\`
        WHERE \`幹部\` IN (${placeholders})
+         AND \`日期\` >= DATE_SUB(CURDATE(), INTERVAL 60 DAY)
        GROUP BY \`幹部\`, \`客戶名\`
+       HAVING COUNT(*) >= 3
        ORDER BY \`幹部\`, 來訪次數 DESC`,
       cadreNames
     );
 
-    // Build result
+    // Build result with public relations name priority
     const result = cadres.map(cadre => ({
       幹部編號: cadre.幹部編號,
       幹部: cadre.姓名 || '未知',
       來訪次數: cadre.來訪次數,
-      總人數: cadre.總人數,
-      客戶列表: customers.filter(c => c.幹部 === cadre.姓名)
+      客戶列表: customers.filter(c => c.幹部 === cadre.姓名).map(c => ({
+        ...c,
+        公關訂桌: c.公關訂桌 || c.公關訂桌編號 || null
+      }))
     }));
 
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== INACTIVE CUSTOMERS ====================
+app.get('/api/inactive-customers', authenticate, async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT
+        cad. \`等級\`,
+        ds. \`客戶名\`,
+        MAX(ds. \`日期\`) as 最後來訪,
+        MAX(ds. \`公關訂桌\`) as 公關訂桌編號,
+        MAX(g. \`姓名\`) as 公關訂桌,
+        MAX(g. \`暱稱\`) as 公關暱稱,
+        COUNT(*) as 來訪次數
+      FROM daily_sales ds
+      LEFT JOIN cadres cad ON ds. \`幹部\` = cad. \`姓名\`
+      LEFT JOIN gossip g ON ds. \`公關訂桌\` = g. \`公關編號\`
+      WHERE cad. \`等級\` = '一線'
+      GROUP BY cad. \`等級\`, ds. \`客戶名\`
+      HAVING MAX(ds. \`日期\`) < DATE_SUB(CURDATE(), INTERVAL 60 DAY)
+         OR MAX(ds. \`日期\`) IS NULL
+      ORDER BY 來訪次數 DESC`
+    );
+    // Fallback to ID if 姓名 is null
+    const result = rows.map(r => ({
+      ...r,
+      公關訂桌: r.公關訂桌 || r.公關暱稱 || r.公關訂桌編號 || null
+    }));
     res.json(result);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

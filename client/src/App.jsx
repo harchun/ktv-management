@@ -179,7 +179,7 @@ function AppContent() {
           <Routes>
             <Route path="/daily-sales" element={<DailySales />} />
             <Route path="/cadres" element={<Cadres />} />
-            <Route path="/customer-relations" element={<CustomerRelations />} />
+            <Route path="/customer-relations" element={<MobileCustomers />} />
             <Route path="/gossip-management" element={<GossipManagement />} />
             <Route path="/broker-management" element={<BrokerManagement />} />
             <Route path="/settings" element={<Settings />} />
@@ -187,7 +187,7 @@ function AppContent() {
             <Route path="/mobile/daily-sales" element={<MobileDailySales />} />
             <Route path="/mobile/cadres" element={<MobileCadres />} />
             <Route path="/mobile/customers" element={<MobileCustomers />} />
-            <Route path="/mobile/relations" element={<MobileRelations />} />
+            <Route path="/mobile/relations" element={<MobileCustomers />} />
             <Route path="/mobile/gossip" element={<MobileGossip />} />
             <Route path="/mobile/broker" element={<MobileBroker />} />
             <Route path="/mobile" element={<MobileDashboard />} />

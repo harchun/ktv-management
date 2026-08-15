@@ -211,8 +211,7 @@ export default function MobileDashboard() {
         {[
           { path: '/mobile/daily-sales', icon: '📊', label: '營業表' },
           { path: '/mobile/cadres', icon: '🏆', label: '幹部' },
-          { path: '/mobile/customers', icon: '👥', label: '客戶' },
-          { path: '/mobile/relations', icon: '📈', label: '關係' },
+          { path: '/mobile/customers', icon: '👥', label: '客戶關係' },
           { path: '/mobile/gossip', icon: '👠', label: '公關' },
           { path: '/mobile/broker', icon: '👔', label: '經紀人' },
         ].map(item => (
