@@ -65,7 +65,7 @@ export default function MobileCustomers() {
     const activeContent = dataSource.map((item, idx) => `
       <div class="cadre-page">
         <h1 class="page-title">日月星辰 KTV 客戶關係表</h1>
-        <h2 class="cadre-title">${item.幹部}</h2>
+        <h2 class="cadre-title">${item.幹部}${item.幹部暱稱 ? ' (' + item.幹部暱稱 + ')' : ''}</h2>
         <p class="cadre-info">客戶數: ${item.客戶列表?.length || 0} 位 | 來訪次數: ${item.來訪次數} 次</p>
         <table class="customer-table">
           <thead>
