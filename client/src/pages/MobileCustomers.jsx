@@ -273,6 +273,7 @@ export default function MobileCustomers() {
                     <Text style={{ color: '#9b59b6', fontWeight: 'bold', fontSize: 14 }}>
                       <UserOutlined style={{ marginRight: 8 }} />
                       {item.幹部}
+                      {item.幹部暱稱 && <Text style={{ color: '#888', fontSize: 12, marginLeft: 6, fontWeight: 'normal' }}>({item.幹部暱稱})</Text>}
                     </Text>
                     <Text style={{ color: '#ffd700', fontSize: 13 }}>
                       {item.客戶列表?.length || 0} 位客戶

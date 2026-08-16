@@ -387,6 +387,7 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
     const result = cadres.map(cadre => ({
       幹部編號: cadre.幹部編號,
       幹部: cadre.姓名 || '未知',
+      幹部暱稱: cadre.暱稱 || null,
       來訪次數: cadre.來訪次數,
       客戶列表: customers.filter(c => c.幹部 === cadre.姓名).map(c => ({
         ...c,
