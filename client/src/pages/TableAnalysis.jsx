@@ -258,9 +258,10 @@ export default function TableAnalysis() {
 
   const handlePrint = () => {
     setShowPrint(true);
+    // Wait for React to re-render, then trigger print
     setTimeout(() => {
       window.print();
-      setShowPrint(false);
+      // Keep print view visible - user will close print dialog themselves
     }, 100);
   };
 
