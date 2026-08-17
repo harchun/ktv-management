@@ -78,9 +78,8 @@ export default function TableUsage() {
     )},
     { title: '幹部', dataIndex: '幹部', key: '幹部', width: 100 },
     { title: '客戶列表', dataIndex: '客戶列表', key: '客戶列表', width: 150, render: (val) => val || '-' },
-    { title: '客戶數', dataIndex: '客戶數', key: '客戶數', width: 70 },
     { title: '消費金額', dataIndex: '總消費', key: '總消費', width: 120, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
-    { title: '次數', dataIndex: '次數', key: '次數', width: 70 },
+    { title: '桌數', dataIndex: '次數', key: '次數', width: 70 },
   ];
 
   const tableData = data.map((row, idx) => ({ ...row, rank: idx + 1 }));
