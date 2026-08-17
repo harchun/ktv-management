@@ -561,5 +561,49 @@ app.put('/api/settings', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ==================== TABLE USAGE STATS ====================
+app.get('/api/stats/table-usage', authenticate, async (req, res) => {
+  try {
+    const { month } = req.query;
+    let sql = `SELECT 
+      ds.\`幹部\`, cad.\`等級\`,
+      COALESCE(g.\`姓名\`, g.\`暱稱\`) as 公關,
+      ds.\`客戶名\`,
+      SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費,
+      COUNT(*) as 次數
+      FROM daily_sales ds
+      LEFT JOIN cadres cad ON ds.\`幹部\` = cad.\`姓名\`
+      LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
+      WHERE 1=1`;
+    const params = [];
+    
+    if (month) {
+      sql += ' AND DATE_FORMAT(ds.\`日期\`, "%Y-%m") = ?';
+      params.push(month);
+    } else {
+      sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)';
+    }
+    
+    sql += ' GROUP BY ds.\`幹部\`, cad.\`等級\`, COALESCE(g.\`姓名\`, g.\`暱稱\`), ds.\`客戶名\`';
+    sql += ' ORDER BY 總消費 DESC';
+    
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/stats/months', authenticate, async (req, res) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT DISTINCT DATE_FORMAT(日期, "%Y-%m") as 月份 
+      FROM daily_sales 
+      WHERE 日期 IS NOT NULL 
+      ORDER BY 月份 DESC 
+      LIMIT 12
+    `);
+    res.json(rows.map(r => r.月份));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 KTV Backend running on port ${PORT}`));
