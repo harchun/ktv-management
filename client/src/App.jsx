@@ -15,6 +15,7 @@ import GossipManagement from './pages/GossipManagement';
 import BrokerManagement from './pages/BrokerManagement';
 import Settings from './pages/Settings';
 import TableUsage from './pages/TableUsage';
+import CadreTable from './pages/CadreTable';
 import MobileDailySales from './pages/MobileDailySales';
 import MobileCadres from './pages/MobileCadres';
 import MobileCustomers from './pages/MobileCustomers';
@@ -76,6 +77,7 @@ function AppContent() {
     { key: '/customers', icon: <ContactsOutlined />, label: '客戶管理' },
     { key: '/customer-relations', icon: <ContactsOutlined />, label: '客戶關係' },
     { key: '/table-usage', icon: <TrophyOutlined />, label: '自訂桌統計' },
+    { key: '/cadre-table', icon: <TrophyOutlined />, label: '幹桌統計' },
     { key: '/gossip-management', icon: <UserOutlined />, label: '公關管理' },
     { key: '/broker-management', icon: <UserOutlined />, label: '經紀人管理' },
     { key: '/settings', icon: <SettingOutlined />, label: '系統設定' },
@@ -183,6 +185,7 @@ function AppContent() {
             <Route path="/cadres" element={<Cadres />} />
             <Route path="/customer-relations" element={<MobileCustomers />} />
             <Route path="/table-usage" element={<TableUsage />} />
+            <Route path="/cadre-table" element={<CadreTable />} />
             <Route path="/gossip-management" element={<GossipManagement />} />
             <Route path="/broker-management" element={<BrokerManagement />} />
             <Route path="/settings" element={<Settings />} />

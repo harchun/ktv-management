@@ -630,5 +630,31 @@ app.get('/api/stats/table-usage-details', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ==================== CADRE TABLE STATS ====================
+app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
+  try {
+    const { month } = req.query;
+    let sql = `SELECT 
+      ds.\`幹部\`, ds.\`客戶名\`,
+      SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
+      FROM daily_sales ds
+      WHERE ds.\`公關訂桌\` IS NOT NULL 
+      AND ds.\`公關訂桌\` != ''`;
+    const params = [];
+    
+    if (month) {
+      sql += ' AND DATE_FORMAT(ds.\`日期\`, "%Y-%m") = ?';
+      params.push(month);
+    } else {
+      sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)';
+    }
+    
+    sql += ' GROUP BY ds.\`幹部\`, ds.\`客戶名\`';
+    sql += ' ORDER BY 總消費 DESC';
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 KTV Backend running on port ${PORT}`));
