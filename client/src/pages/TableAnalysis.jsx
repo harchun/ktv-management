@@ -10,14 +10,12 @@ import {
   Col,
   Statistic,
   Alert,
-  Button,
-  Checkbox
+  Button
 } from 'antd';
 import {
   TrophyOutlined,
   RiseOutlined,
   FallOutlined,
-  TableOutlined,
   DollarOutlined,
   PrinterOutlined
 } from '@ant-design/icons';
@@ -37,7 +35,6 @@ export default function TableAnalysis() {
         const data = res.data;
         const sorted = [...data].sort().reverse();
         setMonths(sorted);
-        // Default: last 3 months
         setSelectedMonths(sorted.slice(0, 3));
       })
       .catch(err => console.error('Failed to load months:', err));
@@ -69,7 +66,7 @@ export default function TableAnalysis() {
       .finally(() => setLoading(false));
   }, [selectedMonths]);
 
-  const getMonthTotal = (month, type) => {
+  const getMonthTotal = (month) => {
     const data = allData[month];
     if (!data) return { custom: { total: 0, count: 0 }, cadre: { total: 0, count: 0 } };
     const customTotal = data.custom.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
@@ -131,22 +128,22 @@ export default function TableAnalysis() {
       {/* Summary Cards */}
       <Row gutter={16} className="print-summary">
         <Col span={12}>
-          <Card className="summary-card custom-card">
+          <Card className="summary-card custom-card" loading={loading}>
             <div className="card-header">
               <TrophyOutlined />
               <span>自訂桌統計</span>
             </div>
             <Row gutter={8}>
               {selectedMonths.map(m => {
-                const d = getMonthTotal(m, 'custom');
+                const d = getMonthTotal(m);
                 const idx = selectedMonths.indexOf(m);
-                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1], 'custom') : null;
-                const growth = prevD ? getGrowthRate(d.total, prevD.total) : null;
+                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
+                const growth = prevD ? getGrowthRate(d.custom.total, prevD.custom.total) : null;
                 return (
                   <Col key={m} span={8}>
                     <Statistic
                       title={<span className="month-label">{m}</span>}
-                      value={d.total}
+                      value={d.custom.total}
                       prefix={<DollarOutlined />}
                       suffix="NT$"
                       precision={0}
@@ -164,22 +161,22 @@ export default function TableAnalysis() {
           </Card>
         </Col>
         <Col span={12}>
-          <Card className="summary-card cadre-card">
+          <Card className="summary-card cadre-card" loading={loading}>
             <div className="card-header">
               <TrophyOutlined style={{ color: '#faad14' }} />
               <span>幹桌統計</span>
             </div>
             <Row gutter={8}>
               {selectedMonths.map(m => {
-                const d = getMonthTotal(m, 'cadre');
+                const d = getMonthTotal(m);
                 const idx = selectedMonths.indexOf(m);
-                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1], 'cadre') : null;
-                const growth = prevD ? getGrowthRate(d.total, prevD.total) : null;
+                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
+                const growth = prevD ? getGrowthRate(d.cadre.total, prevD.cadre.total) : null;
                 return (
                   <Col key={m} span={8}>
                     <Statistic
                       title={<span className="month-label">{m}</span>}
-                      value={d.total}
+                      value={d.cadre.total}
                       prefix={<DollarOutlined />}
                       suffix="NT$"
                       precision={0}
