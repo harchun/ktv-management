@@ -3,10 +3,7 @@ import {
   Select,
   Typography,
   Space,
-  Row,
-  Col,
-  Button,
-  Card
+  Button
 } from 'antd';
 import {
   TrophyOutlined,
@@ -14,142 +11,176 @@ import {
   FallOutlined,
   PrinterOutlined,
   TeamOutlined,
-  DollarCircleOutlined,
-  LineChartOutlined,
-  PieChartOutlined
+  DollarCircleOutlined
 } from '@ant-design/icons';
 import api from '../utils/api';
 
 const { Title, Text } = Typography;
 
-// ==================== Custom Bar Chart ====================
-function BarChart({ data, color }) {
-  const maxVal = Math.max(...data.map(d => d.value));
-  return (
-    <div className="bar-chart">
-      {data.map((d, i) => (
-        <div key={i} className="bar-row">
-          <span className="bar-label">{d.label}</span>
-          <div className="bar-track">
-            <div 
-              className="bar-fill" 
-              style={{ 
-                width: `${(d.value / maxVal) * 100}%`,
-                background: color
-              }}
-            />
-          </div>
-          <span className="bar-value">{d.value.toLocaleString()}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
+// ==================== Print Report Component ====================
+function PrintReport({ customSummary, cadreSummary, months, allData }) {
+  // Calculate growth rates
+  const getGrowth = (current, previous) => {
+    if (!previous || previous === 0) return { rate: 0, isGrowth: true };
+    const rate = ((current - previous) / previous * 100);
+    return { rate, isGrowth: rate >= 0 };
+  };
 
-// ==================== Donut Chart ====================
-function DonutChart({ data, size = 120 }) {
-  const total = data.reduce((sum, d) => sum + d.value, 0);
-  let cumulative = 0;
-  const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
-  
-  const paths = data.map((d, i) => {
-    const percent = d.value / total;
-    const startAngle = cumulative * 360;
-    const endAngle = (cumulative + percent) * 360;
-    cumulative += percent;
-    
-    const startRad = (startAngle - 90) * Math.PI / 180;
-    const endRad = (endAngle - 90) * Math.PI / 180;
-    
-    const r = size / 2;
-    const cx = size / 2;
-    const cy = size / 2;
-    
-    const x1 = cx + r * Math.cos(startRad);
-    const y1 = cy + r * Math.sin(startRad);
-    const x2 = cx + r * Math.cos(endRad);
-    const y2 = cy + r * Math.sin(endRad);
-    
-    const largeArc = percent > 0.5 ? 1 : 0;
-    
-    return {
-      path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`,
-      color: colors[i % colors.length],
-      name: d.name,
-      percent: (percent * 100).toFixed(1)
-    };
-  });
-  
+  const customGrowth = getGrowth(
+    customSummary[customSummary.length - 1]?.total || 0,
+    customSummary[customSummary.length - 2]?.total || 0
+  );
+
+  const cadreGrowth = getGrowth(
+    cadreSummary[cadreSummary.length - 1]?.total || 0,
+    cadreSummary[cadreSummary.length - 2]?.total || 0
+  );
+
   return (
-    <div className="donut-container">
-      <svg viewBox={`0 0 ${size} ${size}`} className="donut-svg">
-        {paths.map((p, i) => (
-          <path key={i} d={p.path} fill={p.color} />
-        ))}
-        <circle cx={size/2} cy={size/2} r={size/2 * 0.6} fill="white" />
-      </svg>
-      <div className="donut-legend">
-        {paths.map((p, i) => (
-          <div key={i} className="legend-item">
-            <span className="legend-dot" style={{ background: p.color }} />
-            <span className="legend-name">{p.name}</span>
-            <span className="legend-pct">{p.percent}%</span>
+    <div className="a4-report">
+      {/* Page 1: Cover */}
+      <div className="page cover-page">
+        <div className="cover-content">
+          <div className="cover-logo">
+            <TrophyOutlined />
           </div>
-        ))}
+          <h1 className="cover-title">日月星辰 KTV</h1>
+          <h2 className="cover-subtitle">訂桌分析報告</h2>
+          <div className="cover-divider" />
+          <p className="cover-period">
+            <span className="label">分析期間</span>
+            <span className="value">{months.join(' ~ ')}</span>
+          </p>
+          <p className="cover-date">
+            <span className="label">報告日期</span>
+            <span className="value">{new Date().toLocaleDateString('zh-TW')}</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Page 2: Summary */}
+      <div className="page summary-page">
+        <div className="page-header">
+          <span className="page-number">01</span>
+          <h2 className="page-title">月度消費摘要</h2>
+        </div>
+        
+        <div className="summary-table">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th className="col-month">月份</th>
+                <th className="col-amount">消費金額</th>
+                <th className="col-count">桌數/公關</th>
+                <th className="col-growth">成長率</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="section-header">
+                <td colSpan="4">自訂桌統計</td>
+              </tr>
+              {customSummary.map((s, i) => (
+                <tr key={s.month} className={i === customSummary.length - 1 ? 'latest' : ''}>
+                  <td>{s.month}</td>
+                  <td className="amount">NT$ {s.total.toLocaleString()}</td>
+                  <td>{s.count} 桌</td>
+                  <td className="growth">
+                    {i > 0 && (
+                      <span className={customSummary[i-1]?.total > 0 ? (getGrowth(s.total, customSummary[i-1].total).isGrowth ? 'up' : 'down') : ''}>
+                        {i > 0 && getGrowth(s.total, customSummary[i-1].total).rate !== 0 && (
+                          <>
+                            {getGrowth(s.total, customSummary[i-1].total).isGrowth ? <RiseOutlined /> : <FallOutlined />}
+                            {Math.abs(getGrowth(s.total, customSummary[i-1].total).rate).toFixed(2)}%
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              <tr className="section-header">
+                <td colSpan="4">幹部訂桌統計</td>
+              </tr>
+              {cadreSummary.map((s, i) => (
+                <tr key={s.month} className={i === cadreSummary.length - 1 ? 'latest' : ''}>
+                  <td>{s.month}</td>
+                  <td className="amount">NT$ {s.total.toLocaleString()}</td>
+                  <td>{s.count} 公關</td>
+                  <td className="growth">
+                    {i > 0 && (
+                      <span className={cadreSummary[i-1]?.total > 0 ? (getGrowth(s.total, cadreSummary[i-1].total).isGrowth ? 'up' : 'down') : ''}>
+                        {i > 0 && getGrowth(s.total, cadreSummary[i-1].total).rate !== 0 && (
+                          <>
+                            {getGrowth(s.total, cadreSummary[i-1].total).isGrowth ? <RiseOutlined /> : <FallOutlined />}
+                            {Math.abs(getGrowth(s.total, cadreSummary[i-1].total).rate).toFixed(2)}%
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="summary-cards">
+          <div className="summary-card custom">
+            <div className="card-icon">
+              <DollarCircleOutlined />
+            </div>
+            <div className="card-info">
+              <div className="card-label">自訂桌統計</div>
+              <div className="card-value">
+                NT$ {customSummary[customSummary.length - 1]?.total.toLocaleString() || '0'}
+              </div>
+              <div className="card-meta">
+                <span>{customSummary[customSummary.length - 1]?.count || 0} 桌</span>
+                {customGrowth.rate !== 0 && (
+                  <span className={customGrowth.isGrowth ? 'up' : 'down'}>
+                    {customGrowth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
+                    {Math.abs(customGrowth.rate).toFixed(2)}%
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="summary-card cadre">
+            <div className="card-icon">
+              <TeamOutlined />
+            </div>
+            <div className="card-info">
+              <div className="card-label">幹部訂桌統計</div>
+              <div className="card-value">
+                NT$ {cadreSummary[cadreSummary.length - 1]?.total.toLocaleString() || '0'}
+              </div>
+              <div className="card-meta">
+                <span>{cadreSummary[cadreSummary.length - 1]?.count || 0} 公關</span>
+                {cadreGrowth.rate !== 0 && (
+                  <span className={cadreGrowth.isGrowth ? 'up' : 'down'}>
+                    {cadreGrowth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
+                    {Math.abs(cadreGrowth.rate).toFixed(2)}%
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Page 3: Footer */}
+      <div className="page footer-page">
+        <div className="footer-content">
+          <p className="footer-text">日月星辰 KTV 管理系統</p>
+          <p className="footer-date">報告日期：{new Date().toLocaleDateString('zh-TW')}</p>
+        </div>
       </div>
     </div>
   );
 }
 
-// ==================== Trend Line Chart ====================
-function TrendLine({ data, color }) {
-  if (data.length < 2) return null;
-  
-  const maxVal = Math.max(...data.map(d => d.value));
-  const minVal = Math.min(...data.map(d => d.value));
-  const range = maxVal - minVal || 1;
-  
-  const width = 300;
-  const height = 100;
-  const padding = 20;
-  
-  const points = data.map((d, i) => {
-    const x = padding + (i / (data.length - 1)) * (width - padding * 2);
-    const y = height - padding - ((d.value - minVal) / range) * (height - padding * 2);
-    return `${x},${y}`;
-  }).join(' ');
-  
-  return (
-    <div className="trend-chart">
-      <svg viewBox={`0 0 ${width} ${height}`} className="trend-svg">
-        <defs>
-          <linearGradient id={`grad-${color.replace('#', '')}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style={{ stopColor: color, stopOpacity: 0.3 }} />
-            <stop offset="100%" style={{ stopColor: color, stopOpacity: 0 }} />
-          </linearGradient>
-        </defs>
-        <polyline
-          points={points}
-          fill="none"
-          stroke={color}
-          strokeWidth="2"
-        />
-        {data.map((d, i) => {
-          const x = padding + (i / (data.length - 1)) * (width - padding * 2);
-          const y = height - padding - ((d.value - minVal) / range) * (height - padding * 2);
-          return (
-            <g key={i}>
-              <circle cx={x} cy={y} r="3" fill={color} />
-              <text x={x} y={y - 8} textAnchor="middle" fontSize="8" fill="#666">{d.label}</text>
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
-// ==================== Main Report Component ====================
+// ==================== Main Component ====================
 export default function TableAnalysis() {
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [months, setMonths] = useState([]);
@@ -243,7 +274,6 @@ export default function TableAnalysis() {
               icon={<PrinterOutlined />} 
               onClick={handlePrint}
               size="large"
-              className="ta-print-btn"
             >
               列印報告
             </Button>
@@ -252,166 +282,12 @@ export default function TableAnalysis() {
       </div>
 
       {/* Print Report */}
-      <div className="print-report">
-        {/* Slide 1: Cover */}
-        <div className="slide cover-slide">
-          <div className="cover-content">
-            <div className="cover-logo">
-              <TrophyOutlined className="logo-icon" />
-            </div>
-            <h1 className="cover-title">日月星辰 KTV</h1>
-            <h2 className="cover-subtitle">訂桌分析報告</h2>
-            <p className="cover-period">分析期間：{selectedMonths.join(' ~ ')}</p>
-            <p className="cover-date">報告日期：{new Date().toLocaleDateString('zh-TW')}</p>
-          </div>
-        </div>
-
-        {/* Slide 2: Summary */}
-        <div className="slide summary-slide">
-          <div className="slide-header">
-            <span className="slide-number">01</span>
-            <h2 className="slide-title">月度消費摘要</h2>
-          </div>
-          
-          <div className="summary-grid">
-            <div className="summary-card custom-card">
-              <div className="card-icon" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-                <DollarCircleOutlined />
-              </div>
-              <div className="card-content">
-                <div className="card-label">自訂桌統計</div>
-                <div className="card-total">
-                  {customSummary[customSummary.length - 1]?.total.toLocaleString() || '0'}
-                </div>
-                <div className="card-meta">
-                  <span>{customSummary[customSummary.length - 1]?.count || 0} 桌</span>
-                  {customSummary.length > 1 && (
-                    <span className={`growth-tag ${((customSummary[customSummary.length - 1]?.total - customSummary[customSummary.length - 2]?.total) / customSummary[customSummary.length - 2]?.total * 100) >= 0 ? 'up' : 'down'}`}>
-                      {customSummary.length > 1 && (
-                        <>
-                          {((customSummary[customSummary.length - 1]?.total - customSummary[customSummary.length - 2]?.total) / customSummary[customSummary.length - 2]?.total * 100) >= 0 ? <RiseOutlined /> : <FallOutlined />}
-                          {Math.abs(((customSummary[customSummary.length - 1]?.total - customSummary[customSummary.length - 2]?.total) / customSummary[customSummary.length - 2]?.total * 100)).toFixed(2)}%
-                        </>
-                      )}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="summary-card cadre-card">
-              <div className="card-icon" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}>
-                <TeamOutlined />
-              </div>
-              <div className="card-content">
-                <div className="card-label">幹部訂桌統計</div>
-                <div className="card-total">
-                  {cadreSummary[cadreSummary.length - 1]?.total.toLocaleString() || '0'}
-                </div>
-                <div className="card-meta">
-                  <span>{cadreSummary[cadreSummary.length - 1]?.count || 0} 公關</span>
-                  {cadreSummary.length > 1 && cadreSummary[cadreSummary.length - 1]?.total > 0 && cadreSummary[cadreSummary.length - 2]?.total > 0 && (
-                    <span className={`growth-tag ${((cadreSummary[cadreSummary.length - 1]?.total - cadreSummary[cadreSummary.length - 2]?.total) / cadreSummary[cadreSummary.length - 2]?.total * 100) >= 0 ? 'up' : 'down'}`}>
-                      {((cadreSummary[cadreSummary.length - 1]?.total - cadreSummary[cadreSummary.length - 2]?.total) / cadreSummary[cadreSummary.length - 2]?.total * 100) >= 0 ? <RiseOutlined /> : <FallOutlined />}
-                      {Math.abs(((cadreSummary[cadreSummary.length - 1]?.total - cadreSummary[cadreSummary.length - 2]?.total) / cadreSummary[cadreSummary.length - 2]?.total * 100)).toFixed(2)}%
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Slide 3: Custom Table Trend */}
-        <div className="slide chart-slide">
-          <div className="slide-header">
-            <span className="slide-number">02</span>
-            <h2 className="slide-title">自訂桌消費趨勢</h2>
-          </div>
-          
-          <div className="chart-container">
-            <TrendLine 
-              data={customSummary.map(s => ({
-                label: s.month.slice(2),
-                value: s.total
-              }))}
-              color="#667eea"
-            />
-          </div>
-          
-          <div className="bar-chart-container">
-            <BarChart 
-              data={customSummary.map(s => ({
-                label: s.month,
-                value: s.total
-              }))}
-              color="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-            />
-          </div>
-        </div>
-
-        {/* Slide 4: Cadre Table Trend */}
-        <div className="slide chart-slide">
-          <div className="slide-header">
-            <span className="slide-number">03</span>
-            <h2 className="slide-title">幹部訂桌消費趨勢</h2>
-          </div>
-          
-          <div className="chart-container">
-            <TrendLine 
-              data={cadreSummary.map(s => ({
-                label: s.month.slice(2),
-                value: s.total
-              }))}
-              color="#f093fb"
-            />
-          </div>
-          
-          <div className="bar-chart-container">
-            <BarChart 
-              data={cadreSummary.map(s => ({
-                label: s.month,
-                value: s.total
-              }))}
-              color="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
-            />
-          </div>
-        </div>
-
-        {/* Slide 5: TOP Analysis */}
-        <div className="slide chart-slide">
-          <div className="slide-header">
-            <span className="slide-number">04</span>
-            <h2 className="slide-title">TOP 3 占比分析</h2>
-          </div>
-          
-          <div className="donut-grid">
-            {selectedMonths.slice(0, 3).map(month => {
-              const records = allData[month]?.custom?.slice(0, 3) || [];
-              return (
-                <div key={month} className="donut-item">
-                  <h4 className="donut-title">{month}</h4>
-                  <DonutChart 
-                    data={records.map(r => ({
-                      name: r.幹部,
-                      value: Number(r.總消費) || 0
-                    }))}
-                    size={100}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Slide 6: Footer */}
-        <div className="slide footer-slide">
-          <div className="footer-content">
-            <p className="footer-text">日月星辰 KTV 管理系統</p>
-            <p className="footer-date">報告日期：{new Date().toLocaleDateString('zh-TW')}</p>
-          </div>
-        </div>
-      </div>
+      <PrintReport 
+        customSummary={customSummary}
+        cadreSummary={cadreSummary}
+        months={selectedMonths}
+        allData={allData}
+      />
     </div>
   );
 }

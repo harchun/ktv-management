@@ -1,5 +1,5 @@
 /* ============================================
-   Table Analysis - Print Optimized A4 Report
+   Table Analysis - Professional A4 Print Report
    ============================================ */
 
 /* ==================== Screen Styles ==================== */
@@ -34,34 +34,25 @@
   color: #fff !important;
 }
 
-.ta-print-btn {
-  background: #fff !important;
-  color: #667eea !important;
-  border-color: #fff !important;
-  font-weight: 600;
-}
-
-.print-report {
+/* ==================== A4 Report Styles ==================== */
+.a4-report {
   max-width: 210mm;
   margin: 0 auto;
-  padding: 20px;
 }
 
-/* ==================== Slide Base ==================== */
-.slide {
+/* ==================== Page Base ==================== */
+.page {
   background: #fff;
-  margin-bottom: 24px;
-  overflow: hidden;
   page-break-after: always;
   page-break-inside: avoid;
 }
 
-.slide:last-child {
+.page:last-child {
   page-break-after: auto;
 }
 
-/* ==================== Cover Slide ==================== */
-.cover-slide {
+/* ==================== Cover Page ==================== */
+.cover-page {
   height: 297mm;
   display: flex;
   align-items: center;
@@ -75,282 +66,231 @@
 }
 
 .cover-logo {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 24px;
-}
-
-.logo-icon {
-  font-size: 56px;
-  color: #fff;
+  font-size: 40px;
 }
 
 .cover-title {
-  font-size: 42px;
+  font-size: 36px;
   font-weight: 700;
   margin: 0 0 12px;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
 }
 
 .cover-subtitle {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 300;
-  margin: 0 0 40px;
+  margin: 0 0 32px;
   opacity: 0.9;
+}
+
+.cover-divider {
+  width: 60px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  margin: 0 auto 24px;
 }
 
 .cover-period,
 .cover-date {
-  font-size: 16px;
-  margin: 6px 0;
+  font-size: 14px;
+  margin: 8px 0;
   opacity: 0.85;
 }
 
-/* ==================== Summary Slide ==================== */
-.summary-slide {
-  padding: 40px;
-  height: 297mm;
-  display: flex;
-  flex-direction: column;
+.cover-period .label,
+.cover-date .label {
+  margin-right: 8px;
+  opacity: 0.7;
 }
 
-.slide-header {
+.cover-period .value,
+.cover-date .value {
+  font-weight: 600;
+}
+
+/* ==================== Summary Page ==================== */
+.summary-page {
+  padding: 20mm 15mm;
+  height: 297mm;
+}
+
+.page-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 }
 
-.slide-number {
-  font-size: 42px;
+.page-number {
+  font-size: 36px;
   font-weight: 700;
   color: #667eea;
-  opacity: 0.25;
-  line-height: 1;
+  opacity: 0.3;
 }
 
-.slide-title {
-  font-size: 28px;
+.page-title {
+  font-size: 24px;
   font-weight: 600;
   color: #1a1a2e;
   margin: 0;
 }
 
-.summary-grid {
+/* ==================== Data Table ==================== */
+.summary-table {
+  margin-bottom: 24px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.data-table th {
+  background: #f8f9fa;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #666;
+  border-bottom: 2px solid #e8e8e8;
+}
+
+.data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.data-table tr.latest {
+  background: #fafbfc;
+  font-weight: 600;
+}
+
+.data-table tr.section-header {
+  background: #667eea;
+  color: #fff;
+  font-weight: 600;
+}
+
+.data-table tr.section-header td {
+  border-bottom: none;
+}
+
+.col-month {
+  width: 20%;
+}
+
+.col-amount {
+  width: 35%;
+  text-align: right;
+  font-family: 'Courier New', monospace;
+}
+
+.col-count {
+  width: 20%;
+}
+
+.col-growth {
+  width: 25%;
+}
+
+.amount {
+  font-weight: 600;
+}
+
+.growth {
+  font-weight: 600;
+}
+
+.growth.up {
+  color: #52c41a;
+}
+
+.growth.down {
+  color: #ff4d4f;
+}
+
+/* ==================== Summary Cards ==================== */
+.summary-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  flex: 1;
+  gap: 16px;
 }
 
 .summary-card {
   background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
-  border-radius: 16px;
-  padding: 28px;
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
   border: 1px solid #e8e8e8;
 }
 
+.summary-card.custom .card-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.summary-card.cadre .card-icon {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
 .card-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 14px;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 24px;
   color: #fff;
   flex-shrink: 0;
 }
 
-.card-content {
+.card-info {
   flex: 1;
 }
 
 .card-label {
-  font-size: 13px;
+  font-size: 11px;
   color: #999;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 
-.card-total {
-  font-size: 32px;
+.card-value {
+  font-size: 22px;
   font-weight: 700;
   color: #1a1a2e;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .card-meta {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: #666;
-}
-
-.growth-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.growth-tag.up {
-  background: #f6ffed;
-  color: #52c41a;
-}
-
-.growth-tag.down {
-  background: #fff2f0;
-  color: #ff4d4f;
-}
-
-/* ==================== Chart Slide ==================== */
-.chart-slide {
-  padding: 40px;
-  height: 297mm;
-  display: flex;
-  flex-direction: column;
-}
-
-.chart-container {
-  background: #fafbfc;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 20px;
-  flex: 1;
-}
-
-.trend-chart {
-  width: 100%;
-}
-
-.trend-svg {
-  width: 100%;
-  height: auto;
-}
-
-.bar-chart-container {
-  background: #fafbfc;
-  border-radius: 12px;
-  padding: 24px;
-}
-
-.bar-chart {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.bar-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.bar-label {
-  width: 50px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #666;
-  text-align: right;
-}
-
-.bar-track {
-  flex: 1;
-  height: 28px;
-  background: #e8e8e8;
-  border-radius: 14px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: 14px;
-}
-
-.bar-value {
-  width: 90px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-}
-
-/* ==================== Donut Chart ==================== */
-.donut-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-
-.donut-item {
-  text-align: center;
-}
-
-.donut-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
-}
-
-.donut-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.donut-svg {
-  width: 90px;
-  height: 90px;
-}
-
-.donut-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 11px;
   color: #666;
 }
 
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.card-meta .up {
+  color: #52c41a;
 }
 
-.legend-name {
-  flex: 1;
+.card-meta .down {
+  color: #ff4d4f;
 }
 
-.legend-pct {
-  font-weight: 600;
-  color: #333;
-}
-
-/* ==================== Footer Slide ==================== */
-.footer-slide {
+/* ==================== Footer Page ==================== */
+.footer-page {
   height: 297mm;
   display: flex;
   align-items: center;
@@ -364,14 +304,14 @@
 }
 
 .footer-text {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   margin: 0 0 12px;
   letter-spacing: 2px;
 }
 
 .footer-date {
-  font-size: 14px;
+  font-size: 13px;
   opacity: 0.6;
   margin: 0;
 }
@@ -398,13 +338,12 @@
     display: none !important;
   }
   
-  .print-report {
+  .a4-report {
     max-width: 100%;
-    padding: 0;
     margin: 0;
   }
   
-  .slide {
+  .page {
     border-radius: 0;
     box-shadow: none;
     margin: 0;
@@ -415,21 +354,20 @@
     overflow: hidden;
   }
   
-  .slide:last-child {
+  .page:last-child {
     page-break-after: auto;
   }
   
-  .summary-card,
-  .chart-container,
-  .bar-chart-container {
-    break-inside: avoid;
-  }
-  
-  /* Ensure gradients print */
-  .cover-slide,
-  .footer-slide,
+  /* Ensure colors print correctly */
+  .cover-page,
+  .footer-page,
+  .data-table th,
+  .data-table tr.section-header,
   .card-icon,
-  .bar-fill {
+  .growth.up,
+  .growth.down,
+  .card-meta .up,
+  .card-meta .down {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -437,11 +375,12 @@
 
 /* ==================== Screen Preview ==================== */
 @media screen {
-  .print-report {
+  .a4-report {
     max-width: 210mm;
   }
   
-  .slide {
+  .page {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
   }
 }
