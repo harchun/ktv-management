@@ -6,128 +6,159 @@ import {
   Space,
   Row,
   Col,
-  Statistic,
-  Button,
-  Divider
+  Button
 } from 'antd';
 import {
   TrophyOutlined,
   RiseOutlined,
   FallOutlined,
   PrinterOutlined,
-  DollarCircleOutlined,
   TeamOutlined,
+  DollarCircleOutlined,
   LineChartOutlined,
   PieChartOutlined
 } from '@ant-design/icons';
 import api from '../utils/api';
 
-const { Title, Text, Span } = Typography;
+const { Title, Text } = Typography;
 
-// ==================== Bar Chart ====================
-function BarChart({ data, color, height = 180 }) {
-  const maxVal = Math.max(...data.map(d => d.value), 1);
-  
+// ==================== Print Report Component ====================
+function PrintReport({ data, months, type }) {
+  // Calculate totals
+  const totals = months.map(m => {
+    const monthData = data[m];
+    const records = type === 'custom' ? monthData?.custom || [] : monthData?.cadre || [];
+    const total = records.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+    const count = records.length;
+    return { month: m, total, count };
+  });
+
+  // Calculate growth rates
+  const growthRates = totals.map((t, idx) => {
+    if (idx === 0) return null;
+    const prev = totals[idx - 1].total;
+    if (prev === 0) return { rate: 0, isGrowth: true };
+    const rate = ((t.total - prev) / prev * 100).toFixed(2);
+    return { rate: parseFloat(rate), isGrowth: t.total >= prev };
+  });
+
+  // Top 3 for pie chart
+  const top3 = (month) => {
+    const records = type === 'custom' 
+      ? (data[month]?.custom || [])
+      : (data[month]?.cadre || []);
+    return records.slice(0, 3).map(r => ({
+      name: type === 'custom' ? r.幹部 : r.公關,
+      value: Number(r.總消費) || 0
+    }));
+  };
+
+  const title = type === 'custom' ? '自訂桌統計分析' : '幹部訂桌統計分析';
+  const icon = type === 'custom' ? <TrophyOutlined /> : <TeamOutlined />;
+  const color = type === 'custom' ? '#52c41a' : '#faad14';
+
   return (
-    <div className="bar-chart-wrapper">
-      <div className="bar-chart">
-        {data.map((item, idx) => (
-          <div key={idx} className="bar-group">
-            <div className="bar-value-label">
-              NT$ {(item.value / 1000).toFixed(0)}K
-            </div>
-            <div 
-              className="bar-fill"
-              style={{ 
-                height: `${Math.max((item.value / maxVal) * 120, 4)}px`,
-                background: `linear-gradient(180deg, ${color} 0%, ${color}CC 100%)`
-              }}
-            />
-            <div className="bar-label">{item.label}</div>
+    <div className={`print-report ${type}-report`}>
+      {/* Report Header */}
+      <div className="report-header">
+        <div className="report-logo">
+          <div className="logo-icon">{icon}</div>
+          <div>
+            <div className="company-name">日月星辰 KTV</div>
+            <div className="report-type">{title}</div>
           </div>
-        ))}
+        </div>
+        <div className="report-period">
+          <div className="period-label">分析期間</div>
+          <div className="period-value">{months[0]} ~ {months[months.length - 1]}</div>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="summary-section">
+        <div className="section-title">
+          <DollarCircleOutlined /> 月度消費摘要
+        </div>
+        <div className="summary-cards">
+          {totals.map((t, idx) => (
+            <div key={t.month} className="summary-card">
+              <div className="card-month">{t.month.slice(5)}</div>
+              <div className="card-amount">NT$ {t.total.toLocaleString()}</div>
+              <div className="card-detail">{t.count} {type === 'custom' ? '桌' : '公關'}</div>
+              {growthRates[idx] && (
+                <div className={`card-growth ${growthRates[idx].isGrowth ? 'up' : 'down'}`}>
+                  {growthRates[idx].isGrowth ? <RiseOutlined /> : <FallOutlined />}
+                  {Math.abs(growthRates[idx].rate)}%
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Chart Section */}
+      <div className="chart-section">
+        <div className="section-title">
+          <LineChartOutlined /> 消費趨勢圖
+        </div>
+        <div className="bar-chart-print">
+          {totals.map((t, idx) => {
+            const maxTotal = Math.max(...totals.map(x => x.total), 1);
+            const height = Math.max((t.total / maxTotal) * 120, 4);
+            return (
+              <div key={t.month} className="bar-item">
+                <div className="bar-value">NT${(t.total / 1000).toFixed(0)}K</div>
+                <div 
+                  className="bar"
+                  style={{ height: `${height}px`, background: color }}
+                />
+                <div className="bar-month">{t.month.slice(5)}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* TOP 3 Section */}
+      <div className="top3-section">
+        <div className="section-title">
+          <PieChartOutlined /> TOP 3 占比分析
+        </div>
+        <div className="top3-grid">
+          {months.map(m => (
+            <div key={m} className="top3-card">
+              <div className="top3-title">{m} TOP 3</div>
+              <div className="pie-chart-small">
+                <PieChartSimple data={top3(m)} color={color} />
+              </div>
+              <div className="top3-total">
+                總消費 NT$ {top3(m).reduce((s, d) => s + d.value, 0).toLocaleString()}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="report-footer">
+        <div className="footer-left">日月星辰 KTV 管理系統</div>
+        <div className="footer-right">
+          列印日期：{new Date().toLocaleDateString('zh-TW')}
+        </div>
       </div>
     </div>
   );
 }
 
-// ==================== Line Chart ====================
-function LineChart({ data, color }) {
-  if (data.length < 2) return null;
-  
-  const padding = 40;
-  const width = 400;
-  const height = 160;
-  const chartWidth = width - padding * 2;
-  const chartHeight = height - padding * 2;
-  
-  const maxVal = Math.max(...data.map(d => d.value), 1);
-  const minVal = Math.min(...data.map(d => d.value), 0);
-  const range = maxVal - minVal || 1;
-  
-  const points = data.map((item, idx) => {
-    const x = padding + (idx / (data.length - 1)) * chartWidth;
-    const y = padding + chartHeight - ((item.value - minVal) / range) * chartHeight;
-    return { x, y, ...item };
-  });
-  
-  const pathD = points.map((p, idx) => 
-    `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
-  ).join(' ');
-  
-  const areaD = pathD + ` L ${points[points.length-1].x} ${padding + chartHeight} L ${points[0].x} ${padding + chartHeight} Z`;
-  
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="line-chart-svg">
-      {/* Grid lines */}
-      {[0, 0.25, 0.5, 0.75, 1].map((p, i) => (
-        <line 
-          key={i} 
-          x1={padding} 
-          y1={padding + p * chartHeight} 
-          x2={width - padding} 
-          y2={padding + p * chartHeight}
-          stroke="#f0f0f0" 
-          strokeWidth="1" 
-        />
-      ))}
-      
-      {/* Area fill */}
-      <path d={areaD} fill={color} fillOpacity="0.1" />
-      
-      {/* Line */}
-      <path d={pathD} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      
-      {/* Points */}
-      {points.map((p, idx) => (
-        <g key={idx}>
-          <circle cx={p.x} cy={p.y} r="6" fill="white" stroke={color} strokeWidth="3" />
-          <text x={p.x} y={p.y - 14} textAnchor="middle" fill="#333" fontSize="11" fontWeight="600">
-            NT$ {(p.value / 1000).toFixed(0)}K
-          </text>
-          <text x={p.x} y={height - 8} textAnchor="middle" fill="#999" fontSize="11">
-            {p.label}
-          </text>
-        </g>
-      ))}
-    </svg>
-  );
-}
-
-// ==================== Pie Chart ====================
-function PieChart({ data, size = 140 }) {
+// Simple pie chart for print
+function PieChartSimple({ data, color }) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
   if (total === 0) {
-    return (
-      <div className="empty-pie">
-        <PieChartOutlined style={{ fontSize: 32, color: '#d9d9d9' }} />
-        <Text type="secondary">無數據</Text>
-      </div>
-    );
+    return <div className="empty-print">無數據</div>;
   }
-  
+
   let cumulativePercent = 0;
-  const colors = ['#52c41a', '#1890ff', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2'];
+  const colors = [color, '#1890ff', '#faad14'];
   
   const slices = data.map((item, idx) => {
     const percent = item.value / total;
@@ -138,41 +169,37 @@ function PieChart({ data, size = 140 }) {
     const startRad = (startAngle - 90) * Math.PI / 180;
     const endRad = (endAngle - 90) * Math.PI / 180;
     
-    const x1 = 50 + 42 * Math.cos(startRad);
-    const y1 = 50 + 42 * Math.sin(startRad);
-    const x2 = 50 + 42 * Math.cos(endRad);
-    const y2 = 50 + 42 * Math.sin(endRad);
+    const x1 = 50 + 40 * Math.cos(startRad);
+    const y1 = 50 + 40 * Math.sin(startRad);
+    const x2 = 50 + 40 * Math.cos(endRad);
+    const y2 = 50 + 40 * Math.sin(endRad);
     
     const largeArc = percent > 0.5 ? 1 : 0;
     
     return {
       path: percent >= 0.999 
-        ? `M 50 50 L 50 8 A 42 42 0 1 1 49.99 8 Z`
-        : `M 50 50 L ${x1} ${y1} A 42 42 0 ${largeArc} 1 ${x2} ${y2} Z`,
+        ? `M 50 50 L 50 10 A 40 40 0 1 1 49.99 10 Z`
+        : `M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z`,
       color: colors[idx % colors.length],
       name: item.name,
       percent: (percent * 100).toFixed(1)
     };
   });
-  
+
   return (
-    <div className="pie-chart-wrapper">
-      <svg viewBox="0 0 100 100" className="pie-svg">
+    <div className="pie-container">
+      <svg viewBox="0 0 100 100" className="pie-svg-print">
         {slices.map((s, idx) => (
           <path key={idx} d={s.path} fill={s.color} stroke="white" strokeWidth="1" />
         ))}
-        <circle cx="50" cy="50" r="28" fill="white" />
+        <circle cx="50" cy="50" r="25" fill="white" />
       </svg>
-      <div className="pie-center-info">
-        <div className="pie-total">NT$ {(total / 1000).toFixed(0)}K</div>
-        <div className="pie-sub">總消費</div>
-      </div>
-      <div className="pie-legend">
+      <div className="pie-legend-print">
         {slices.map((s, idx) => (
-          <div key={idx} className="legend-row">
-            <span className="legend-dot" style={{ background: s.color }} />
-            <span className="legend-name">{s.name}</span>
-            <span className="legend-pct">{s.percent}%</span>
+          <div key={idx} className="legend-row-print">
+            <span className="legend-dot-print" style={{ background: s.color }} />
+            <span className="legend-name-print">{s.name}</span>
+            <span className="legend-pct-print">{s.percent}%</span>
           </div>
         ))}
       </div>
@@ -186,6 +213,7 @@ export default function TableAnalysis() {
   const [months, setMonths] = useState([]);
   const [allData, setAllData] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showPrint, setShowPrint] = useState(false);
 
   useEffect(() => {
     api.get('/stats/months')
@@ -224,81 +252,34 @@ export default function TableAnalysis() {
       .finally(() => setLoading(false));
   }, [selectedMonths]);
 
-  const getMonthTotal = (month) => {
-    const data = allData[month];
-    if (!data) return { custom: { total: 0, count: 0 }, cadre: { total: 0, count: 0 } };
-    const customTotal = data.custom.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-    const cadreTotal = data.cadre.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-    return {
-      custom: { total: customTotal, count: data.custom.length },
-      cadre: { total: cadreTotal, count: data.cadre.length }
-    };
-  };
-
-  const getGrowthRate = (current, previous) => {
-    if (!previous || previous === 0) return { rate: 0, isGrowth: true };
-    const rate = ((current - previous) / previous * 100).toFixed(2);
-    return { rate: parseFloat(rate), isGrowth: current >= previous };
-  };
-
   const handleMonthChange = (values) => {
     setSelectedMonths(values.sort().reverse());
   };
 
   const handlePrint = () => {
-    window.print();
+    setShowPrint(true);
+    setTimeout(() => {
+      window.print();
+      setShowPrint(false);
+    }, 100);
   };
 
-  // Chart data preparation
-  const customBarData = selectedMonths.map(m => ({
-    label: m.slice(5),
-    value: getMonthTotal(m).custom.total
-  }));
-
-  const cadreBarData = selectedMonths.map(m => ({
-    label: m.slice(5),
-    value: getMonthTotal(m).cadre.total
-  }));
-
-  const customTrendData = selectedMonths.map(m => ({
-    label: m.slice(5),
-    value: getMonthTotal(m).custom.total
-  }));
-
-  const cadreTrendData = selectedMonths.map(m => ({
-    label: m.slice(5),
-    value: getMonthTotal(m).cadre.total
-  }));
-
-  const customTop3 = (month) => 
-    (allData[month]?.custom || []).slice(0, 3).map(r => ({
-      name: r.幹部,
-      value: Number(r.總消費) || 0
-    }));
-
-  const cadreTop3 = (month) => 
-    (allData[month]?.cadre || []).slice(0, 3).map(r => ({
-      name: r.公關,
-      value: Number(r.總消費) || 0
-    }));
-
   return (
-    <div className="ta-container">
-      {/* Header */}
-      <div className="ta-header print-hide">
-        <div className="ta-header-left">
-          <Title level={2} className="ta-title">訂桌分析報表</Title>
-          <Text className="ta-subtitle">多月份成長/衰退趨勢分析 · 適合老闆報備</Text>
+    <div className="ta-wrapper">
+      {/* Control Panel - Hidden when printing */}
+      <div className="ta-control print-hide">
+        <div className="ta-title">
+          <Title level={3}>📊 訂桌分析報表</Title>
+          <Text type="secondary">選擇月份進行多月份比較分析</Text>
         </div>
-        <Space className="ta-header-right">
+        <Space>
           <Select
             mode="multiple"
             value={selectedMonths}
             onChange={handleMonthChange}
             style={{ width: 260 }}
-            placeholder="選擇月份"
+            placeholder="選擇月份（3-6個月）"
             maxTagCount={2}
-            className="ta-month-select"
           >
             {months.map(m => (
               <Select.Option key={m} value={m}>{m}</Select.Option>
@@ -308,148 +289,45 @@ export default function TableAnalysis() {
             type="primary" 
             icon={<PrinterOutlined />} 
             onClick={handlePrint}
-            className="ta-print-btn"
+            size="large"
           >
-            列印報表
+            列印A4報表
           </Button>
         </Space>
       </div>
 
-      {/* Report Title - Print Only */}
-      <div className="ta-print-title print-only">
-        <h1>日月星辰 KTV 訂桌分析報告</h1>
-        <p>分析期間：{selectedMonths.join(' 至 ')} 月</p>
-      </div>
+      {/* Preview Panel - Hidden when printing */}
+      {!showPrint && (
+        <div className="ta-preview print-hide">
+          <div className="preview-info">
+            <h3>報表預覽</h3>
+            <p>點擊「列印A4報表」按鈕，將生成符合A4大小的專業報表</p>
+          </div>
+        </div>
+      )}
 
-      {/* Summary Cards */}
-      <Row gutter={[20, 20]} className="ta-summary-row">
-        <Col span={12}>
-          <Card className="ta-card ta-custom-card" loading={loading}>
-            <div className="ta-card-header">
-              <div className="ta-card-icon ta-custom-icon">
-                <TrophyOutlined />
-              </div>
-              <div className="ta-card-info">
-                <span className="ta-card-title">自訂桌統計</span>
-                <span className="ta-card-desc">幹部自訂桌消費分析</span>
-              </div>
-            </div>
-            <Row gutter={[12, 12]} className="ta-summary-items">
-              {selectedMonths.map((m, idx) => {
-                const d = getMonthTotal(m);
-                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
-                const growth = prevD ? getGrowthRate(d.custom.total, prevD.custom.total) : null;
-                return (
-                  <Col key={m} span={8}>
-                    <div className="ta-summary-item">
-                      <div className="ta-month-tag">{m.slice(5)}</div>
-                      <div className="ta-amount">NT$ {d.custom.total.toLocaleString()}</div>
-                      <div className="ta-detail">{d.custom.count} 桌</div>
-                      {growth && (
-                        <div className={`ta-growth ${growth.isGrowth ? 'ta-growth-up' : 'ta-growth-down'}`}>
-                          {growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
-                          {Math.abs(growth.rate)}%
-                        </div>
-                      )}
-                    </div>
-                  </Col>
-                );
-              })}
-            </Row>
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card className="ta-card ta-cadre-card" loading={loading}>
-            <div className="ta-card-header">
-              <div className="ta-card-icon ta-cadre-icon">
-                <TeamOutlined />
-              </div>
-              <div className="ta-card-info">
-                <span className="ta-card-title">幹部訂桌統計</span>
-                <span className="ta-card-desc">公關訂桌消費分析</span>
-              </div>
-            </div>
-            <Row gutter={[12, 12]} className="ta-summary-items">
-              {selectedMonths.map((m, idx) => {
-                const d = getMonthTotal(m);
-                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
-                const growth = prevD ? getGrowthRate(d.cadre.total, prevD.cadre.total) : null;
-                return (
-                  <Col key={m} span={8}>
-                    <div className="ta-summary-item">
-                      <div className="ta-month-tag">{m.slice(5)}</div>
-                      <div className="ta-amount">NT$ {d.cadre.total.toLocaleString()}</div>
-                      <div className="ta-detail">{d.cadre.length} 公關</div>
-                      {growth && (
-                        <div className={`ta-growth ${growth.isGrowth ? 'ta-growth-up' : 'ta-growth-down'}`}>
-                          {growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
-                          {Math.abs(growth.rate)}%
-                        </div>
-                      )}
-                    </div>
-                  </Col>
-                );
-              })}
-            </Row>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Charts Section */}
-      <Divider className="ta-section-divider print-hide">
-        <LineChartOutlined /> 趨勢分析
-      </Divider>
-
-      <Row gutter={[20, 20]} className="ta-charts-row">
-        <Col span={12}>
-          <Card className="ta-card" title={<span className="ta-card-label">自訂桌月度消費</span>}>
-            <BarChart data={customBarData} color="#52c41a" />
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card className="ta-card" title={<span className="ta-card-label">幹部訂桌月度消費</span>}>
-            <BarChart data={cadreBarData} color="#faad14" />
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={[20, 20]} className="ta-charts-row">
-        <Col span={12}>
-          <Card className="ta-card" title={<span className="ta-card-label">自訂桌成長趨勢</span>}>
-            <LineChart data={customTrendData} color="#52c41a" />
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card className="ta-card" title={<span className="ta-card-label">幹部訂桌成長趨勢</span>}>
-            <LineChart data={cadreTrendData} color="#faad14" />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* TOP 3 Charts */}
-      <Divider className="ta-section-divider print-hide">
-        <PieChartOutlined /> TOP 3 占比分析
-      </Divider>
-
-      <Row gutter={[20, 20]}>
-        {selectedMonths.map(m => (
-          <Col span={8} key={m}>
-            <Card className="ta-card ta-pie-card" title={<span className="ta-card-label">{m} 自訂桌 TOP 3</span>}>
-              <PieChart data={customTop3(m)} />
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
-      <Row gutter={[20, 20]} className="ta-pie-row-2">
-        {selectedMonths.map(m => (
-          <Col span={8} key={m}>
-            <Card className="ta-card ta-pie-card" title={<span className="ta-card-label">{m} 幹部訂桌 TOP 3</span>}>
-              <PieChart data={cadreTop3(m)} />
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      {/* Print Report - Only visible when printing */}
+      {showPrint && (
+        <div className="print-container">
+          {/* Page 1: Custom Table Analysis */}
+          <div className="print-page">
+            <PrintReport 
+              data={allData} 
+              months={selectedMonths} 
+              type="custom" 
+            />
+          </div>
+          
+          {/* Page 2: Cadre Table Analysis */}
+          <div className="print-page">
+            <PrintReport 
+              data={allData} 
+              months={selectedMonths} 
+              type="cadre" 
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

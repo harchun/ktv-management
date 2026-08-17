@@ -1,252 +1,232 @@
 /* ============================================
-   Table Analysis - Modern Dashboard Styles
+   Table Analysis - Print-Optimized A4 Styles
    ============================================ */
 
-.ta-container {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
-  background: #f5f7fa;
+/* ==================== Screen Styles ==================== */
+.ta-wrapper {
   min-height: 100vh;
+  background: #f5f7fa;
 }
 
-/* ==================== Header ==================== */
-.ta-header {
+.ta-control {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 24px 32px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.25);
+  gap: 24px;
 }
 
-.ta-header-left {
+.ta-title {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.ta-title {
+.ta-title h3 {
   margin: 0 !important;
   color: #fff !important;
-  font-size: 24px !important;
-  font-weight: 700 !important;
+  font-size: 22px !important;
 }
 
-.ta-subtitle {
+.ta-title .ant-typography {
   color: rgba(255, 255, 255, 0.85) !important;
   font-size: 13px !important;
 }
 
-.ta-header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.ta-preview {
+  max-width: 1200px;
+  margin: 32px auto;
+  padding: 0 24px;
 }
 
-.ta-month-select {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  
-  .ant-select-selector {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-}
-
-.ta-print-btn {
-  background: #fff !important;
-  color: #667eea !important;
-  border: none !important;
-  font-weight: 600 !important;
-  border-radius: 8px !important;
-  padding: 0 20px !important;
-  
-  &:hover {
-    background: #f8f9ff !important;
-    transform: translateY(-1px);
-  }
-}
-
-/* ==================== Print Title ==================== */
-.ta-print-title {
-  display: none;
-  text-align: center;
-  padding: 32px 20px;
+.preview-info {
   background: #fff;
+  padding: 24px;
   border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.preview-info h3 {
+  margin: 0 0 8px !important;
+  color: #1a1a2e;
+}
+
+.preview-info p {
+  margin: 0 !important;
+  color: #666;
+}
+
+/* ==================== Print Container ==================== */
+.print-container {
+  display: none;
+}
+
+.print-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 15mm;
+  background: #fff;
+  box-sizing: border-box;
+  page-break-after: always;
+  page-break-inside: avoid;
+}
+
+.print-page:last-child {
+  page-break-after: auto;
+}
+
+/* ==================== Report Layout ==================== */
+.print-report {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e8e8e8;
   margin-bottom: 24px;
-  
-  h1 {
-    margin: 0 0 8px !important;
-    font-size: 28px !important;
-    font-weight: 700 !important;
-    color: #1a1a2e !important;
-  }
-  
-  p {
-    margin: 0 !important;
-    color: #666 !important;
-    font-size: 14px !important;
-  }
 }
 
-/* ==================== Cards ==================== */
-.ta-card {
-  border: none !important;
-  border-radius: 16px !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04) !important;
-  background: #fff !important;
-  transition: all 0.3s ease !important;
-  
-  &:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
-    transform: translateY(-2px);
-  }
-}
-
-.ta-card-header {
+.report-logo {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
 }
 
-.ta-card-icon {
-  width: 48px;
-  height: 48px;
+.logo-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.ta-custom-icon {
-  background: linear-gradient(135deg, #52c41a 0%, #95de64 100%);
   color: #fff;
+  font-size: 28px;
 }
 
-.ta-cadre-icon {
-  background: linear-gradient(135deg, #faad14 0%, #ffd666 100%);
-  color: #fff;
+.company-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 4px;
 }
 
-.ta-card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.report-type {
+  font-size: 14px;
+  color: #666;
 }
 
-.ta-card-title {
+.report-period {
+  text-align: right;
+}
+
+.period-label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.period-value {
   font-size: 16px;
   font-weight: 600;
   color: #1a1a2e;
 }
 
-.ta-card-desc {
-  font-size: 12px;
-  color: #999;
-}
-
-.ta-card-label {
-  font-size: 15px;
+/* Section Title */
+.section-title {
+  font-size: 14px;
   font-weight: 600;
-  color: #1a1a2e;
+  color: #667eea;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* ==================== Summary Items ==================== */
-.ta-summary-row {
-  margin-bottom: 24px;
+/* Summary Section */
+.summary-section {
+  margin-bottom: 28px;
 }
 
-.ta-summary-items {
-  margin-top: 8px;
+.summary-cards {
+  display: flex;
+  gap: 12px;
 }
 
-.ta-summary-item {
-  text-align: center;
-  padding: 16px 8px;
-  background: #fafbfc;
+.summary-card {
+  flex: 1;
+  background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
   border-radius: 12px;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: #f0f2f5;
-  }
+  padding: 16px;
+  text-align: center;
+  border: 1px solid #e8e8e8;
 }
 
-.ta-month-tag {
-  font-size: 11px;
+.card-month {
+  font-size: 12px;
   font-weight: 600;
   color: #999;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   margin-bottom: 8px;
+  text-transform: uppercase;
 }
 
-.ta-amount {
-  font-size: 20px;
+.card-amount {
+  font-size: 22px;
   font-weight: 700;
   color: #1a1a2e;
   margin-bottom: 4px;
-  line-height: 1.2;
 }
 
-.ta-detail {
-  font-size: 12px;
+.card-detail {
+  font-size: 11px;
   color: #666;
   margin-bottom: 8px;
 }
 
-.ta-growth {
+.card-growth {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 12px;
   font-weight: 600;
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: 12px;
 }
 
-.ta-growth-up {
+.card-growth.up {
   background: #f6ffed;
   color: #52c41a;
 }
 
-.ta-growth-down {
+.card-growth.down {
   background: #fff2f0;
   color: #ff4d4f;
 }
 
-/* ==================== Charts ==================== */
-.ta-charts-row {
-  margin-bottom: 20px;
+/* Chart Section */
+.chart-section {
+  margin-bottom: 28px;
 }
 
-/* Bar Chart */
-.bar-chart-wrapper {
-  padding: 20px 10px;
-}
-
-.bar-chart {
+.bar-chart-print {
   display: flex;
   justify-content: space-around;
   align-items: flex-end;
-  height: 180px;
-  padding: 0 20px;
+  height: 160px;
+  padding: 20px;
+  background: #fafbfc;
+  border-radius: 12px;
+  border: 1px solid #e8e8e8;
 }
 
-.bar-group {
+.bar-item {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -254,230 +234,188 @@
   flex: 1;
 }
 
-.bar-value-label {
+.bar-value {
   font-size: 11px;
   font-weight: 600;
   color: #666;
 }
 
-.bar-fill {
+.bar {
   width: 48px;
   border-radius: 6px 6px 0 0;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    opacity: 0.85;
-    transform: scaleY(1.02);
-  }
+  min-height: 4px;
 }
 
-.bar-label {
+.bar-month {
   font-size: 12px;
   font-weight: 500;
   color: #666;
 }
 
-/* Line Chart */
-.line-chart-svg {
-  width: 100%;
-  height: 180px;
+/* TOP 3 Section */
+.top3-section {
+  margin-bottom: 28px;
 }
 
-/* Pie Chart */
-.ta-pie-card {
-  .ant-card-body {
-    padding: 16px !important;
-  }
-}
-
-.pie-chart-wrapper {
+.top3-grid {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
-.pie-svg {
-  width: 140px;
-  height: 140px;
+.top3-card {
+  flex: 1;
+  background: #fafbfc;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #e8e8e8;
 }
 
-.pie-center-info {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+.top3-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
   text-align: center;
-  
-  .pie-total {
-    font-size: 14px;
-    font-weight: 700;
-    color: #1a1a2e;
-  }
-  
-  .pie-sub {
-    font-size: 11px;
-    color: #999;
-  }
 }
 
-.empty-pie {
+.pie-chart-small {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 140px;
   gap: 8px;
-  color: #d9d9d9;
 }
 
-.pie-legend {
-  width: 100%;
-  margin-top: 8px;
-}
-
-.legend-row {
+.pie-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 6px 0;
-  border-bottom: 1px solid #f5f5f5;
-  
-  &:last-child {
-    border-bottom: none;
-  }
 }
 
-.legend-dot {
-  width: 10px;
-  height: 10px;
+.pie-svg-print {
+  width: 100px;
+  height: 100px;
+}
+
+.pie-legend-print {
+  width: 100%;
+}
+
+.legend-row-print {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 10px;
+}
+
+.legend-dot-print {
+  width: 8px;
+  height: 8px;
   border-radius: 2px;
   flex-shrink: 0;
 }
 
-.legend-name {
+.legend-name-print {
   flex: 1;
-  font-size: 12px;
   color: #666;
 }
 
-.legend-pct {
-  font-size: 12px;
+.legend-pct-print {
   font-weight: 600;
   color: #333;
 }
 
-/* ==================== Section Dividers ==================== */
-.ta-section-divider {
-  margin: 32px 0 20px !important;
-  border-top: 2px solid #e8eaf6 !important;
-  
-  .ant-divider-inner-text {
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    color: #667eea !important;
-    padding: 0 12px !important;
-    background: #f5f7fa !important;
-  }
+.top3-total {
+  font-size: 11px;
+  color: #999;
+  text-align: center;
+  margin-top: 8px;
 }
 
-.ta-pie-row-2 {
-  margin-top: 20px;
+.empty-print {
+  color: #d9d9d9;
+  font-size: 12px;
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* Footer */
+.report-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid #e8e8e8;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #999;
 }
 
 /* ==================== Print Styles ==================== */
 @media print {
   @page {
     size: A4;
-    margin: 15mm;
+    margin: 0;
   }
   
   body {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    margin: 0;
+    padding: 0;
   }
   
   .print-hide {
     display: none !important;
   }
   
-  .print-only {
+  .print-container {
     display: block !important;
   }
   
-  .ta-container {
-    padding: 0;
-    background: #fff;
-  }
-  
-  .ta-card {
-    break-inside: avoid;
+  .print-page {
+    width: 210mm !important;
+    height: 297mm !important;
+    padding: 15mm !important;
+    margin: 0 !important;
+    page-break-after: always;
     page-break-inside: avoid;
     box-shadow: none !important;
-    border: 1px solid #e8e8e8 !important;
-    margin-bottom: 16px !important;
-    
-    &:hover {
-      transform: none !important;
-    }
   }
   
-  .ta-header {
-    display: none !important;
+  .print-page:last-child {
+    page-break-after: auto;
   }
   
-  .ta-section-divider {
-    margin: 20px 0 12px !important;
-    
-    .ant-divider-inner-text {
-      background: #fff !important;
-    }
-  }
-  
-  .bar-fill {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-  
-  .ta-growth-up, .ta-growth-down {
-    border: 1px solid !important;
-  }
-  
-  .ta-growth-up {
+  /* Ensure colors print correctly */
+  .card-growth.up {
     background: #f6ffed !important;
     color: #52c41a !important;
-    border-color: #b7eb8f !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   
-  .ta-growth-down {
+  .card-growth.down {
     background: #fff2f0 !important;
     color: #ff4d4f !important;
-    border-color: #ffa39e !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .bar {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .logo-icon {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 
-/* ==================== Responsive ==================== */
-@media (max-width: 768px) {
-  .ta-container {
-    padding: 12px;
-  }
-  
-  .ta-header {
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
-  }
-  
-  .ta-header-right {
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  .ta-month-select {
-    width: 100% !important;
-  }
-  
-  .ta-amount {
-    font-size: 16px !important;
+/* ==================== Screen Preview ==================== */
+@media screen {
+  .print-container {
+    display: none;
   }
 }
