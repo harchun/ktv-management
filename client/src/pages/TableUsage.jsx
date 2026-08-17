@@ -40,16 +40,16 @@ export default function TableUsage() {
     finally { setLoading(false); }
   };
 
-  const fetchDetails = async (cadre, customer) => {
-    if (expandedRows[`${cadre}-${customer}`]) return;
-    setLoadingDetails(prev => ({ ...prev, [`${cadre}-${customer}`]: true }));
+  const fetchDetails = async (cadre) => {
+    if (expandedRows[cadre]) return;
+    setLoadingDetails(prev => ({ ...prev, [cadre]: true }));
     try {
-      const params = { cadre, customer };
+      const params = { cadre };
       if (selectedMonth) params.month = selectedMonth;
       const res = await API.get('/stats/table-usage-details', { params });
-      setExpandedRows(prev => ({ ...prev, [`${cadre}-${customer}`]: res.data }));
+      setExpandedRows(prev => ({ ...prev, [cadre]: res.data }));
     } catch (e) { message.error('載入明細失敗'); }
-    finally { setLoadingDetails(prev => ({ ...prev, [`${cadre}-${customer}`]: false })); }
+    finally { setLoadingDetails(prev => ({ ...prev, [cadre]: false })); }
   };
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function TableUsage() {
 
   const totalConsumption = data.reduce((sum, row) => sum + (row.總消費 || 0), 0);
   const totalVisits = data.reduce((sum, row) => sum + (row.次數 || 0), 0);
-  const uniqueCustomers = new Set(data.map(r => r.客戶名).filter(Boolean)).size;
+  const uniqueCustomers = new Set(data.map(r => r.客戶列表?.split(', ')).flat().filter(Boolean)).size;
 
   const columns = [
     { title: '排名', dataIndex: 'rank', key: 'rank', width: 60, render: (val) => (
@@ -79,14 +79,13 @@ export default function TableUsage() {
     { title: '幹部', dataIndex: '幹部', key: '幹部', width: 100 },
     { title: '等級', dataIndex: '等級', key: '等級', width: 80 },
     { title: '公關', dataIndex: '公關', key: '公關', width: 80, render: (val) => val || '-' },
-    { title: '客戶名', dataIndex: '客戶名', key: '客戶名', width: 100, render: (val) => val || '-' },
+    { title: '客戶列表', dataIndex: '客戶列表', key: '客戶列表', width: 150, render: (val) => val || '-' },
+    { title: '客戶數', dataIndex: '客戶數', key: '客戶數', width: 70 },
     { title: '消費金額', dataIndex: '總消費', key: '總消費', width: 120, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
-    { title: '次數', dataIndex: '次數', key: '次數', width: 80 },
+    { title: '次數', dataIndex: '次數', key: '次數', width: 70 },
   ];
 
   const tableData = data.map((row, idx) => ({ ...row, rank: idx + 1 }));
-
-  const getRowKey = (record) => `${record.幹部}-${record.客戶名}`;
 
   return (
     <div>
@@ -143,17 +142,17 @@ export default function TableUsage() {
         <Table
           columns={columns}
           dataSource={tableData}
-          rowKey={getRowKey}
+          rowKey={(record) => record.幹部}
           loading={loading}
           pagination={{ pageSize: 50, showSizeChanger: false }}
-          scroll={{ x: 800 }}
+          scroll={{ x: 900 }}
           size="small"
           className="table-striped"
           expandable={{
             expandedRowRender: (record) => {
-              const rowKey = getRowKey(record);
-              const details = expandedRows[rowKey];
-              const isLoading = loadingDetails[rowKey];
+              const cadre = record.幹部;
+              const details = expandedRows[cadre];
+              const isLoading = loadingDetails[cadre];
               
               if (isLoading) {
                 return (
@@ -172,14 +171,9 @@ export default function TableUsage() {
               }
 
               const detailColumns = [
-                { title: '日期', dataIndex: '日期', width: 120, render: (val) => val ? new Date(val).toISOString().slice(0, 10) : '-' },
-                { title: '房號', dataIndex: '房號', width: 80 },
-                { title: '人數', dataIndex: '人數', width: 60 },
-                { title: '現金', dataIndex: '現金', width: 90, render: (val) => `NT$ ${Number(val || 0).toLocaleString('zh-TW')}` },
-                { title: '信用', dataIndex: '信用', width: 90, render: (val) => `NT$ ${Number(val || 0).toLocaleString('zh-TW')}` },
-                { title: '簽帳', dataIndex: '簽帳', width: 90, render: (val) => `NT$ ${Number(val || 0).toLocaleString('zh-TW')}` },
-                { title: '其它', dataIndex: '其它', width: 90, render: (val) => `NT$ ${Number(val || 0).toLocaleString('zh-TW')}` },
-                { title: '備註', dataIndex: '備註', width: 120, render: (val) => val || '-' },
+                { title: '日期', dataIndex: '日期', width: 110, render: (val) => val ? new Date(val).toISOString().slice(0, 10) : '-' },
+                { title: '客戶名', dataIndex: '客戶名', width: 100 },
+                { title: '消費金額', dataIndex: '總消費', width: 100, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
               ];
 
               return (
@@ -196,9 +190,8 @@ export default function TableUsage() {
             },
             rowExpandable: (record) => true,
             onExpand: (expanded, record) => {
-              const rowKey = getRowKey(record);
-              if (expanded && !expandedRows[rowKey]) {
-                fetchDetails(record.幹部, record.客戶名);
+              if (expanded) {
+                fetchDetails(record.幹部);
               }
             }
           }}
