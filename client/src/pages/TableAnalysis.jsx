@@ -9,7 +9,6 @@ import {
   Row,
   Col,
   Statistic,
-  Alert,
   Button
 } from 'antd';
 import {
@@ -17,7 +16,8 @@ import {
   RiseOutlined,
   FallOutlined,
   DollarOutlined,
-  PrinterOutlined
+  PrinterOutlined,
+  FileTextOutlined
 } from '@ant-design/icons';
 import api from '../utils/api';
 
@@ -100,10 +100,10 @@ export default function TableAnalysis() {
 
   return (
     <div className="table-analysis-container">
-      {/* Header */}
-      <div className="analysis-header print-header-hidden">
+      {/* Control Header - Hidden when printing */}
+      <div className="control-header print-hidden">
         <div>
-          <Title level={2}>📊 訂桌分析報表</Title>
+          <Title level={3}>📊 訂桌分析報表</Title>
           <Text type="secondary">多月份成長/衰退趨勢分析（適合老闆報備）</Text>
         </div>
         <Space>
@@ -125,159 +125,146 @@ export default function TableAnalysis() {
         </Space>
       </div>
 
-      {/* Summary Cards */}
-      <Row gutter={16} className="print-summary">
-        <Col span={12}>
-          <Card className="summary-card custom-card" loading={loading}>
-            <div className="card-header">
-              <TrophyOutlined />
-              <span>自訂桌統計</span>
+      {/* Print Section: Summary */}
+      <div className="print-section print-summary-section">
+        <div className="report-title">日月星辰 KTV 訂桌分析報告</div>
+        <div className="report-period">分析期間：{selectedMonths.join(' 至 ')} 月</div>
+        
+        <Row gutter={32} className="summary-row">
+          <Col span={12}>
+            <div className="summary-box custom-summary">
+              <div className="summary-icon">
+                <TrophyOutlined />
+                <span>自訂桌統計</span>
+              </div>
+              <Row gutter={16}>
+                {selectedMonths.map((m, idx) => {
+                  const d = getMonthTotal(m);
+                  const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
+                  const growth = prevD ? getGrowthRate(d.custom.total, prevD.custom.total) : null;
+                  return (
+                    <Col key={m} span={8}>
+                      <div className="summary-item">
+                        <div className="summary-month">{m}</div>
+                        <div className="summary-amount">NT$ {d.custom.total.toLocaleString()}</div>
+                        <div className="summary-detail">{d.custom.count} 桌</div>
+                        {growth && (
+                          <div className={`growth-badge ${growth.isGrowth ? 'growth' : 'decline'}`}>
+                            {growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
+                            {Math.abs(growth.rate)}%
+                          </div>
+                        )}
+                      </div>
+                    </Col>
+                  );
+                })}
+              </Row>
             </div>
-            <Row gutter={8}>
-              {selectedMonths.map(m => {
-                const d = getMonthTotal(m);
-                const idx = selectedMonths.indexOf(m);
-                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
-                const growth = prevD ? getGrowthRate(d.custom.total, prevD.custom.total) : null;
-                return (
-                  <Col key={m} span={8}>
-                    <Statistic
-                      title={<span className="month-label">{m}</span>}
-                      value={d.custom.total}
-                      prefix={<DollarOutlined />}
-                      suffix="NT$"
-                      precision={0}
-                      valueStyle={{ fontSize: 16 }}
-                    />
-                    {growth && (
-                      <Text type={growth.isGrowth ? 'success' : 'danger'} className="growth-text">
-                        {growth.isGrowth ? '↑' : '↓'} {Math.abs(growth.rate)}%
-                      </Text>
-                    )}
-                  </Col>
-                );
-              })}
-            </Row>
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card className="summary-card cadre-card" loading={loading}>
-            <div className="card-header">
-              <TrophyOutlined style={{ color: '#faad14' }} />
-              <span>幹桌統計</span>
+          </Col>
+          <Col span={12}>
+            <div className="summary-box cadre-summary">
+              <div className="summary-icon">
+                <TrophyOutlined style={{ color: '#faad14' }} />
+                <span>幹部訂桌統計</span>
+              </div>
+              <Row gutter={16}>
+                {selectedMonths.map((m, idx) => {
+                  const d = getMonthTotal(m);
+                  const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
+                  const growth = prevD ? getGrowthRate(d.cadre.total, prevD.cadre.total) : null;
+                  return (
+                    <Col key={m} span={8}>
+                      <div className="summary-item">
+                        <div className="summary-month">{m}</div>
+                        <div className="summary-amount">NT$ {d.cadre.total.toLocaleString()}</div>
+                        <div className="summary-detail">{d.cadre.length} 公關</div>
+                        {growth && (
+                          <div className={`growth-badge ${growth.isGrowth ? 'growth' : 'decline'}`}>
+                            {growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
+                            {Math.abs(growth.rate)}%
+                          </div>
+                        )}
+                      </div>
+                    </Col>
+                  );
+                })}
+              </Row>
             </div>
-            <Row gutter={8}>
-              {selectedMonths.map(m => {
-                const d = getMonthTotal(m);
-                const idx = selectedMonths.indexOf(m);
-                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
-                const growth = prevD ? getGrowthRate(d.cadre.total, prevD.cadre.total) : null;
-                return (
-                  <Col key={m} span={8}>
-                    <Statistic
-                      title={<span className="month-label">{m}</span>}
-                      value={d.cadre.total}
-                      prefix={<DollarOutlined />}
-                      suffix="NT$"
-                      precision={0}
-                      valueStyle={{ fontSize: 16 }}
-                    />
-                    {growth && (
-                      <Text type={growth.isGrowth ? 'success' : 'danger'} className="growth-text">
-                        {growth.isGrowth ? '↑' : '↓'} {Math.abs(growth.rate)}%
-                      </Text>
-                    )}
-                  </Col>
-                );
-              })}
-            </Row>
-          </Card>
-        </Col>
-      </Row>
+          </Col>
+        </Row>
+      </div>
 
-      {/* Detailed Tables */}
-      <Row gutter={16}>
-        <Col span={12}>
-          <Card
-            title={<Space><TrophyOutlined />自訂桌統計明細</Space>}
-            loading={loading}
-          >
-            {selectedMonths.map(m => {
-              const data = allData[m]?.custom || [];
-              if (data.length === 0) return null;
-              return (
-                <div key={m} className="month-section">
-                  <Text strong className="month-title">{m}</Text>
-                  <Table
-                    dataSource={data}
-                    columns={[
-                      { title: '排名', dataIndex: 'rank', width: 50, render: (_, __, index) => <span style={getRankStyle(index)}>{index + 1}</span> },
-                      { title: '幹部', dataIndex: '幹部', render: n => <Text strong>{n}</Text> },
-                      { title: '總消費', dataIndex: '總消費', render: v => <Text type="danger">NT$ {Number(v).toLocaleString()}</Text> },
-                      { title: '桌數', dataIndex: '桌數', width: 60, render: v => <Tag color="blue">{v}</Tag> }
-                    ]}
-                    rowKey="幹部"
-                    pagination={false}
-                    size="small"
-                    summary={() => (
-                      <Table.Summary>
-                        <Table.Summary.Row style={{ background: '#f0f0f0' }}>
-                          <Table.Summary.Cell><Text strong>合計</Text></Table.Summary.Cell>
-                          <Table.Summary.Cell><Text strong>{data.length}人</Text></Table.Summary.Cell>
-                          <Table.Summary.Cell>
-                            <Text type="danger" strong>NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()}</Text>
-                          </Table.Summary.Cell>
-                          <Table.Summary.Cell><Tag color="blue">{data.length}桌</Tag></Table.Summary.Cell>
-                        </Table.Summary.Row>
-                      </Table.Summary>
-                    )}
-                  />
-                </div>
-              );
-            })}
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card
-            title={<Space><TrophyOutlined style={{ color: '#faad14' }} />幹桌統計明細</Space>}
-            loading={loading}
-          >
-            {selectedMonths.map(m => {
-              const data = allData[m]?.cadre || [];
-              if (data.length === 0) return null;
-              return (
-                <div key={m} className="month-section">
-                  <Text strong className="month-title">{m}</Text>
-                  <Table
-                    dataSource={data}
-                    columns={[
-                      { title: '排名', dataIndex: 'rank', width: 50, render: (_, __, index) => <span style={getRankStyle(index)}>{index + 1}</span> },
-                      { title: '公關', dataIndex: '公關', render: n => <Text strong>{n}</Text> },
-                      { title: '總消費', dataIndex: '總消費', render: v => <Text type="danger">NT$ {Number(v).toLocaleString()}</Text> },
-                      { title: '紀錄數', dataIndex: '紀錄數', width: 60, render: v => <Tag color="green">{v}</Tag> }
-                    ]}
-                    rowKey="公關"
-                    pagination={false}
-                    size="small"
-                    summary={() => (
-                      <Table.Summary>
-                        <Table.Summary.Row style={{ background: '#f0f0f0' }}>
-                          <Table.Summary.Cell><Text strong>合計</Text></Table.Summary.Cell>
-                          <Table.Summary.Cell><Text strong>{data.length}人</Text></Table.Summary.Cell>
-                          <Table.Summary.Cell>
-                            <Text type="danger" strong>NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()}</Text>
-                          </Table.Summary.Cell>
-                          <Table.Summary.Cell><Tag color="green">{data.length}筆</Tag></Table.Summary.Cell>
-                        </Table.Summary.Row>
-                      </Table.Summary>
-                    )}
-                  />
-                </div>
-              );
-            })}
-          </Card>
-        </Col>
-      </Row>
+      {/* Print Section: Custom Table Details */}
+      <div className="print-section print-page-break">
+        <div className="section-header">
+          <FileTextOutlined />
+          <span>自訂桌統計明細</span>
+        </div>
+        {selectedMonths.map(m => {
+          const data = allData[m]?.custom || [];
+          if (data.length === 0) return null;
+          return (
+            <div key={m} className="month-block">
+              <div className="month-header">
+                <span className="month-name">{m}</span>
+                <span className="month-total">
+                  合計：NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()} ({data.length}桌)
+                </span>
+              </div>
+              <Table
+                dataSource={data}
+                columns={[
+                  { title: '排名', dataIndex: 'rank', width: 50, render: (_, __, index) => <span className={`rank-badge rank-${index + 1}`}>{index + 1}</span> },
+                  { title: '幹部姓名', dataIndex: '幹部', render: n => <Text strong>{n}</Text> },
+                  { title: '總消費', dataIndex: '總消費', render: v => <Text className="amount">NT$ {Number(v).toLocaleString()}</Text> },
+                  { title: '桌數', dataIndex: '桌數', width: 60, render: v => <Tag color="blue">{v}</Tag> }
+                ]}
+                rowKey="幹部"
+                pagination={false}
+                size="small"
+                showHeader
+                className="detail-table"
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Print Section: Cadre Table Details */}
+      <div className="print-section print-page-break print-last-page">
+        <div className="section-header">
+          <FileTextOutlined />
+          <span>幹部訂桌統計明細</span>
+        </div>
+        {selectedMonths.map(m => {
+          const data = allData[m]?.cadre || [];
+          if (data.length === 0) return null;
+          return (
+            <div key={m} className="month-block">
+              <div className="month-header">
+                <span className="month-name">{m}</span>
+                <span className="month-total">
+                  合計：NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()} ({data.length}筆)
+                </span>
+              </div>
+              <Table
+                dataSource={data}
+                columns={[
+                  { title: '排名', dataIndex: 'rank', width: 50, render: (_, __, index) => <span className={`rank-badge rank-${index + 1}`}>{index + 1}</span> },
+                  { title: '公關姓名', dataIndex: '公關', render: n => <Text strong>{n}</Text> },
+                  { title: '總消費', dataIndex: '總消費', render: v => <Text className="amount">NT$ {Number(v).toLocaleString()}</Text> },
+                  { title: '紀錄數', dataIndex: '紀錄數', width: 60, render: v => <Tag color="green">{v}</Tag> }
+                ]}
+                rowKey="公關"
+                pagination={false}
+                size="small"
+                showHeader
+                className="detail-table"
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
