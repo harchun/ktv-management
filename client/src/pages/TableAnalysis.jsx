@@ -14,6 +14,7 @@ import {
   DollarCircleOutlined
 } from '@ant-design/icons';
 import api from '../utils/api';
+import './TableAnalysis.css';
 
 const { Title, Text } = Typography;
 
