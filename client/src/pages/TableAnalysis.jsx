@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
   Card,
-  Table,
   Select,
   Typography,
   Space,
-  Tag,
   Row,
   Col,
   Statistic,
@@ -15,13 +13,144 @@ import {
   TrophyOutlined,
   RiseOutlined,
   FallOutlined,
-  DollarOutlined,
   PrinterOutlined,
-  FileTextOutlined
+  BarChartOutlined
 } from '@ant-design/icons';
 import api from '../utils/api';
 
 const { Title, Text } = Typography;
+
+// Bar Chart Component
+function BarChart({ data, title, color, height = 200 }) {
+  const maxVal = Math.max(...data.map(d => d.value), 1);
+  
+  return (
+    <div className="chart-container">
+      <div className="chart-title">{title}</div>
+      <div className="bar-chart">
+        {data.map((item, idx) => (
+          <div key={idx} className="bar-item">
+            <div className="bar-wrapper">
+              <div 
+                className="bar"
+                style={{ 
+                  height: `${(item.value / maxVal) * 150}px`,
+                  background: `linear-gradient(180deg, ${color} 0%, ${color}88 100%)`
+                }}
+              />
+              <div className="bar-value">NT$ {item.value.toLocaleString()}</div>
+            </div>
+            <div className="bar-label">{item.name}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Pie Chart Component (Simple CSS-based)
+function PieChart({ data, title }) {
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  let cumulativePercent = 0;
+  
+  const colors = ['#1890ff', '#52c41a', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2'];
+  
+  return (
+    <div className="pie-chart-container">
+      <div className="chart-title">{title}</div>
+      <div className="pie-wrapper">
+        <svg viewBox="0 0 100 100" className="pie-svg">
+          {data.map((item, idx) => {
+            const percent = total > 0 ? item.value / total : 0;
+            const startAngle = cumulativePercent * 360;
+            const endAngle = (cumulativePercent + percent) * 360;
+            cumulativePercent += percent;
+            
+            const startRad = (startAngle - 90) * Math.PI / 180;
+            const endRad = (endAngle - 90) * Math.PI / 180;
+            
+            const x1 = 50 + 45 * Math.cos(startRad);
+            const y1 = 50 + 45 * Math.sin(startRad);
+            const x2 = 50 + 45 * Math.cos(endRad);
+            const y2 = 50 + 45 * Math.sin(endRad);
+            
+            const largeArc = percent > 0.5 ? 1 : 0;
+            
+            const pathData = percent >= 1 
+              ? `M 50 50 L 50 5 A 45 45 0 1 1 49.99 5 Z`
+              : `M 50 50 L ${x1} ${y1} A 45 45 0 ${largeArc} 1 ${x2} ${y2} Z`;
+            
+            return (
+              <path
+                key={idx}
+                d={pathData}
+                fill={colors[idx % colors.length]}
+                stroke="white"
+                strokeWidth="0.5"
+              />
+            );
+          })}
+          <circle cx="50" cy="50" r="25" fill="white" />
+        </svg>
+        <div className="pie-center">
+          <div className="pie-total">NT$ {total.toLocaleString()}</div>
+          <div className="pie-label">總消費</div>
+        </div>
+      </div>
+      <div className="pie-legend">
+        {data.map((item, idx) => (
+          <div key={idx} className="legend-item">
+            <span className="legend-color" style={{ background: colors[idx % colors.length] }}></span>
+            <span className="legend-name">{item.name}</span>
+            <span className="legend-value">{((item.value / total) * 100).toFixed(1)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Line Chart Component for trends
+function LineChart({ data, title }) {
+  const maxVal = Math.max(...data.map(d => d.value), 1);
+  const minVal = Math.min(...data.map(d => d.value), 0);
+  const range = maxVal - minVal || 1;
+  
+  const points = data.map((item, idx) => {
+    const x = (idx / (data.length - 1 || 1)) * 300 + 25;
+    const y = 150 - ((item.value - minVal) / range) * 120;
+    return `${x},${y}`;
+  }).join(' ');
+  
+  return (
+    <div className="line-chart-container">
+      <div className="chart-title">{title}</div>
+      <svg viewBox="0 0 350 180" className="line-svg">
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((p, i) => (
+          <line key={i} x1="25" y1={20 + p * 130} x2="330" y2={20 + p * 130} 
+                stroke="#f0f0f0" strokeWidth="1" />
+        ))}
+        {/* Line */}
+        <polyline points={points} fill="none" stroke="#1890ff" strokeWidth="3" />
+        {/* Points */}
+        {data.map((item, idx) => {
+          const x = (idx / (data.length - 1 || 1)) * 300 + 25;
+          const y = 150 - ((item.value - minVal) / range) * 120;
+          return (
+            <g key={idx}>
+              <circle cx={x} cy={y} r="5" fill="#1890ff" stroke="white" strokeWidth="2" />
+              <text x={x} y={y - 12} textAnchor="middle" fill="#333" fontSize="11" fontWeight="bold">
+                NT$ {(item.value / 1000).toFixed(0)}K
+              </text>
+              <text x={x} y="170" textAnchor="middle" fill="#666" fontSize="11">{item.label}</text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
 
 export default function TableAnalysis() {
   const [selectedMonths, setSelectedMonths] = useState([]);
@@ -91,12 +220,43 @@ export default function TableAnalysis() {
     window.print();
   };
 
-  const getRankStyle = (index) => {
-    if (index === 0) return { background: '#FFD700', color: '#fff' };
-    if (index === 1) return { background: '#C0C0C0', color: '#fff' };
-    if (index === 2) return { background: '#CD7F32', color: '#fff' };
-    return {};
+  // Prepare chart data
+  const customBarData = selectedMonths.map(m => ({
+    name: m,
+    value: getMonthTotal(m).custom.total
+  }));
+
+  const cadreBarData = selectedMonths.map(m => ({
+    name: m,
+    value: getMonthTotal(m).cadre.total
+  }));
+
+  const customTop3 = (month) => {
+    const data = allData[month]?.custom || [];
+    return data.slice(0, 3).map(r => ({
+      name: r.幹部,
+      value: Number(r.總消費) || 0
+    }));
   };
+
+  const cadreTop3 = (month) => {
+    const data = allData[month]?.cadre || [];
+    return data.slice(0, 3).map(r => ({
+      name: r.公關,
+      value: Number(r.總消費) || 0
+    }));
+  };
+
+  // Line chart data for trends
+  const customTrendData = selectedMonths.map((m, idx) => ({
+    label: m,
+    value: getMonthTotal(m).custom.total
+  }));
+
+  const cadreTrendData = selectedMonths.map((m, idx) => ({
+    label: m,
+    value: getMonthTotal(m).cadre.total
+  }));
 
   return (
     <div className="table-analysis-container">
@@ -125,146 +285,127 @@ export default function TableAnalysis() {
         </Space>
       </div>
 
-      {/* Print Section: Summary */}
+      {/* Print Header */}
       <div className="print-section print-summary-section">
         <div className="report-title">日月星辰 KTV 訂桌分析報告</div>
         <div className="report-period">分析期間：{selectedMonths.join(' 至 ')} 月</div>
-        
-        <Row gutter={32} className="summary-row">
-          <Col span={12}>
-            <div className="summary-box custom-summary">
-              <div className="summary-icon">
-                <TrophyOutlined />
-                <span>自訂桌統計</span>
-              </div>
-              <Row gutter={16}>
-                {selectedMonths.map((m, idx) => {
-                  const d = getMonthTotal(m);
-                  const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
-                  const growth = prevD ? getGrowthRate(d.custom.total, prevD.custom.total) : null;
-                  return (
-                    <Col key={m} span={8}>
-                      <div className="summary-item">
-                        <div className="summary-month">{m}</div>
-                        <div className="summary-amount">NT$ {d.custom.total.toLocaleString()}</div>
-                        <div className="summary-detail">{d.custom.count} 桌</div>
-                        {growth && (
-                          <div className={`growth-badge ${growth.isGrowth ? 'growth' : 'decline'}`}>
-                            {growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
-                            {Math.abs(growth.rate)}%
-                          </div>
-                        )}
-                      </div>
-                    </Col>
-                  );
-                })}
-              </Row>
-            </div>
-          </Col>
-          <Col span={12}>
-            <div className="summary-box cadre-summary">
-              <div className="summary-icon">
-                <TrophyOutlined style={{ color: '#faad14' }} />
-                <span>幹部訂桌統計</span>
-              </div>
-              <Row gutter={16}>
-                {selectedMonths.map((m, idx) => {
-                  const d = getMonthTotal(m);
-                  const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
-                  const growth = prevD ? getGrowthRate(d.cadre.total, prevD.cadre.total) : null;
-                  return (
-                    <Col key={m} span={8}>
-                      <div className="summary-item">
-                        <div className="summary-month">{m}</div>
-                        <div className="summary-amount">NT$ {d.cadre.total.toLocaleString()}</div>
-                        <div className="summary-detail">{d.cadre.length} 公關</div>
-                        {growth && (
-                          <div className={`growth-badge ${growth.isGrowth ? 'growth' : 'decline'}`}>
-                            {growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
-                            {Math.abs(growth.rate)}%
-                          </div>
-                        )}
-                      </div>
-                    </Col>
-                  );
-                })}
-              </Row>
-            </div>
-          </Col>
-        </Row>
       </div>
 
-      {/* Print Section: Custom Table Details */}
-      <div className="print-section print-page-break">
-        <div className="section-header">
-          <FileTextOutlined />
-          <span>自訂桌統計明細</span>
-        </div>
-        {selectedMonths.map(m => {
-          const data = allData[m]?.custom || [];
-          if (data.length === 0) return null;
-          return (
-            <div key={m} className="month-block">
-              <div className="month-header">
-                <span className="month-name">{m}</span>
-                <span className="month-total">
-                  合計：NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()} ({data.length}桌)
-                </span>
-              </div>
-              <Table
-                dataSource={data}
-                columns={[
-                  { title: '排名', dataIndex: 'rank', width: 50, render: (_, __, index) => <span className={`rank-badge rank-${index + 1}`}>{index + 1}</span> },
-                  { title: '幹部姓名', dataIndex: '幹部', render: n => <Text strong>{n}</Text> },
-                  { title: '總消費', dataIndex: '總消費', render: v => <Text className="amount">NT$ {Number(v).toLocaleString()}</Text> },
-                  { title: '桌數', dataIndex: '桌數', width: 60, render: v => <Tag color="blue">{v}</Tag> }
-                ]}
-                rowKey="幹部"
-                pagination={false}
-                size="small"
-                showHeader
-                className="detail-table"
-              />
+      {/* Summary Cards */}
+      <Row gutter={24} className="summary-row">
+        <Col span={12}>
+          <Card className="summary-card custom-card" loading={loading}>
+            <div className="card-header">
+              <TrophyOutlined />
+              <span>自訂桌統計</span>
             </div>
-          );
-        })}
-      </div>
+            <Row gutter={16}>
+              {selectedMonths.map((m, idx) => {
+                const d = getMonthTotal(m);
+                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
+                const growth = prevD ? getGrowthRate(d.custom.total, prevD.custom.total) : null;
+                return (
+                  <Col key={m} span={8}>
+                    <div className="summary-item">
+                      <div className="summary-month">{m}</div>
+                      <div className="summary-amount">NT$ {d.custom.total.toLocaleString()}</div>
+                      <div className="summary-detail">{d.custom.count} 桌</div>
+                      {growth && (
+                        <div className={`growth-badge ${growth.isGrowth ? 'growth' : 'decline'}`}>
+                          {growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
+                          {Math.abs(growth.rate)}%
+                        </div>
+                      )}
+                    </div>
+                  </Col>
+                );
+              })}
+            </Row>
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card className="summary-card cadre-card" loading={loading}>
+            <div className="card-header">
+              <TrophyOutlined style={{ color: '#faad14' }} />
+              <span>幹部訂桌統計</span>
+            </div>
+            <Row gutter={16}>
+              {selectedMonths.map((m, idx) => {
+                const d = getMonthTotal(m);
+                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
+                const growth = prevD ? getGrowthRate(d.cadre.total, prevD.cadre.total) : null;
+                return (
+                  <Col key={m} span={8}>
+                    <div className="summary-item">
+                      <div className="summary-month">{m}</div>
+                      <div className="summary-amount">NT$ {d.cadre.total.toLocaleString()}</div>
+                      <div className="summary-detail">{d.cadre.length} 公關</div>
+                      {growth && (
+                        <div className={`growth-badge ${growth.isGrowth ? 'growth' : 'decline'}`}>
+                          {growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
+                          {Math.abs(growth.rate)}%
+                        </div>
+                      )}
+                    </div>
+                  </Col>
+                );
+              })}
+            </Row>
+          </Card>
+        </Col>
+      </Row>
 
-      {/* Print Section: Cadre Table Details */}
-      <div className="print-section print-page-break print-last-page">
-        <div className="section-header">
-          <FileTextOutlined />
-          <span>幹部訂桌統計明細</span>
-        </div>
-        {selectedMonths.map(m => {
-          const data = allData[m]?.cadre || [];
-          if (data.length === 0) return null;
-          return (
-            <div key={m} className="month-block">
-              <div className="month-header">
-                <span className="month-name">{m}</span>
-                <span className="month-total">
-                  合計：NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()} ({data.length}筆)
-                </span>
-              </div>
-              <Table
-                dataSource={data}
-                columns={[
-                  { title: '排名', dataIndex: 'rank', width: 50, render: (_, __, index) => <span className={`rank-badge rank-${index + 1}`}>{index + 1}</span> },
-                  { title: '公關姓名', dataIndex: '公關', render: n => <Text strong>{n}</Text> },
-                  { title: '總消費', dataIndex: '總消費', render: v => <Text className="amount">NT$ {Number(v).toLocaleString()}</Text> },
-                  { title: '紀錄數', dataIndex: '紀錄數', width: 60, render: v => <Tag color="green">{v}</Tag> }
-                ]}
-                rowKey="公關"
-                pagination={false}
-                size="small"
-                showHeader
-                className="detail-table"
-              />
-            </div>
-          );
-        })}
-      </div>
+      {/* Charts Section */}
+      <Row gutter={24}>
+        {/* Custom Table Bar Chart */}
+        <Col span={12}>
+          <Card title={<Space><BarChartOutlined />自訂桌月度趨勢</Space>} loading={loading}>
+            <BarChart data={customBarData} title="" color="#1890ff" height={200} />
+          </Card>
+        </Col>
+
+        {/* Cadre Table Bar Chart */}
+        <Col span={12}>
+          <Card title={<Space><BarChartOutlined />幹部訂桌月度趨勢</Space>} loading={loading}>
+            <BarChart data={cadreBarData} title="" color="#faad14" height={200} />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Line Charts for Trends */}
+      <Row gutter={24}>
+        <Col span={12}>
+          <Card title={<Space><BarChartOutlined />自訂桌成長趨勢</Space>} loading={loading}>
+            <LineChart data={customTrendData} title="" />
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card title={<Space><BarChartOutlined />幹部訂桌成長趨勢</Space>} loading={loading}>
+            <LineChart data={cadreTrendData} title="" />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Pie Charts for Top Contributors */}
+      <Row gutter={24}>
+        {selectedMonths.map(m => (
+          <Col span={12} key={m}>
+            <Card title={<span>{m} 自訂桌 TOP 3</span>} loading={loading}>
+              <PieChart data={customTop3(m)} title="" />
+            </Card>
+          </Col>
+        ))}
+      </Row>
+
+      <Row gutter={24}>
+        {selectedMonths.map(m => (
+          <Col span={12} key={m}>
+            <Card title={<span>{m} 幹部訂桌 TOP 3</span>} loading={loading}>
+              <PieChart data={cadreTop3(m)} title="" />
+            </Card>
+          </Col>
+        ))}
+      </Row>
     </div>
   );
 }

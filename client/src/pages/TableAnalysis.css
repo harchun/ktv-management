@@ -22,80 +22,76 @@
   background: #fafafa;
 }
 
-/* Page Break */
-.print-page-break {
-  page-break-after: always;
-  break-after: page;
-}
-
-.print-last-page {
-  page-break-after: avoid;
-  break-after: avoid;
-}
-
 /* Summary Section */
 .print-summary-section {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
+  text-align: center;
 }
 
 .report-title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
-  text-align: center;
   margin-bottom: 8px;
 }
 
 .report-period {
-  text-align: center;
+  font-size: 16px;
   opacity: 0.9;
-  margin-bottom: 24px;
-  font-size: 14px;
 }
 
+/* Summary Row */
 .summary-row {
-  margin-top: 16px;
+  margin-bottom: 24px;
 }
 
-.summary-box {
-  background: rgba(255, 255, 255, 0.15);
+.summary-card {
   border-radius: 12px;
-  padding: 16px;
-  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.summary-icon {
+.summary-card .card-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.custom-card .card-header {
+  color: #1890ff;
+}
+
+.cadre-card .card-header {
+  color: #faad14;
 }
 
 .summary-item {
   text-align: center;
-  padding: 8px;
+  padding: 12px 8px;
 }
 
 .summary-month {
   font-size: 12px;
-  opacity: 0.8;
+  color: #999;
   margin-bottom: 4px;
 }
 
 .summary-amount {
   font-size: 20px;
   font-weight: bold;
+  color: #ff4d4f;
   margin-bottom: 4px;
 }
 
 .summary-detail {
   font-size: 12px;
-  opacity: 0.7;
+  color: #666;
+  margin-bottom: 4px;
 }
 
 .growth-badge {
@@ -106,124 +102,167 @@
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
-  margin-top: 4px;
 }
 
 .growth-badge.growth {
-  background: rgba(82, 196, 26, 0.2);
+  background: #f6ffed;
   color: #52c41a;
 }
 
 .growth-badge.decline {
-  background: rgba(255, 77, 79, 0.2);
+  background: #fff2f0;
   color: #ff4d4f;
 }
 
-/* Section Header */
-.section-header {
+/* Bar Chart Styles */
+.chart-container {
+  padding: 16px;
+}
+
+.chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.bar-chart {
   display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 200px;
+  padding: 20px 10px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.bar-item {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #1890ff;
+  flex: 1;
 }
 
-.section-header svg {
-  color: #1890ff;
-}
-
-/* Month Block */
-.month-block {
-  margin-bottom: 24px;
-  padding-bottom: 24px;
-  border-bottom: 1px dashed #d9d9d9;
-}
-
-.month-block:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.month-header {
+.bar-wrapper {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: #f0f5ff;
-  border-radius: 6px;
+  gap: 4px;
 }
 
-.month-name {
-  font-size: 16px;
+.bar {
+  width: 50px;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.3s ease;
+  min-height: 4px;
+}
+
+.bar:hover {
+  opacity: 0.8;
+  transform: scaleY(1.02);
+}
+
+.bar-value {
+  font-size: 11px;
   font-weight: 600;
-  color: #1890ff;
+  color: #333;
+  text-align: center;
+  white-space: nowrap;
 }
 
-.month-total {
-  font-size: 14px;
-  font-weight: 500;
-  color: #666;
-}
-
-/* Rank Badge */
-.rank-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  font-weight: 600;
+.bar-label {
   font-size: 12px;
+  color: #666;
+  font-weight: 500;
 }
 
-.rank-1 {
-  background: #FFD700;
-  color: #fff;
+/* Pie Chart Styles */
+.pie-chart-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.rank-2 {
-  background: #C0C0C0;
-  color: #fff;
+.pie-wrapper {
+  position: relative;
+  width: 180px;
+  height: 180px;
 }
 
-.rank-3 {
-  background: #CD7F32;
-  color: #fff;
+.pie-svg {
+  width: 100%;
+  height: 100%;
 }
 
-/* Detail Table */
-.detail-table {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
+.pie-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
 }
 
-.detail-table .ant-table-thead > tr > th {
-  background: #fafafa;
-  font-weight: 600;
-  border-bottom: 2px solid #e8e8e8;
+.pie-total {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
 }
 
-.detail-table .ant-table-tbody > tr > td {
+.pie-label {
+  font-size: 11px;
+  color: #999;
+}
+
+.pie-legend {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
   border-bottom: 1px solid #f0f0f0;
 }
 
-.detail-table .ant-table-tbody > tr:last-child > td {
+.legend-item:last-child {
   border-bottom: none;
 }
 
-.amount {
-  font-weight: 600;
-  color: #ff4d4f;
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 8px;
 }
 
-/* Print Styles - A4 Format */
+.legend-name {
+  flex: 1;
+  font-size: 13px;
+  color: #333;
+}
+
+.legend-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+
+/* Line Chart Styles */
+.line-chart-container {
+  padding: 16px;
+}
+
+.line-svg {
+  width: 100%;
+  height: 180px;
+}
+
+/* Print Styles */
 @media print {
   @page {
     size: A4;
@@ -246,131 +285,33 @@
   .print-section {
     border: none !important;
     padding: 0 !important;
-    margin-bottom: 30px !important;
-    page-break-inside: avoid;
+    margin-bottom: 20px !important;
   }
 
-  /* Summary Section */
   .print-summary-section {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  .report-title, .report-period {
+    color: white !important;
+  }
+
+  .summary-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .bar-chart, .pie-chart-container, .line-chart-container {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Add page break after first page */
+  .summary-row {
     page-break-after: always;
     break-after: page;
-  }
-
-  .report-title {
-    font-size: 22px;
-    color: #333 !important;
-    background: white !important;
-  }
-
-  .report-period {
-    color: #666 !important;
-    background: white !important;
-  }
-
-  .summary-box {
-    background: white !important;
-    color: #333 !important;
-  }
-
-  .summary-icon {
-    color: #333 !important;
-    border-bottom-color: #ddd !important;
-  }
-
-  .summary-amount {
-    color: #ff4d4f !important;
-    background: white !important;
-  }
-
-  .summary-month, .summary-detail {
-    color: #666 !important;
-    background: white !important;
-  }
-
-  .growth-badge {
-    background: #f6ffed !important;
-    color: #52c41a !important;
-    border: 1px solid #b7eb8f !important;
-  }
-
-  .growth-badge.decline {
-    background: #fff2f0 !important;
-    color: #ff4d4f !important;
-    border: 1px solid #ffa39e !important;
-  }
-
-  /* Section Header */
-  .section-header {
-    color: #333 !important;
-    border-bottom-color: #1890ff !important;
-    background: white !important;
-  }
-
-  .section-header svg {
-    color: #1890ff !important;
-  }
-
-  /* Month Block */
-  .month-block {
-    background: white !important;
-  }
-
-  .month-header {
-    background: #f0f5ff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .month-name {
-    color: #1890ff !important;
-  }
-
-  .month-total {
-    color: #666 !important;
-  }
-
-  /* Detail Table */
-  .detail-table {
-    background: white !important;
-  }
-
-  .detail-table .ant-table-thead > tr > th {
-    background: #fafafa !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .amount {
-    color: #ff4d4f !important;
-  }
-
-  /* Rank Badge */
-  .rank-badge {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  /* Page Breaks */
-  .print-page-break {
-    page-break-after: always;
-    break-after: page;
-  }
-
-  .print-last-page {
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-
-  /* Hide antd components */
-  .ant-table-pagination {
-    display: none !important;
-  }
-
-  .ant-tag {
-    border: 1px solid !important;
   }
 }
 
@@ -386,9 +327,12 @@
     align-items: flex-start;
   }
 
-  .month-header {
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
+  .bar {
+    width: 40px;
+  }
+
+  .pie-wrapper {
+    width: 150px;
+    height: 150px;
   }
 }
