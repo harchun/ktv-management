@@ -46,8 +46,9 @@
   page-break-after: always;
   page-break-inside: avoid;
   width: 210mm;
-  min-height: 297mm;
-  margin: 0 auto;
+  height: 297mm;
+  margin: 0 auto 20px;
+  overflow: hidden;
 }
 
 .page:last-child {
@@ -57,6 +58,7 @@
 /* ==================== Cover Page ==================== */
 .cover-page {
   height: 297mm;
+  min-height: 297mm;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -123,6 +125,7 @@
 .summary-page {
   padding: 20mm 15mm;
   height: 297mm;
+  min-height: 297mm;
 }
 
 .page-header {
@@ -295,6 +298,7 @@
 /* ==================== Footer Page ==================== */
 .footer-page {
   height: 297mm;
+  min-height: 297mm;
   display: flex;
   align-items: center;
   justify-content: center;
