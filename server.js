@@ -635,9 +635,10 @@ app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
   try {
     const { month } = req.query;
     let sql = `SELECT 
-      ds.\`公關訂桌\`, ds.\`幹部\`, ds.\`客戶名\`,
+      g.\`姓名\` as 公關, ds.\`幹部\`, ds.\`客戶名\`,
       SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
       FROM daily_sales ds
+      LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
       WHERE ds.\`公關訂桌\` IS NOT NULL 
       AND ds.\`公關訂桌\` != ''`;
     const params = [];
@@ -649,7 +650,7 @@ app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
       sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)';
     }
     
-    sql += ' GROUP BY ds.\`公關訂桌\`, ds.\`幹部\`, ds.\`客戶名\`';
+    sql += ' GROUP BY g.\`姓名\`, ds.\`幹部\`, ds.\`客戶名\`';
     sql += ' ORDER BY 總消費 DESC';
     const [rows] = await pool.execute(sql, params);
     res.json(rows);
