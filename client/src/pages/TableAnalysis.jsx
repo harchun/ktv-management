@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Table, Card, Row, Col, Statistic, Typography, Tag, Progress } from 'antd';
-import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined, TrendUpOutlined, TrendDownOutlined, DollarOutlined, TeamOutlined, CalendarOutlined, RiseOutlined } from '@ant-design/icons';
+import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined, DollarOutlined, TeamOutlined, CalendarOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const { Title, Text, Paragraph } = Typography;
@@ -212,7 +212,7 @@ export default function TableAnalysis() {
               {overallGossipGrowth !== null && (
                 <Tag 
                   color={parseFloat(overallGossipGrowth) >= 0 ? 'success' : 'error'}
-                  icon={parseFloat(overallGossipGrowth) >= 0 ? <TrendUpOutlined /> : <TrendDownOutlined />}
+                  icon={parseFloat(overallGossipGrowth) >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
                 >
                   期內成長 {parseFloat(overallGossipGrowth) >= 0 ? '+' : ''}{overallGossipGrowth}%
                 </Tag>
@@ -240,7 +240,7 @@ export default function TableAnalysis() {
               {overallCadreGrowth !== null && (
                 <Tag 
                   color={parseFloat(overallCadreGrowth) >= 0 ? 'success' : 'error'}
-                  icon={parseFloat(overallCadreGrowth) >= 0 ? <TrendUpOutlined /> : <TrendDownOutlined />}
+                  icon={parseFloat(overallCadreGrowth) >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
                 >
                   期內成長 {parseFloat(overallCadreGrowth) >= 0 ? '+' : ''}{overallCadreGrowth}%
                 </Tag>
@@ -333,7 +333,7 @@ export default function TableAnalysis() {
                     </span>
                   ) : (
                     <span style={{ color: '#ff4d4f' }}>
-                      <TrendDownOutlined /> 衰退中 ({overallGossipGrowth}%)
+                      <ArrowDownOutlined /> 衰退中 ({overallGossipGrowth}%)
                     </span>
                   )}
                 </div>
