@@ -122,7 +122,7 @@ export default function TableUsage() {
           </Col>
           <Col span={6}>
             <Statistic 
-              title="獨到客戶數" 
+              title="客戶數" 
               value={uniqueCustomers} 
               valueStyle={{ color: '#3498db' }}
             />
