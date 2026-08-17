@@ -568,7 +568,7 @@ app.get('/api/stats/table-usage', authenticate, async (req, res) => {
     let sql = `SELECT 
       ds.\`幹部\`, cad.\`等級\`,
       COALESCE(g.\`姓名\`, g.\`暱稱\`) as 公關,
-      GROUP_CONCAT(ds.\`客戶名\` SEPARATOR ', ') as 客戶列表,
+      GROUP_CONCAT(DISTINCT ds.\`客戶名\` SEPARATOR ', ') as 客戶列表,
       SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費,
       COUNT(*) as 次數,
       COUNT(DISTINCT ds.\`客戶名\`) as 客戶數
