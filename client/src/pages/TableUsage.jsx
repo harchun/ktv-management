@@ -88,6 +88,7 @@ export default function TableUsage() {
                 <Option key={m} value={m}>{m}</Option>
               ))}
             </Select>
+            <span style={{ color: '#aaa', marginLeft: 16 }}>等級: 公關</span>
           </Space>
         }
       >
