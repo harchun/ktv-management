@@ -1,405 +1,407 @@
 import { useState, useEffect } from 'react';
-import { Table, Card, Row, Col, Statistic, Typography, Tag, Progress } from 'antd';
-import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined, DollarOutlined, TeamOutlined, CalendarOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import {
+  Card,
+  Table,
+  Select,
+  Typography,
+  Space,
+  Tag,
+  Row,
+  Col,
+  Statistic,
+  Progress,
+  Alert,
+  Collapse
+} from 'antd';
+import {
+  TrophyOutlined,
+  RiseOutlined,
+  FallOutlined,
+  TableOutlined,
+  DollarOutlined
+} from '@ant-design/icons';
 
-const { Title, Text, Paragraph } = Typography;
-
-const API = axios.create({ baseURL: '/api' });
-API.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+const { Title, Text } = Typography;
+const { Panel } = Collapse;
 
 export default function TableAnalysis() {
-  const [data, setData] = useState([]);
-  const [summary, setSummary] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [months, setMonths] = useState([]);
+  const [customTables, setCustomTables] = useState([]);
+  const [cadreTables, setCadreTables] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [customGrowth, setCustomGrowth] = useState(null);
+  const [cadreGrowth, setCadreGrowth] = useState(null);
 
   useEffect(() => {
-    fetchSummary();
-    fetchData();
+    fetch('/api/stats/months')
+      .then(r => r.json())
+      .then(data => {
+        const sorted = [...data].sort().reverse();
+        setMonths(sorted);
+        if (sorted.length > 0) setSelectedMonth(sorted[0]);
+      });
   }, []);
 
-  const fetchSummary = async () => {
-    try {
-      const res = await API.get('/stats/table-analysis');
-      setSummary(res.data);
-    } catch (e) { console.error('載入摘要失敗', e); }
-  };
+  useEffect(() => {
+    if (!selectedMonth) return;
 
-  const fetchData = async () => {
     setLoading(true);
-    try {
-      const [growthRes, gossipRes, cadreRes] = await Promise.all([
-        API.get('/stats/table-analysis-growth'),
-        API.get('/stats/table-analysis-gossip'),
-        API.get('/stats/table-analysis-cadre')
-      ]);
-      
-      const result = growthRes.data.map((row, idx) => ({
-        ...row,
-        id: row.month,
-        gossip_growth: idx > 0 ? calculateGrowth(gossipRes.data[idx-1]?.total, row.gossip_total) : null,
-        cadre_growth: idx > 0 ? calculateGrowth(cadreRes.data[idx-1]?.total, row.cadre_total) : null,
-        visits_growth: idx > 0 ? calculateGrowth(cadreRes.data[idx-1]?.visits, row.visits) : null
-      }));
-      
-      setData(result);
-    } catch (e) { console.error('載入失敗', e); }
-    finally { setLoading(false); }
+    Promise.all([
+      fetch(`/api/stats/table-usage?month=${selectedMonth}`),
+      fetch(`/api/stats/cadre-table?month=${selectedMonth}`)
+    ])
+      .then(([customRes, cadreRes]) =>
+        Promise.all([customRes.json(), cadreRes.json()])
+      )
+      .then(([customData, cadreData]) => {
+        setCustomTables(customData || []);
+        setCadreTables(cadreData || []);
+        calculateGrowth(selectedMonth, customData, cadreData);
+      })
+      .finally(() => setLoading(false));
+  }, [selectedMonth]);
+
+  const calculateGrowth = (currentMonth, currentCustom, currentCadre) => {
+    const currentIndex = months.indexOf(currentMonth);
+    if (currentIndex <= 0) return;
+
+    const prevMonth = months[currentIndex - 1];
+
+    // 自訂桌成長率
+    if (currentCustom && months[currentIndex - 1]) {
+      fetch(`/api/stats/table-usage?month=${prevMonth}`)
+        .then(r => r.json())
+        .then(prevData => {
+          const currentTotal = currentCustom.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+          const prevTotal = (prevData || []).reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+          const currentTables = currentCustom.length;
+          const prevTables = (prevData || []).length;
+
+          setCustomGrowth({
+            consumption: prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal * 100).toFixed(2) : 0,
+            tables: prevTables > 0 ? ((currentTables - prevTables) / prevTables * 100).toFixed(2) : 0,
+            isGrowth: currentTotal >= prevTotal
+          });
+        });
+    }
+
+    // 幹桌成長率
+    if (currentCadre && months[currentIndex - 1]) {
+      fetch(`/api/stats/cadre-table?month=${prevMonth}`)
+        .then(r => r.json())
+        .then(prevData => {
+          const currentTotal = currentCadre.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+          const prevTotal = (prevData || []).reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+          const currentTables = currentCadre.length;
+          const prevTables = (prevData || []).length;
+
+          setCadreGrowth({
+            consumption: prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal * 100).toFixed(2) : 0,
+            tables: prevTables > 0 ? ((currentTables - prevTables) / prevTables * 100).toFixed(2) : 0,
+            isGrowth: currentTotal >= prevTotal
+          });
+        });
+    }
   };
 
-  const calculateGrowth = (prev, current) => {
-    if (!prev || !current || prev === 0) return null;
-    return ((current - prev) / prev * 100).toFixed(2);
+  const getRankStyle = (index) => {
+    if (index === 0) return { background: '#FFD700', color: '#fff' };
+    if (index === 1) return { background: '#C0C0C0', color: '#fff' };
+    if (index === 2) return { background: '#CD7F32', color: '#fff' };
+    return {};
   };
 
-  const formatMoney = (val) => {
-    return `NT$ ${Math.round(Number(val) || 0).toLocaleString('zh-TW')}`;
-  };
-
-  const getGrowthBadge = (growth) => {
-    if (growth === null) return <Tag icon={<MinusOutlined />} color="default">-</Tag>;
-    const val = parseFloat(growth);
-    if (val > 0) return <Tag icon={<ArrowUpOutlined />} color="success">+{val}%</Tag>;
-    if (val < 0) return <Tag icon={<ArrowDownOutlined />} color="error">{val}%</Tag>;
-    return <Tag color="warning">0%</Tag>;
-  };
-
-  const getGrowthIcon = (growth) => {
-    if (growth === null) return <MinusOutlined style={{ color: '#8c8c8c' }} />;
-    const val = parseFloat(growth);
-    if (val > 0) return <ArrowUpOutlined style={{ color: '#52c41a' }} />;
-    if (val < 0) return <ArrowDownOutlined style={{ color: '#ff4d4f' }} />;
-    return <MinusOutlined style={{ color: '#faad14' }} />;
-  };
-
-  // 計算累計數據
-  const totalGossipConsumption = data.reduce((sum, r) => sum + (Number(r.gossip_total) || 0), 0);
-  const totalCadreConsumption = data.reduce((sum, r) => sum + (Number(r.cadre_total) || 0), 0);
-  const totalVisits = data.reduce((sum, r) => sum + (Number(r.visits) || 0), 0);
-  const totalRecords = data.reduce((sum, r) => sum + (Number(r.gossip_records) || 0), 0);
-
-  // 計算整體成長率
-  const overallGossipGrowth = data.length > 1 
-    ? calculateGrowth(data[0]?.gossip_total, data[data.length - 1]?.gossip_total) 
-    : null;
-  const overallCadreGrowth = data.length > 1
-    ? calculateGrowth(data[0]?.cadre_total, data[data.length - 1]?.cadre_total)
-    : null;
-
-  // 找出最佳月份
-  const bestMonth = data.reduce((prev, current) => 
-    (Number(current.gossip_total) > Number(prev.gossip_total) ? current : prev)
-  , data[0]);
-  const worstMonth = data.reduce((prev, current) =>
-    (Number(current.gossip_total) < Number(prev.gossip_total) ? current : prev)
-  , data[0]);
-
-  // 數據表格
-  const columns = [
+  const customColumns = [
     {
-      title: '月份',
-      dataIndex: 'month',
-      key: 'month',
-      width: 100,
-      render: (val) => <Text strong style={{ fontSize: 14 }}>{val}</Text>
+      title: '排名',
+      dataIndex: 'rank',
+      key: 'rank',
+      width: 60,
+      render: (rank, _, index) => (
+        <span style={getRankStyle(index)}>
+          {index + 1}
+        </span>
+      )
     },
     {
-      title: '公關訂桌',
-      children: [
-        {
-          title: '總消費',
-          dataIndex: 'gossip_total',
-          key: 'gossip_total',
-          width: 130,
-          render: (val) => <Text strong>{formatMoney(val)}</Text>
-        },
-        {
-          title: '月增率',
-          dataIndex: 'gossip_growth',
-          key: 'gossip_growth',
-          width: 90,
-          render: (val) => getGrowthBadge(val)
-        },
-        {
-          title: '紀錄數',
-          dataIndex: 'gossip_records',
-          key: 'gossip_records',
-          width: 80
-        }
-      ]
+      title: '幹部',
+      dataIndex: '幹部',
+      key: '幹部',
+      render: (name) => <Text strong>{name}</Text>
     },
     {
-      title: '幹部公關',
-      children: [
-        {
-          title: '總消費',
-          dataIndex: 'cadre_total',
-          key: 'cadre_total',
-          width: 130,
-          render: (val) => <Text strong>{formatMoney(val)}</Text>
-        },
-        {
-          title: '月增率',
-          dataIndex: 'cadre_growth',
-          key: 'cadre_growth',
-          width: 90,
-          render: (val) => getGrowthBadge(val)
-        },
-        {
-          title: '活躍幹部',
-          dataIndex: 'active_count',
-          key: 'active_count',
-          width: 90
-        },
-        {
-          title: '桌數',
-          dataIndex: 'visits',
-          key: 'visits',
-          width: 80
-        }
-      ]
+      title: '總消費',
+      dataIndex: '總消費',
+      key: '總消費',
+      render: (val) => <Text type="danger">NT$ {Number(val).toLocaleString()}</Text>
+    },
+    {
+      title: '桌數',
+      dataIndex: '桌數',
+      key: '桌數',
+      width: 80,
+      render: (val) => <Tag color="blue">{val}</Tag>
     }
   ];
 
-  return (
-    <div style={{ padding: '0 4px' }}>
-      {/* 報告標題區 */}
-      <Card 
-        style={{ 
-          marginBottom: 16, 
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: '#fff',
-          borderRadius: 8
-        }}
-        styles={{ body: { padding: '20px 24px' } }}
-      >
-        <Row align="middle" gutter={[24, 16]}>
-          <Col>
-            <Title level={3} style={{ color: '#fff', margin: 0 }}>📊 訂桌經營分析報告</Title>
-          </Col>
-          <Col style={{ marginLeft: 'auto' }}>
-            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>
-              {summary?.first_month || '2026-05'} ~ {summary?.current_month || '2026-07'}
-            </Text>
-          </Col>
-        </Row>
-      </Card>
+  const cadreColumns = [
+    {
+      title: '排名',
+      dataIndex: 'rank',
+      key: 'rank',
+      width: 60,
+      render: (rank, _, index) => (
+        <span style={getRankStyle(index)}>
+          {index + 1}
+        </span>
+      )
+    },
+    {
+      title: '公關',
+      dataIndex: '公關訂桌',
+      key: '公關訂桌',
+      render: (name) => <Text strong>{name}</Text>
+    },
+    {
+      title: '總消費',
+      dataIndex: '總消費',
+      key: '總消費',
+      render: (val) => <Text type="danger">NT$ {Number(val).toLocaleString()}</Text>
+    },
+    {
+      title: '紀錄數',
+      dataIndex: '紀錄數',
+      key: '紀錄數',
+      width: 80,
+      render: (val) => <Tag color="green">{val}</Tag>
+    }
+  ];
 
-      {/* 關鍵指標區 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-        <Col xs={12} sm={6}>
-          <Card 
-            style={{ 
-              borderRadius: 8, 
-              border: '1px solid #e8e8e8',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-            }}
-          >
-            <Statistic
-              title={<Text type="secondary">公關訂桌總消費</Text>}
-              value={totalGossipConsumption}
-              prefix={<DollarOutlined style={{ color: '#f39c12' }} />}
-              prefixStyle={{ color: '#f39c12' }}
-              valueStyle={{ color: '#f39c12', fontSize: 24 }}
-              precision={0}
-              suffix="NT$"
-            />
-            <div style={{ marginTop: 8 }}>
-              {overallGossipGrowth !== null && (
-                <Tag 
-                  color={parseFloat(overallGossipGrowth) >= 0 ? 'success' : 'error'}
-                  icon={parseFloat(overallGossipGrowth) >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-                >
-                  期內成長 {parseFloat(overallGossipGrowth) >= 0 ? '+' : ''}{overallGossipGrowth}%
-                </Tag>
-              )}
-            </div>
-          </Card>
+  const growthBadge = (growth) => {
+    if (!growth) return null;
+    const isGrowth = parseFloat(growth.consumption) >= 0;
+    return (
+      <Tag color={isGrowth ? 'success' : 'error'} className="ml-2">
+        {isGrowth ? <RiseOutlined /> : <FallOutlined />}
+        {Math.abs(growth.consumption)}%
+      </Tag>
+    );
+  };
+
+  return (
+    <div style={{ padding: '24px' }}>
+      <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+        <Col>
+          <Title level={2}>📊 訂桌分析</Title>
+          <Text type="secondary">分析自訂桌統計與幹桌統計的月份成長/衰退趨勢</Text>
         </Col>
-        <Col xs={12} sm={6}>
-          <Card 
-            style={{ 
-              borderRadius: 8, 
-              border: '1px solid #e8e8e8',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-            }}
+        <Col>
+          <Select
+            value={selectedMonth}
+            onChange={setSelectedMonth}
+            style={{ width: 150 }}
+            size="large"
           >
-            <Statistic
-              title={<Text type="secondary">幹部公關總消費</Text>}
-              value={totalCadreConsumption}
-              prefix={<DollarOutlined style={{ color: '#52c41a' }} />}
-              valueStyle={{ color: '#52c41a', fontSize: 24 }}
-              precision={0}
-              suffix="NT$"
-            />
-            <div style={{ marginTop: 8 }}>
-              {overallCadreGrowth !== null && (
-                <Tag 
-                  color={parseFloat(overallCadreGrowth) >= 0 ? 'success' : 'error'}
-                  icon={parseFloat(overallCadreGrowth) >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-                >
-                  期內成長 {parseFloat(overallCadreGrowth) >= 0 ? '+' : ''}{overallCadreGrowth}%
-                </Tag>
-              )}
-            </div>
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card 
-            style={{ 
-              borderRadius: 8, 
-              border: '1px solid #e8e8e8',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-            }}
-          >
-            <Statistic
-              title={<Text type="secondary">總來訪桌數</Text>}
-              value={totalVisits}
-              prefix={<CalendarOutlined style={{ color: '#722ed1' }} />}
-              valueStyle={{ color: '#722ed1', fontSize: 24 }}
-            />
-            <div style={{ marginTop: 8 }}>
-              <Tag color="processing">{data.length} 個月數據</Tag>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card 
-            style={{ 
-              borderRadius: 8, 
-              border: '1px solid #e8e8e8',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-            }}
-          >
-            <Statistic
-              title={<Text type="secondary">公關訂桌紀錄</Text>}
-              value={totalRecords}
-              prefix={<TeamOutlined style={{ color: '#1890ff' }} />}
-              valueStyle={{ color: '#1890ff', fontSize: 24 }}
-            />
-            <div style={{ marginTop: 8 }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                平均每月 {Math.round(totalRecords / (data.length || 1))} 筆
-              </Text>
-            </div>
-          </Card>
+            {months.map(m => (
+              <Select.Option key={m} value={m}>{m}</Select.Option>
+            ))}
+          </Select>
         </Col>
       </Row>
 
-      {/* 分析摘要 */}
-      {bestMonth && worstMonth && bestMonth.month !== worstMonth.month && (
-        <Card 
-          title={<span>📈 分析摘要</span>}
-          style={{ 
-            marginBottom: 16, 
-            borderRadius: 8,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-          }}
-        >
-          <Row gutter={[24, 16]}>
-            <Col span={8}>
-              <div style={{ padding: '12px 16px', background: '#f6ffed', borderRadius: 6, border: '1px solid #b7eb8f' }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>最佳月份</Text>
-                <div style={{ fontSize: 20, fontWeight: 'bold', color: '#52c41a', marginTop: 4 }}>
-                  {bestMonth.month}
-                </div>
-                <div style={{ fontSize: 14, color: '#52c41a', marginTop: 4 }}>
-                  {formatMoney(bestMonth.gossip_total)}
-                </div>
-              </div>
-            </Col>
-            <Col span={8}>
-              <div style={{ padding: '12px 16px', background: '#fff2f0', borderRadius: 6, border: '1px solid #ffa39e' }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>最低月份</Text>
-                <div style={{ fontSize: 20, fontWeight: 'bold', color: '#ff4d4f', marginTop: 4 }}>
-                  {worstMonth.month}
-                </div>
-                <div style={{ fontSize: 14, color: '#ff4d4f', marginTop: 4 }}>
-                  {formatMoney(worstMonth.gossip_total)}
-                </div>
-              </div>
-            </Col>
-            <Col span={8}>
-              <div style={{ padding: '12px 16px', background: '#e6f7ff', borderRadius: 6, border: '1px solid #91d5ff' }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>整體趨勢</Text>
-                <div style={{ fontSize: 16, fontWeight: 'bold', marginTop: 4 }}>
-                  {parseFloat(overallGossipGrowth || 0) >= 0 ? (
-                    <span style={{ color: '#52c41a' }}>
-                      <TrendUpOutlined /> 成長中 (+{overallGossipGrowth}%)
-                    </span>
-                  ) : (
-                    <span style={{ color: '#ff4d4f' }}>
-                      <ArrowDownOutlined /> 衰退中 ({overallGossipGrowth}%)
-                    </span>
-                  )}
-                </div>
-                <Text type="secondary" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
-                  {formatMoney(totalGossipConsumption)} / {data.length} 個月
-                </Text>
-              </div>
-            </Col>
-          </Row>
-        </Card>
-      )}
-
-      {/* 詳細數據表格 */}
-      <Card 
-        title={<span>📋 月度數據明細</span>}
+      {/* 自訂桌統計區段 */}
+      <Card
+        title={
+          <Space>
+            <TrophyOutlined />
+            <span>自訂桌統計</span>
+            {customGrowth && growthBadge(customGrowth)}
+          </Space>
+        }
         loading={loading}
-        style={{ 
-          borderRadius: 8,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-        }}
+        extra={
+          customGrowth && (
+            <Space direction="vertical" size={0}>
+              <Text type="secondary">較上月：</Text>
+              <Text type={customGrowth.isGrowth ? 'success' : 'danger'} strong>
+                {customGrowth.isGrowth ? '↑' : '↓'} 消費 {Math.abs(customGrowth.consumption)}%
+              </Text>
+            </Space>
+          )
+        }
+        style={{ marginBottom: 24 }}
       >
-        <Table
-          columns={columns}
-          dataSource={data}
-          rowKey="id"
-          pagination={false}
-          size="middle"
-          bordered
-          summary={({ pageData }) => (
-            <Table.Summary.Fixed>
-              <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 'bold' }}>
-                <Table.Summary.Cell index={0}>合計</Table.Summary.Cell>
-                <Table.Summary.Cell index={1}>{formatMoney(pageData.reduce((sum, r) => sum + (Number(r.gossip_total) || 0), 0))}</Table.Summary.Cell>
-                <Table.Summary.Cell index={2}>-</Table.Summary.Cell>
-                <Table.Summary.Cell index={3}>{pageData.reduce((sum, r) => sum + (Number(r.gossip_records) || 0), 0)}</Table.Summary.Cell>
-                <Table.Summary.Cell index={4}>{formatMoney(pageData.reduce((sum, r) => sum + (Number(r.cadre_total) || 0), 0))}</Table.Summary.Cell>
-                <Table.Summary.Cell index={5}>-</Table.Summary.Cell>
-                <Table.Summary.Cell index={6}>{pageData.reduce((sum, r) => sum + (Number(r.active_count) || 0), 0)}</Table.Summary.Cell>
-                <Table.Summary.Cell index={7}>{pageData.reduce((sum, r) => sum + (Number(r.visits) || 0), 0)}</Table.Summary.Cell>
-              </Table.Summary.Row>
-            </Table.Summary.Fixed>
-          )}
-        />
+        {customTables.length > 0 ? (
+          <>
+            {/* 本月統計摘要 */}
+            <Row gutter={16} style={{ marginBottom: 16 }}>
+              <Col span={6}>
+                <Statistic
+                  title="本月總消費"
+                  value={customTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0)}
+                  prefix={<DollarOutlined />}
+                  suffix="NT$"
+                  precision={0}
+                />
+              </Col>
+              <Col span={6}>
+                <Statistic
+                  title="本月桌數"
+                  value={customTables.length}
+                  prefix={<TableOutlined />}
+                />
+              </Col>
+              {customGrowth && (
+                <>
+                  <Col span={6}>
+                    <Statistic
+                      title="上月總消費"
+                      value={customTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0) * (1 - customGrowth.consumption / 100)}
+                      prefix={<DollarOutlined />}
+                      suffix="NT$"
+                      precision={0}
+                    />
+                  </Col>
+                  <Col span={6}>
+                    <Statistic
+                      title="上月桌數"
+                      value={Math.round(customTables.length / (1 + customGrowth.tables / 100))}
+                      prefix={<TableOutlined />}
+                    />
+                  </Col>
+                </>
+              )}
+            </Row>
+
+            <Table
+              dataSource={customTables}
+              columns={customColumns}
+              rowKey="幹部"
+              pagination={false}
+              size="middle"
+              summary={() => (
+                <Table.Summary fixed>
+                  <Table.Summary.Row style={{ background: '#f0f0f0' }}>
+                    <Table.Summary.Cell index={0}><Text strong>合計</Text></Table.Summary.Cell>
+                    <Table.Summary.Cell index={1}><Text strong>{customTables.length} 人</Text></Table.Summary.Cell>
+                    <Table.Summary.Cell index={2}>
+                      <Text type="danger" strong>
+                        NT$ {customTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0).toLocaleString()}
+                      </Text>
+                    </Table.Summary.Cell>
+                    <Table.Summary.Cell index={3}>
+                      <Tag color="blue" style={{ fontWeight: 'bold' }}>{customTables.length} 桌</Tag>
+                    </Table.Summary.Cell>
+                  </Table.Summary.Row>
+                </Table.Summary>
+              )}
+            />
+          </>
+        ) : (
+          <Alert
+            message="本月暂无自訂桌統計數據"
+            type="info"
+            showIcon
+          />
+        )}
       </Card>
 
-      {/* 備註區 */}
-      <Card 
-        style={{ 
-          marginTop: 16, 
-          borderRadius: 8,
-          background: '#fafafa',
-          border: '1px solid #e8e8e8'
-        }}
+      {/* 幹桌統計區段 */}
+      <Card
+        title={
+          <Space>
+            <TrophyOutlined style={{ color: '#faad14' }} />
+            <span>幹桌統計</span>
+            {cadreGrowth && growthBadge(cadreGrowth)}
+          </Space>
+        }
+        loading={loading}
+        extra={
+          cadreGrowth && (
+            <Space direction="vertical" size={0}>
+              <Text type="secondary">較上月：</Text>
+              <Text type={cadreGrowth.isGrowth ? 'success' : 'error'} strong>
+                {cadreGrowth.isGrowth ? '↑' : '↓'} 消費 {Math.abs(cadreGrowth.consumption)}%
+              </Text>
+            </Space>
+          )
+        }
+        style={{ marginBottom: 24 }}
       >
-        <Title level={5} style={{ margin: '0 0 12px 0', color: '#666' }}>📝 報告說明</Title>
-        <div style={{ color: '#666', lineHeight: 1.8 }}>
-          <p style={{ margin: '0 0 8px 0' }}>
-            <strong>公關訂桌：</strong>以營業報表中的「公關訂桌」欄位為主，統計該公關所帶來的總消費金額。
-          </p>
-          <p style={{ margin: '0 0 8px 0' }}>
-            <strong>幹部公關：</strong>統計幹部等級為「公關」之人員的來訪紀錄與消費金額。
-          </p>
-          <p style={{ margin: '0' }}>
-            <strong>月增率：</strong>相對於上個月的成長或衰退百分比。
-          </p>
-        </div>
+        {cadreTables.length > 0 ? (
+          <>
+            {/* 本月統計摘要 */}
+            <Row gutter={16} style={{ marginBottom: 16 }}>
+              <Col span={6}>
+                <Statistic
+                  title="本月總消費"
+                  value={cadreTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0)}
+                  prefix={<DollarOutlined />}
+                  suffix="NT$"
+                  precision={0}
+                />
+              </Col>
+              <Col span={6}>
+                <Statistic
+                  title="本月紀錄數"
+                  value={cadreTables.length}
+                  prefix={<TableOutlined />}
+                />
+              </Col>
+              {cadreGrowth && (
+                <>
+                  <Col span={6}>
+                    <Statistic
+                      title="上月總消費"
+                      value={cadreTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0) * (1 - cadreGrowth.consumption / 100)}
+                      prefix={<DollarOutlined />}
+                      suffix="NT$"
+                      precision={0}
+                    />
+                  </Col>
+                  <Col span={6}>
+                    <Statistic
+                      title="上月紀錄數"
+                      value={Math.round(cadreTables.length / (1 + cadreGrowth.tables / 100))}
+                      prefix={<TableOutlined />}
+                    />
+                  </Col>
+                </>
+              )}
+            </Row>
+
+            <Table
+              dataSource={cadreTables}
+              columns={cadreColumns}
+              rowKey="公關訂桌"
+              pagination={false}
+              size="middle"
+              summary={() => (
+                <Table.Summary fixed>
+                  <Table.Summary.Row style={{ background: '#f0f0f0' }}>
+                    <Table.Summary.Cell index={0}><Text strong>合計</Text></Table.Summary.Cell>
+                    <Table.Summary.Cell index={1}><Text strong>{cadreTables.length} 人</Text></Table.Summary.Cell>
+                    <Table.Summary.Cell index={2}>
+                      <Text type="danger" strong>
+                        NT$ {cadreTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0).toLocaleString()}
+                      </Text>
+                    </Table.Summary.Cell>
+                    <Table.Summary.Cell index={3}>
+                      <Tag color="green" style={{ fontWeight: 'bold' }}>{cadreTables.length} 筆</Tag>
+                    </Table.Summary.Cell>
+                  </Table.Summary.Row>
+                </Table.Summary>
+              )}
+            />
+          </>
+        ) : (
+          <Alert
+            message="本月暂无幹桌統計數據"
+            type="info"
+            showIcon
+          />
+        )}
       </Card>
     </div>
   );
