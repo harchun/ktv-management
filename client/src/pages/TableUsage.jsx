@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Card, Select, Space, Row, Col, Statistic } from 'antd';
+import { Table, Card, Select, Space, Row, Col, Statistic, Spin } from 'antd';
 import axios from 'axios';
 
 const API = axios.create({ baseURL: '/api' });
@@ -16,6 +16,8 @@ export default function TableUsage() {
   const [months, setMonths] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('');
   const [loading, setLoading] = useState(false);
+  const [expandedRows, setExpandedRows] = useState({});
+  const [loadingDetails, setLoadingDetails] = useState({});
 
   const fetchMonths = async () => {
     try {
@@ -33,8 +35,21 @@ export default function TableUsage() {
       const params = month ? { month } : {};
       const res = await API.get('/stats/table-usage', { params });
       setData(res.data);
+      setExpandedRows({});
     } catch (e) { message.error('載入失敗'); }
     finally { setLoading(false); }
+  };
+
+  const fetchDetails = async (cadre, customer) => {
+    if (expandedRows[`${cadre}-${customer}`]) return;
+    setLoadingDetails(prev => ({ ...prev, [`${cadre}-${customer}`]: true }));
+    try {
+      const params = { cadre, customer };
+      if (selectedMonth) params.month = selectedMonth;
+      const res = await API.get('/stats/table-usage-details', { params });
+      setExpandedRows(prev => ({ ...prev, [`${cadre}-${customer}`]: res.data }));
+    } catch (e) { message.error('載入明細失敗'); }
+    finally { setLoadingDetails(prev => ({ ...prev, [`${cadre}-${customer}`]: false })); }
   };
 
   useEffect(() => {
@@ -65,11 +80,13 @@ export default function TableUsage() {
     { title: '等級', dataIndex: '等級', key: '等級', width: 80 },
     { title: '公關', dataIndex: '公關', key: '公關', width: 80, render: (val) => val || '-' },
     { title: '客戶名', dataIndex: '客戶名', key: '客戶名', width: 100, render: (val) => val || '-' },
-    {title:`消費金額`,dataIndex:`總消費`,key:`總消費`,width:120,render:e=>`NT$ ${Math.round(e||0).toLocaleString('zh-TW')}`},
+    { title: '消費金額', dataIndex: '總消費', key: '總消費', width: 120, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
     { title: '次數', dataIndex: '次數', key: '次數', width: 80 },
   ];
 
   const tableData = data.map((row, idx) => ({ ...row, rank: idx + 1 }));
+
+  const getRowKey = (record) => `${record.幹部}-${record.客戶名}`;
 
   return (
     <div>
@@ -84,9 +101,7 @@ export default function TableUsage() {
               style={{ width: 140 }}
               placeholder="選擇月份"
             >
-              {months.map(m => (
-                <Option key={m} value={m}>{m}</Option>
-              ))}
+              {months.map(m => <Option key={m} value={m}>{m}</Option>)}
             </Select>
             <span style={{ color: '#aaa', marginLeft: 16 }}>等級: 公關</span>
           </Space>
@@ -125,15 +140,68 @@ export default function TableUsage() {
           </Col>
         </Row>
 
-        <Table 
-          columns={columns} 
-          dataSource={tableData} 
-          loading={loading} 
-          rowKey={(record) => `${record.幹部}-${record.客戶名}`}
+        <Table
+          columns={columns}
+          dataSource={tableData}
+          rowKey={getRowKey}
+          loading={loading}
           pagination={{ pageSize: 50, showSizeChanger: false }}
           scroll={{ x: 800 }}
           size="small"
           className="table-striped"
+          expandable={{
+            expandedRowRender: (record) => {
+              const rowKey = getRowKey(record);
+              const details = expandedRows[rowKey];
+              const isLoading = loadingDetails[rowKey];
+              
+              if (isLoading) {
+                return (
+                  <div style={{ textAlign: 'center', padding: 16 }}>
+                    <Spin />
+                  </div>
+                );
+              }
+              
+              if (!details || details.length === 0) {
+                return (
+                  <div style={{ color: '#888', padding: 16, textAlign: 'center' }}>
+                    暫無明細資料
+                  </div>
+                );
+              }
+
+              const detailColumns = [
+                { title: '日期', dataIndex: '日期', width: 120, render: (val) => val ? new Date(val).toISOString().slice(0, 10) : '-' },
+                { title: '房號', dataIndex: '房號', width: 80 },
+                { title: '人數', dataIndex: '人數', width: 60 },
+                { title: '現金', dataIndex: '現金', width: 90, render: (val) => `NT$ ${Number(val || 0).toLocaleString('zh-TW')}` },
+                { title: '信用', dataIndex: '信用', width: 90, render: (val) => `NT$ ${Number(val || 0).toLocaleString('zh-TW')}` },
+                { title: '簽帳', dataIndex: '簽帳', width: 90, render: (val) => `NT$ ${Number(val || 0).toLocaleString('zh-TW')}` },
+                { title: '其它', dataIndex: '其它', width: 90, render: (val) => `NT$ ${Number(val || 0).toLocaleString('zh-TW')}` },
+                { title: '備註', dataIndex: '備註', width: 120, render: (val) => val || '-' },
+              ];
+
+              return (
+                <Table
+                  columns={detailColumns}
+                  dataSource={details}
+                  rowKey={(r) => r.營業編號}
+                  pagination={false}
+                  size="small"
+                  bordered
+                  className="detail-table"
+                />
+              );
+            },
+            rowExpandable: (record) => true,
+            onExpand: (expanded, record) => {
+              const rowKey = getRowKey(record);
+              if (expanded && !expandedRows[rowKey]) {
+                fetchDetails(record.幹部, record.客戶名);
+              }
+            }
+          }}
         />
       </Card>
     </div>

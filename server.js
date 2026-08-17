@@ -605,5 +605,26 @@ app.get('/api/stats/months', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/stats/table-usage-details', authenticate, async (req, res) => {
+  try {
+    const { cadre, customer, month } = req.query;
+    let sql = `SELECT 營業編號, 日期, 房號, 客戶名, 人數, 現金, 信用, 簽帳, 其它, 備註
+      FROM daily_sales 
+      WHERE 幹部 = ? AND 客戶名 = ?`;
+    const params = [cadre, customer];
+    
+    if (month) {
+      sql += ' AND DATE_FORMAT(日期, "%Y-%m") = ?';
+      params.push(month);
+    } else {
+      sql += ' AND 日期 >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)';
+    }
+    
+    sql += ' ORDER BY 日期 DESC';
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 KTV Backend running on port ${PORT}`));
