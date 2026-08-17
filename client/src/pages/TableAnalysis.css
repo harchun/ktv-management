@@ -45,6 +45,9 @@
   background: #fff;
   page-break-after: always;
   page-break-inside: avoid;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
 }
 
 .page:last-child {
@@ -341,6 +344,7 @@
   .a4-report {
     max-width: 100%;
     margin: 0;
+    padding: 0;
   }
   
   .page {
@@ -352,6 +356,7 @@
     height: 297mm;
     width: 210mm;
     overflow: hidden;
+    min-height: 297mm;
   }
   
   .page:last-child {
