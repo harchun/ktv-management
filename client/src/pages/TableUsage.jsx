@@ -65,7 +65,7 @@ export default function TableUsage() {
     { title: '等級', dataIndex: '等級', key: '等級', width: 80 },
     { title: '公關', dataIndex: '公關', key: '公關', width: 80, render: (val) => val || '-' },
     { title: '客戶名', dataIndex: '客戶名', key: '客戶名', width: 100, render: (val) => val || '-' },
-    { title: '消費金額', dataIndex: '總消費', key: '總消費', width: 120, render: (val) => `NT$ ${val?.toLocaleString('zh-TW', {minimumFractionDigits: 0, maximumFractionDigits: 0})}` },
+    {title:`消費金額`,dataIndex:`總消費`,key:`總消費`,width:120,render:e=>`NT$ ${Math.round(e||0).toLocaleString('zh-TW')}`},
     { title: '次數', dataIndex: '次數', key: '次數', width: 80 },
   ];
 
