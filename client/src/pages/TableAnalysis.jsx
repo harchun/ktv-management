@@ -9,9 +9,8 @@ import {
   Row,
   Col,
   Statistic,
-  Progress,
   Alert,
-  Collapse
+  Spin
 } from 'antd';
 import {
   TrophyOutlined,
@@ -20,9 +19,9 @@ import {
   TableOutlined,
   DollarOutlined
 } from '@ant-design/icons';
+import api from '../utils/api';
 
 const { Title, Text } = Typography;
-const { Panel } = Collapse;
 
 export default function TableAnalysis() {
   const [selectedMonth, setSelectedMonth] = useState('');
@@ -34,13 +33,14 @@ export default function TableAnalysis() {
   const [cadreGrowth, setCadreGrowth] = useState(null);
 
   useEffect(() => {
-    fetch('/api/stats/months')
-      .then(r => r.json())
-      .then(data => {
+    api.get('/stats/months')
+      .then(res => {
+        const data = res.data;
         const sorted = [...data].sort().reverse();
         setMonths(sorted);
         if (sorted.length > 0) setSelectedMonth(sorted[0]);
-      });
+      })
+      .catch(err => console.error('Failed to load months:', err));
   }, []);
 
   useEffect(() => {
@@ -48,60 +48,60 @@ export default function TableAnalysis() {
 
     setLoading(true);
     Promise.all([
-      fetch(`/api/stats/table-usage?month=${selectedMonth}`),
-      fetch(`/api/stats/cadre-table?month=${selectedMonth}`)
+      api.get(`/stats/table-usage?month=${selectedMonth}`),
+      api.get(`/stats/cadre-table?month=${selectedMonth}`)
     ])
-      .then(([customRes, cadreRes]) =>
-        Promise.all([customRes.json(), cadreRes.json()])
-      )
-      .then(([customData, cadreData]) => {
-        setCustomTables(customData || []);
-        setCadreTables(cadreData || []);
+      .then(([customRes, cadreRes]) => {
+        const customData = customRes.data || [];
+        const cadreData = cadreRes.data || [];
+        setCustomTables(customData);
+        setCadreTables(cadreData);
         calculateGrowth(selectedMonth, customData, cadreData);
       })
+      .catch(err => console.error('Failed to load data:', err))
       .finally(() => setLoading(false));
   }, [selectedMonth]);
 
-  const calculateGrowth = (currentMonth, currentCustom, currentCadre) => {
+  const calculateGrowth = async (currentMonth, currentCustom, currentCadre) => {
     const currentIndex = months.indexOf(currentMonth);
     if (currentIndex <= 0) return;
 
     const prevMonth = months[currentIndex - 1];
 
-    // 自訂桌成長率
-    if (currentCustom && months[currentIndex - 1]) {
-      fetch(`/api/stats/table-usage?month=${prevMonth}`)
-        .then(r => r.json())
-        .then(prevData => {
-          const currentTotal = currentCustom.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-          const prevTotal = (prevData || []).reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-          const currentTables = currentCustom.length;
-          const prevTables = (prevData || []).length;
+    try {
+      // 自訂桌成長率
+      if (currentCustom && prevMonth) {
+        const prevRes = await api.get(`/stats/table-usage?month=${prevMonth}`);
+        const prevData = prevRes.data || [];
+        const currentTotal = currentCustom.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+        const prevTotal = prevData.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+        const currentTables = currentCustom.length;
+        const prevTables = prevData.length;
 
-          setCustomGrowth({
-            consumption: prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal * 100).toFixed(2) : 0,
-            tables: prevTables > 0 ? ((currentTables - prevTables) / prevTables * 100).toFixed(2) : 0,
-            isGrowth: currentTotal >= prevTotal
-          });
+        setCustomGrowth({
+          consumption: prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal * 100).toFixed(2) : 0,
+          tables: prevTables > 0 ? ((currentTables - prevTables) / prevTables * 100).toFixed(2) : 0,
+          isGrowth: currentTotal >= prevTotal
         });
-    }
+      }
 
-    // 幹桌成長率
-    if (currentCadre && months[currentIndex - 1]) {
-      fetch(`/api/stats/cadre-table?month=${prevMonth}`)
-        .then(r => r.json())
-        .then(prevData => {
-          const currentTotal = currentCadre.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-          const prevTotal = (prevData || []).reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-          const currentTables = currentCadre.length;
-          const prevTables = (prevData || []).length;
+      // 幹桌成長率
+      if (currentCadre && prevMonth) {
+        const prevRes = await api.get(`/stats/cadre-table?month=${prevMonth}`);
+        const prevData = prevRes.data || [];
+        const currentTotal = currentCadre.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+        const prevTotal = prevData.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+        const currentTables = currentCadre.length;
+        const prevTables = prevData.length;
 
-          setCadreGrowth({
-            consumption: prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal * 100).toFixed(2) : 0,
-            tables: prevTables > 0 ? ((currentTables - prevTables) / prevTables * 100).toFixed(2) : 0,
-            isGrowth: currentTotal >= prevTotal
-          });
+        setCadreGrowth({
+          consumption: prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal * 100).toFixed(2) : 0,
+          tables: prevTables > 0 ? ((currentTables - prevTables) / prevTables * 100).toFixed(2) : 0,
+          isGrowth: currentTotal >= prevTotal
         });
+      }
+    } catch (err) {
+      console.error('Failed to calculate growth:', err);
     }
   };
 
@@ -119,9 +119,7 @@ export default function TableAnalysis() {
       key: 'rank',
       width: 60,
       render: (rank, _, index) => (
-        <span style={getRankStyle(index)}>
-          {index + 1}
-        </span>
+        <span style={getRankStyle(index)}>{index + 1}</span>
       )
     },
     {
@@ -152,9 +150,7 @@ export default function TableAnalysis() {
       key: 'rank',
       width: 60,
       render: (rank, _, index) => (
-        <span style={getRankStyle(index)}>
-          {index + 1}
-        </span>
+        <span style={getRankStyle(index)}>{index + 1}</span>
       )
     },
     {
@@ -189,6 +185,21 @@ export default function TableAnalysis() {
     );
   };
 
+  const renderSummaryRow = (data, label) => (
+    <Table.Summary.Row style={{ background: '#f0f0f0' }}>
+      <Table.Summary.Cell index={0}><Text strong>合計</Text></Table.Summary.Cell>
+      <Table.Summary.Cell index={1}><Text strong>{data.length} 人</Text></Table.Summary.Cell>
+      <Table.Summary.Cell index={2}>
+        <Text type="danger" strong>
+          NT$ {data.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0).toLocaleString()}
+        </Text>
+      </Table.Summary.Cell>
+      <Table.Summary.Cell index={3}>
+        <Tag color="blue" style={{ fontWeight: 'bold' }}>{data.length} {label}</Tag>
+      </Table.Summary.Cell>
+    </Table.Summary.Row>
+  );
+
   return (
     <div style={{ padding: '24px' }}>
       <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
@@ -202,6 +213,7 @@ export default function TableAnalysis() {
             onChange={setSelectedMonth}
             style={{ width: 150 }}
             size="large"
+            placeholder="選擇月份"
           >
             {months.map(m => (
               <Select.Option key={m} value={m}>{m}</Select.Option>
@@ -234,7 +246,6 @@ export default function TableAnalysis() {
       >
         {customTables.length > 0 ? (
           <>
-            {/* 本月統計摘要 */}
             <Row gutter={16} style={{ marginBottom: 16 }}>
               <Col span={6}>
                 <Statistic
@@ -282,25 +293,14 @@ export default function TableAnalysis() {
               size="middle"
               summary={() => (
                 <Table.Summary fixed>
-                  <Table.Summary.Row style={{ background: '#f0f0f0' }}>
-                    <Table.Summary.Cell index={0}><Text strong>合計</Text></Table.Summary.Cell>
-                    <Table.Summary.Cell index={1}><Text strong>{customTables.length} 人</Text></Table.Summary.Cell>
-                    <Table.Summary.Cell index={2}>
-                      <Text type="danger" strong>
-                        NT$ {customTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0).toLocaleString()}
-                      </Text>
-                    </Table.Summary.Cell>
-                    <Table.Summary.Cell index={3}>
-                      <Tag color="blue" style={{ fontWeight: 'bold' }}>{customTables.length} 桌</Tag>
-                    </Table.Summary.Cell>
-                  </Table.Summary.Row>
+                  {renderSummaryRow(customTables, '桌')}
                 </Table.Summary>
               )}
             />
           </>
         ) : (
           <Alert
-            message="本月暂无自訂桌統計數據"
+            message={selectedMonth ? `本月暫無自訂桌統計數據` : "請選擇月份"}
             type="info"
             showIcon
           />
@@ -331,7 +331,6 @@ export default function TableAnalysis() {
       >
         {cadreTables.length > 0 ? (
           <>
-            {/* 本月統計摘要 */}
             <Row gutter={16} style={{ marginBottom: 16 }}>
               <Col span={6}>
                 <Statistic
@@ -379,25 +378,14 @@ export default function TableAnalysis() {
               size="middle"
               summary={() => (
                 <Table.Summary fixed>
-                  <Table.Summary.Row style={{ background: '#f0f0f0' }}>
-                    <Table.Summary.Cell index={0}><Text strong>合計</Text></Table.Summary.Cell>
-                    <Table.Summary.Cell index={1}><Text strong>{cadreTables.length} 人</Text></Table.Summary.Cell>
-                    <Table.Summary.Cell index={2}>
-                      <Text type="danger" strong>
-                        NT$ {cadreTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0).toLocaleString()}
-                      </Text>
-                    </Table.Summary.Cell>
-                    <Table.Summary.Cell index={3}>
-                      <Tag color="green" style={{ fontWeight: 'bold' }}>{cadreTables.length} 筆</Tag>
-                    </Table.Summary.Cell>
-                  </Table.Summary.Row>
+                  {renderSummaryRow(cadreTables, '筆')}
                 </Table.Summary>
               )}
             />
           </>
         ) : (
           <Alert
-            message="本月暂无幹桌統計數據"
+            message={selectedMonth ? `本月暫無幹桌統計數據` : "請選擇月份"}
             type="info"
             showIcon
           />
