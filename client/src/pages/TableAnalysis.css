@@ -45,104 +45,6 @@
   display: block;
 }
 
-.trend-card {
-  margin-bottom: 24px;
-}
-
-/* Trend Chart */
-.trend-chart {
-  padding: 20px;
-  background: #fafafa;
-  border-radius: 8px;
-}
-
-.chart-header {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin-bottom: 20px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-}
-
-.legend-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 3px;
-}
-
-.custom-color {
-  background: #1890ff;
-}
-
-.cadre-color {
-  background: #faad14;
-}
-
-.chart-body {
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-end;
-  height: 200px;
-  padding: 0 20px;
-}
-
-.chart-column {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  max-width: 120px;
-}
-
-.bar-group {
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  height: 150px;
-}
-
-.bar {
-  width: 28px;
-  border-radius: 4px 4px 0 0;
-  transition: all 0.3s;
-}
-
-.custom-bar {
-  background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%);
-}
-
-.cadre-bar {
-  background: linear-gradient(180deg, #faad14 0%, #d48806 100%);
-}
-
-.bar-values {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 4px;
-  font-size: 10px;
-}
-
-.custom-value {
-  color: #1890ff;
-}
-
-.cadre-value {
-  color: #d48806;
-}
-
-.month-label {
-  font-size: 12px;
-  color: #666;
-  margin-top: 8px;
-}
-
 /* Month Section */
 .month-section {
   margin-bottom: 24px;
@@ -177,108 +79,63 @@
     display: none !important;
   }
 
-  .print-report {
-    font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
-    padding: 0;
-    margin: 0;
+  .print-summary {
+    display: none !important;
   }
 
-  .print-header {
+  .table-analysis-container {
+    padding: 0;
+  }
+
+  .ant-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+
+  .month-section {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .month-section:last-child {
+    page-break-after: avoid;
+  }
+
+  /* Print header */
+  .table-analysis-container::before {
+    content: "日月星辰 KTV 訂桌分析報告";
+    display: block;
+    font-size: 20px;
+    font-weight: bold;
     text-align: center;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
     border-bottom: 2px solid #333;
   }
 
-  .print-header h1 {
-    font-size: 22px;
-    margin: 0 0 8px 0;
-    color: #333;
+  /* Table styles for print */
+  .ant-table {
+    font-size: 10px;
   }
 
-  .print-header p {
-    font-size: 12px;
-    margin: 4px 0;
-    color: #666;
+  .ant-table-thead > tr > th {
+    background: #f5f5f5 !important;
+    font-weight: 600;
   }
 
-  .print-section {
-    margin-bottom: 20px;
-    page-break-inside: avoid;
+  .ant-table-tbody > tr > td {
+    padding: 4px 8px;
   }
 
-  .print-section h2 {
-    font-size: 16px;
-    color: #333;
-    margin: 0 0 12px 0;
-    padding-bottom: 6px;
+  /* Remove antd default styles for print */
+  .ant-card-head {
     border-bottom: 1px solid #ddd;
   }
 
-  .print-section h3 {
-    font-size: 13px;
-    color: #555;
-    margin: 12px 0 8px 0;
-  }
-
-  .print-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 11px;
-  }
-
-  .print-table.small {
-    font-size: 10px;
-  }
-
-  .print-table th,
-  .print-table td {
-    border: 1px solid #ddd;
-    padding: 6px 8px;
-    text-align: left;
-  }
-
-  .print-table th {
-    background: #f5f5f5;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .print-table .summary-row {
-    background: #fafafa;
-    font-weight: 600;
-  }
-
-  .print-table .summary-row td {
-    border-top: 2px solid #ddd;
-  }
-
-  .positive {
-    color: #52c41a;
-    font-weight: 600;
-  }
-
-  .negative {
-    color: #ff4d4f;
-    font-weight: 600;
-  }
-
-  .print-month-group {
-    margin-bottom: 16px;
-    page-break-inside: avoid;
-  }
-
-  .print-footer {
-    margin-top: 24px;
-    padding-top: 12px;
-    border-top: 1px solid #ddd;
-    text-align: center;
-    font-size: 10px;
-    color: #999;
-  }
-
-  .print-summary {
-    display: none !important;
+  .ant-card-body {
+    padding: 0;
   }
 }
 
@@ -292,13 +149,5 @@
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
-  }
-
-  .chart-body {
-    padding: 0 10px;
-  }
-
-  .bar {
-    width: 20px;
   }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -11,9 +11,7 @@ import {
   Statistic,
   Alert,
   Button,
-  Checkbox,
-  Modal,
-  DatePicker
+  Checkbox
 } from 'antd';
 import {
   TrophyOutlined,
@@ -21,22 +19,17 @@ import {
   FallOutlined,
   TableOutlined,
   DollarOutlined,
-  PrinterOutlined,
-  BarChartOutlined
+  PrinterOutlined
 } from '@ant-design/icons';
 import api from '../utils/api';
-import dayjs from 'dayjs';
-import './TableAnalysis.css';
 
 const { Title, Text } = Typography;
-const { RangePicker } = DatePicker;
 
 export default function TableAnalysis() {
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [months, setMonths] = useState([]);
   const [allData, setAllData] = useState({});
   const [loading, setLoading] = useState(false);
-  const printRef = useRef(null);
 
   useEffect(() => {
     api.get('/stats/months')
@@ -107,11 +100,6 @@ export default function TableAnalysis() {
     if (index === 2) return { background: '#CD7F32', color: '#fff' };
     return {};
   };
-
-  // Print view
-  if (typeof window !== 'undefined' && window.location.hash === '#print') {
-    return <PrintView allData={allData} months={selectedMonths} />;
-  }
 
   return (
     <div className="table-analysis-container">
@@ -210,14 +198,6 @@ export default function TableAnalysis() {
         </Col>
       </Row>
 
-      {/* Trend Chart Section */}
-      <Card
-        title={<Space><BarChartOutlined />月度趨勢對比</Space>}
-        className="trend-card print-header-hidden"
-      >
-        <TrendChart allData={allData} months={selectedMonths} />
-      </Card>
-
       {/* Detailed Tables */}
       <Row gutter={16}>
         <Col span={12}>
@@ -304,237 +284,3 @@ export default function TableAnalysis() {
     </div>
   );
 }
-
-// Print View Component
-function PrintView({ allData, months }) {
-  const getMonthTotal = (month, type) => {
-    const data = allData[month];
-    if (!data) return { custom: { total: 0, count: 0 }, cadre: { total: 0, count: 0 } };
-    const customTotal = data.custom.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-    const cadreTotal = data.cadre.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-    return {
-      custom: { total: customTotal, count: data.custom.length },
-      cadre: { total: cadreTotal, count: data.cadre.length }
-    };
-  };
-
-  return (
-    <div className="print-report">
-      <div className="print-header">
-        <h1>日月星辰 KTV 訂桌分析報告</h1>
-        <p>分析期間：{months[0]} ~ {months[months.length - 1]}</p>
-        <p>報告日期：{dayjs().format('YYYY年MM月DD日')}</p>
-      </div>
-
-      {/* Summary Table */}
-      <div className="print-section">
-        <h2>一、月度統計摘要</h2>
-        <table className="print-table">
-          <thead>
-            <tr>
-              <th rowSpan="2">統計項目</th>
-              {months.map(m => <th key={m}>{m}</th>)}
-              <th rowSpan="2">趨勢</th>
-            </tr>
-            <tr>
-              {months.map(m => <th key={`sub-${m}`}>消費金額</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>自訂桌統計</td>
-              {months.map(m => {
-                const d = getMonthTotal(m, 'custom');
-                return <td key={m}>NT$ {d.custom.total.toLocaleString()}</td>;
-              })}
-              <td>
-                {months.length >= 2 && (
-                  <span className={getGrowthRate(
-                    getMonthTotal(months[months.length - 1], 'custom').custom.total,
-                    getMonthTotal(months[months.length - 2], 'custom').custom.total
-                  ).isGrowth ? 'positive' : 'negative'}>
-                    {getGrowthRate(
-                      getMonthTotal(months[months.length - 1], 'custom').custom.total,
-                      getMonthTotal(months[months.length - 2], 'custom').custom.total
-                    ).rate > 0 ? '↑' : '↓'}
-                    {Math.abs(getGrowthRate(
-                      getMonthTotal(months[months.length - 1], 'custom').custom.total,
-                      getMonthTotal(months[months.length - 2], 'custom').custom.total
-                    ).rate).toFixed(1)}%
-                  </span>
-                )}
-              </td>
-            </tr>
-            <tr>
-              <td>幹桌統計</td>
-              {months.map(m => {
-                const d = getMonthTotal(m, 'cadre');
-                return <td key={m}>NT$ {d.cadre.total.toLocaleString()}</td>;
-              })}
-              <td>
-                {months.length >= 2 && (
-                  <span className={getGrowthRate(
-                    getMonthTotal(months[months.length - 1], 'cadre').cadre.total,
-                    getMonthTotal(months[months.length - 2], 'cadre').cadre.total
-                  ).isGrowth ? 'positive' : 'negative'}>
-                    {getGrowthRate(
-                      getMonthTotal(months[months.length - 1], 'cadre').cadre.total,
-                      getMonthTotal(months[months.length - 2], 'cadre').cadre.total
-                    ).rate > 0 ? '↑' : '↓'}
-                    {Math.abs(getGrowthRate(
-                      getMonthTotal(months[months.length - 1], 'cadre').cadre.total,
-                      getMonthTotal(months[months.length - 2], 'cadre').cadre.total
-                    ).rate).toFixed(1)}%
-                  </span>
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* Custom Tables Detail */}
-      <div className="print-section">
-        <h2>二、自訂桌統計明細</h2>
-        {months.map(m => {
-          const data = allData[m]?.custom || [];
-          if (data.length === 0) return null;
-          return (
-            <div key={m} className="print-month-group">
-              <h3>{m}月</h3>
-              <table className="print-table small">
-                <thead>
-                  <tr>
-                    <th>排名</th>
-                    <th>幹部</th>
-                    <th>總消費</th>
-                    <th>桌數</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.map((row, i) => (
-                    <tr key={row.幹部}>
-                      <td>{i + 1}</td>
-                      <td>{row.幹部}</td>
-                      <td>NT$ {Number(row.總消費).toLocaleString()}</td>
-                      <td>{row.桌數}</td>
-                    </tr>
-                  ))}
-                  <tr className="summary-row">
-                    <td colSpan="2"><strong>合計</strong></td>
-                    <td><strong>NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()}</strong></td>
-                    <td><strong>{data.length}桌</strong></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Cadre Tables Detail */}
-      <div className="print-section">
-        <h2>三、幹桌統計明細</h2>
-        {months.map(m => {
-          const data = allData[m]?.cadre || [];
-          if (data.length === 0) return null;
-          return (
-            <div key={m} className="print-month-group">
-              <h3>{m}月</h3>
-              <table className="print-table small">
-                <thead>
-                  <tr>
-                    <th>排名</th>
-                    <th>公關</th>
-                    <th>總消費</th>
-                    <th>紀錄數</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.map((row, i) => (
-                    <tr key={row.公關}>
-                      <td>{i + 1}</td>
-                      <td>{row.公關}</td>
-                      <td>NT$ {Number(row.總消費).toLocaleString()}</td>
-                      <td>{row.紀錄數}</td>
-                    </tr>
-                  ))}
-                  <tr className="summary-row">
-                    <td colSpan="2"><strong>合計</strong></td>
-                    <td><strong>NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()}</strong></td>
-                    <td><strong>{data.length}筆</strong></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="print-footer">
-        <p>報告生成時間：{dayjs().format('YYYY-MM-DD HH:mm:ss')}</p>
-        <p>日月星辰 KTV 管理系統</p>
-      </div>
-    </div>
-  );
-}
-
-// Trend Chart Component
-function TrendChart({ allData, months }) {
-  const getTotals = () => {
-    return months.map(m => {
-      const customData = allData[m]?.custom || [];
-      const cadreData = allData[m]?.cadre || [];
-      const customTotal = customData.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-      const cadreTotal = cadreData.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-      return { month: m, custom: customTotal, cadre: cadreTotal };
-    });
-  };
-
-  const data = getTotals();
-  const maxVal = Math.max(...data.map(d => Math.max(d.custom, d.cadre)));
-
-  return (
-    <div className="trend-chart">
-      <div className="chart-header">
-        <span className="legend-item">
-          <span className="legend-color custom-color"></span>
-          自訂桌統計
-        </span>
-        <span className="legend-item">
-          <span className="legend-color cadre-color"></span>
-          幹桌統計
-        </span>
-      </div>
-      <div className="chart-body">
-        {data.map((d, i) => (
-          <div key={d.month} className="chart-column">
-            <div className="bar-group">
-              <div
-                className="bar custom-bar"
-                style={{ height: `${(d.custom / maxVal) * 150}px` }}
-                title={`自訂桌: NT$ ${d.custom.toLocaleString()}`}
-              />
-              <div
-                className="bar cadre-bar"
-                style={{ height: `${(d.cadre / maxVal) * 150}px` }}
-                title={`幹桌: NT$ ${d.cadre.toLocaleString()}`}
-              />
-            </div>
-            <div className="bar-values">
-              <span className="custom-value">NT${(d.custom / 1000).toFixed(0)}k</span>
-              <span className="cadre-value">NT${(d.cadre / 1000).toFixed(0)}k</span>
-            </div>
-            <div className="month-label">{d.month}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const getGrowthRate = (current, previous) => {
-  if (!previous || previous === 0) return { rate: 0, isGrowth: true };
-  const rate = ((current - previous) / previous * 100);
-  return { rate: parseFloat(rate.toFixed(2)), isGrowth: current >= previous };
-};
