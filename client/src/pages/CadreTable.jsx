@@ -59,6 +59,7 @@ export default function CadreTable() {
         borderRadius: 4
       }}>{val}</span>
     )},
+    { title: '公關訂桌', dataIndex: '公關訂桌', key: '公關訂桌', width: 100 },
     { title: '幹部', dataIndex: '幹部', key: '幹部', width: 100 },
     { title: '客戶名', dataIndex: '客戶名', key: '客戶名', width: 100 },
     { title: '消費金額', dataIndex: '總消費', key: '總消費', width: 120, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
@@ -110,7 +111,7 @@ export default function CadreTable() {
         <Table
           columns={columns}
           dataSource={tableData}
-          rowKey={(record, index) => `${record.幹部}-${record.客戶名}-${index}`}
+          rowKey={(record, index) => `${record.公關訂桌}-${record.幹部}-${record.客戶名}-${index}`}
           loading={loading}
           pagination={{ pageSize: 100, showSizeChanger: false }}
           scroll={{ x: 600 }}
