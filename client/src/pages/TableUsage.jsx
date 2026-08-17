@@ -62,8 +62,8 @@ export default function TableUsage() {
     }
   }, [selectedMonth]);
 
-  const totalConsumption = data.reduce((sum, row) => sum + (row.總消費 || 0), 0);
-  const totalVisits = data.reduce((sum, row) => sum + (row.次數 || 0), 0);
+  const totalConsumption = data.reduce((sum, row) => sum + (Number(row.總消費) || 0), 0);
+  const totalVisits = data.reduce((sum, row) => sum + (Number(row.次數) || 0), 0);
   const uniqueCustomers = new Set(data.map(r => r.客戶列表?.split(', ')).flat().filter(Boolean)).size;
 
   const columns = [
