@@ -635,8 +635,9 @@ app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
   try {
     const { month } = req.query;
     let sql = `SELECT 
-      g.\`姓名\` as 公關, ds.\`幹部\`, ds.\`客戶名\`,
-      SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
+      g.\`姓名\` as 公關,
+      SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費,
+      COUNT(*) as 紀錄數
       FROM daily_sales ds
       LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
       WHERE ds.\`公關訂桌\` IS NOT NULL 
@@ -650,7 +651,32 @@ app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
       sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)';
     }
     
-    sql += ' GROUP BY g.\`姓名\`, ds.\`幹部\`, ds.\`客戶名\`';
+    sql += ' GROUP BY g.\`姓名\`';
+    sql += ' ORDER BY 總消費 DESC';
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/stats/cadre-table-details', authenticate, async (req, res) => {
+  try {
+    const { gossip, month } = req.query;
+    let sql = `SELECT 
+      ds.\`日期\`, ds.\`幹部\`, ds.\`客戶名\`,
+      SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
+      FROM daily_sales ds
+      LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
+      WHERE g.\`姓名\` = ?`;
+    const params = [gossip];
+    
+    if (month) {
+      sql += ' AND DATE_FORMAT(ds.\`日期\`, "%Y-%m") = ?';
+      params.push(month);
+    } else {
+      sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)';
+    }
+    
+    sql += ' GROUP BY ds.\`日期\`, ds.\`幹部\`, ds.\`客戶名\`';
     sql += ' ORDER BY 總消費 DESC';
     const [rows] = await pool.execute(sql, params);
     res.json(rows);

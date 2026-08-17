@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Card, Select, Row, Col, Statistic } from 'antd';
+import { Table, Card, Select, Row, Col, Statistic, Spin } from 'antd';
 import axios from 'axios';
 
 const API = axios.create({ baseURL: '/api' });
@@ -16,6 +16,8 @@ export default function CadreTable() {
   const [months, setMonths] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('');
   const [loading, setLoading] = useState(false);
+  const [expandedRows, setExpandedRows] = useState({});
+  const [loadingDetails, setLoadingDetails] = useState({});
 
   const fetchMonths = async () => {
     try {
@@ -33,8 +35,21 @@ export default function CadreTable() {
       const params = month ? { month } : {};
       const res = await API.get('/stats/cadre-table', { params });
       setData(res.data);
+      setExpandedRows({});
     } catch (e) { message.error('載入失敗'); }
     finally { setLoading(false); }
+  };
+
+  const fetchDetails = async (gossip) => {
+    if (expandedRows[gossip]) return;
+    setLoadingDetails(prev => ({ ...prev, [gossip]: true }));
+    try {
+      const params = { gossip };
+      if (selectedMonth) params.month = selectedMonth;
+      const res = await API.get('/stats/cadre-table-details', { params });
+      setExpandedRows(prev => ({ ...prev, [gossip]: res.data }));
+    } catch (e) { message.error('載入明細失敗'); }
+    finally { setLoadingDetails(prev => ({ ...prev, [gossip]: false })); }
   };
 
   useEffect(() => {
@@ -60,9 +75,8 @@ export default function CadreTable() {
       }}>{val}</span>
     )},
     { title: '公關', dataIndex: '公關', key: '公關', width: 100, render: (val) => val || '-' },
-    { title: '幹部', dataIndex: '幹部', key: '幹部', width: 100 },
-    { title: '客戶名', dataIndex: '客戶名', key: '客戶名', width: 100 },
     { title: '消費金額', dataIndex: '總消費', key: '總消費', width: 120, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
+    { title: '紀錄數', dataIndex: '紀錄數', key: '紀錄數', width: 80 },
   ];
 
   const tableData = data.map((row, idx) => ({ ...row, rank: idx + 1 }));
@@ -94,8 +108,8 @@ export default function CadreTable() {
           </Col>
           <Col span={8}>
             <Statistic 
-              title="紀錄數" 
-              value={data.length} 
+              title="總紀錄數" 
+              value={data.reduce((sum, r) => sum + (r.紀錄數 || 0), 0)} 
               valueStyle={{ color: '#27ae60' }}
             />
           </Col>
@@ -111,12 +125,59 @@ export default function CadreTable() {
         <Table
           columns={columns}
           dataSource={tableData}
-          rowKey={(record, index) => `${record.公關}-${record.幹部}-${record.客戶名}-${index}`}
+          rowKey={(record) => record.公關}
           loading={loading}
-          pagination={{ pageSize: 100, showSizeChanger: false }}
+          pagination={{ pageSize: 50, showSizeChanger: false }}
           scroll={{ x: 600 }}
           size="small"
           className="table-striped"
+          expandable={{
+            expandedRowRender: (record) => {
+              const gossip = record.公關;
+              const details = expandedRows[gossip];
+              const isLoading = loadingDetails[gossip];
+              
+              if (isLoading) {
+                return (
+                  <div style={{ textAlign: 'center', padding: 16 }}>
+                    <Spin />
+                  </div>
+                );
+              }
+              
+              if (!details || details.length === 0) {
+                return (
+                  <div style={{ color: '#888', padding: 16, textAlign: 'center' }}>
+                    暫無明細資料
+                  </div>
+                );
+              }
+
+              const detailColumns = [
+                { title: '幹部', dataIndex: '幹部', width: 100 },
+                { title: '客戶名', dataIndex: '客戶名', width: 100 },
+                { title: '消費金額', dataIndex: '總消費', width: 120, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
+              ];
+
+              return (
+                <Table
+                  columns={detailColumns}
+                  dataSource={details}
+                  rowKey={(r) => `${r.幹部}-${r.客戶名}`}
+                  pagination={false}
+                  size="small"
+                  bordered
+                  className="detail-table"
+                />
+              );
+            },
+            rowExpandable: (record) => true,
+            onExpand: (expanded, record) => {
+              if (expanded) {
+                fetchDetails(record.公關);
+              }
+            }
+          }}
         />
       </Card>
     </div>
