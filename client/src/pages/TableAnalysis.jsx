@@ -109,7 +109,11 @@ function PrintReport({ customSummary, cadreSummary, months, allData }) {
                   <td>{s.count} 公關</td>
                   <td className="growth">
                     {i > 0 && (
-                      <span className={cadreSummary[i-1]?.total > 0 ? (getGrowth(s.total, cadreSummary[i-1].total).isGrowth ? 'up' : 'down') : ''}>
+                      <span className={
+                        cadreSummary[i-1]?.total > 0
+                          ? (getGrowth(s.total, cadreSummary[i-1].total).isGrowth ? 'up' : 'down')
+                          : ''
+                      }>
                         {i > 0 && getGrowth(s.total, cadreSummary[i-1].total).rate !== 0 && (
                           <>
                             {getGrowth(s.total, cadreSummary[i-1].total).isGrowth ? <RiseOutlined /> : <FallOutlined />}

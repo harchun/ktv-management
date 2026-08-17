@@ -267,11 +267,11 @@
 }
 
 .card-label {
-  font-size: 11px;
-  color: #999;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 13px;
+  color: #1a1a2e;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
 }
 
 .card-value {
