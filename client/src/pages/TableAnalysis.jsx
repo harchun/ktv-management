@@ -155,8 +155,8 @@ export default function TableAnalysis() {
     },
     {
       title: '公關',
-      dataIndex: '公關訂桌',
-      key: '公關訂桌',
+      dataIndex: '公關',
+      key: '公關',
       render: (name) => <Text strong>{name}</Text>
     },
     {
