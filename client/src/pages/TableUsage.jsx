@@ -68,8 +68,8 @@ export default function TableUsage() {
 
   const columns = [
     { title: '排名', dataIndex: 'rank', key: 'rank', width: 60, render: (val) => (
-      <span style={{ 
-        fontWeight: 'bold', 
+      <span style={{
+        fontWeight: 'bold',
         color: val <= 3 ? '#f39c12' : '#fff',
         background: val <= 3 ? 'rgba(243,156,18,0.2)' : 'transparent',
         padding: '2px 8px',
@@ -77,8 +77,6 @@ export default function TableUsage() {
       }}>{val}</span>
     )},
     { title: '幹部', dataIndex: '幹部', key: '幹部', width: 100 },
-    { title: '等級', dataIndex: '等級', key: '等級', width: 80 },
-    { title: '公關', dataIndex: '公關', key: '公關', width: 80, render: (val) => val || '-' },
     { title: '客戶列表', dataIndex: '客戶列表', key: '客戶列表', width: 150, render: (val) => val || '-' },
     { title: '客戶數', dataIndex: '客戶數', key: '客戶數', width: 70 },
     { title: '消費金額', dataIndex: '總消費', key: '總消費', width: 120, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
