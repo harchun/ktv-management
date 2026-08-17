@@ -62,7 +62,7 @@ export default function CadreTable() {
     }
   }, [selectedMonth]);
 
-  const totalConsumption = data.reduce((sum, row) => sum + (row.總消費 || 0), 0);
+  const totalConsumption = data.reduce((sum, row) => sum + (Number(row.總消費) || 0), 0);
 
   const columns = [
     { title: '排名', dataIndex: 'rank', key: 'rank', width: 70, render: (val) => (
