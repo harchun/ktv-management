@@ -7,40 +7,43 @@ import {
   Row,
   Col,
   Statistic,
-  Button
+  Button,
+  Divider
 } from 'antd';
 import {
   TrophyOutlined,
   RiseOutlined,
   FallOutlined,
   PrinterOutlined,
-  BarChartOutlined
+  DollarCircleOutlined,
+  TeamOutlined,
+  LineChartOutlined,
+  PieChartOutlined
 } from '@ant-design/icons';
 import api from '../utils/api';
 
-const { Title, Text } = Typography;
+const { Title, Text, Span } = Typography;
 
-// Bar Chart Component
-function BarChart({ data, title, color, height = 200 }) {
+// ==================== Bar Chart ====================
+function BarChart({ data, color, height = 180 }) {
   const maxVal = Math.max(...data.map(d => d.value), 1);
   
   return (
-    <div className="chart-container">
-      <div className="chart-title">{title}</div>
+    <div className="bar-chart-wrapper">
       <div className="bar-chart">
         {data.map((item, idx) => (
-          <div key={idx} className="bar-item">
-            <div className="bar-wrapper">
-              <div 
-                className="bar"
-                style={{ 
-                  height: `${(item.value / maxVal) * 150}px`,
-                  background: `linear-gradient(180deg, ${color} 0%, ${color}88 100%)`
-                }}
-              />
-              <div className="bar-value">NT$ {item.value.toLocaleString()}</div>
+          <div key={idx} className="bar-group">
+            <div className="bar-value-label">
+              NT$ {(item.value / 1000).toFixed(0)}K
             </div>
-            <div className="bar-label">{item.name}</div>
+            <div 
+              className="bar-fill"
+              style={{ 
+                height: `${Math.max((item.value / maxVal) * 120, 4)}px`,
+                background: `linear-gradient(180deg, ${color} 0%, ${color}CC 100%)`
+              }}
+            />
+            <div className="bar-label">{item.label}</div>
           </div>
         ))}
       </div>
@@ -48,110 +51,136 @@ function BarChart({ data, title, color, height = 200 }) {
   );
 }
 
-// Pie Chart Component (Simple CSS-based)
-function PieChart({ data, title }) {
-  const total = data.reduce((sum, d) => sum + d.value, 0);
-  let cumulativePercent = 0;
+// ==================== Line Chart ====================
+function LineChart({ data, color }) {
+  if (data.length < 2) return null;
   
-  const colors = ['#1890ff', '#52c41a', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2'];
+  const padding = 40;
+  const width = 400;
+  const height = 160;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
   
-  return (
-    <div className="pie-chart-container">
-      <div className="chart-title">{title}</div>
-      <div className="pie-wrapper">
-        <svg viewBox="0 0 100 100" className="pie-svg">
-          {data.map((item, idx) => {
-            const percent = total > 0 ? item.value / total : 0;
-            const startAngle = cumulativePercent * 360;
-            const endAngle = (cumulativePercent + percent) * 360;
-            cumulativePercent += percent;
-            
-            const startRad = (startAngle - 90) * Math.PI / 180;
-            const endRad = (endAngle - 90) * Math.PI / 180;
-            
-            const x1 = 50 + 45 * Math.cos(startRad);
-            const y1 = 50 + 45 * Math.sin(startRad);
-            const x2 = 50 + 45 * Math.cos(endRad);
-            const y2 = 50 + 45 * Math.sin(endRad);
-            
-            const largeArc = percent > 0.5 ? 1 : 0;
-            
-            const pathData = percent >= 1 
-              ? `M 50 50 L 50 5 A 45 45 0 1 1 49.99 5 Z`
-              : `M 50 50 L ${x1} ${y1} A 45 45 0 ${largeArc} 1 ${x2} ${y2} Z`;
-            
-            return (
-              <path
-                key={idx}
-                d={pathData}
-                fill={colors[idx % colors.length]}
-                stroke="white"
-                strokeWidth="0.5"
-              />
-            );
-          })}
-          <circle cx="50" cy="50" r="25" fill="white" />
-        </svg>
-        <div className="pie-center">
-          <div className="pie-total">NT$ {total.toLocaleString()}</div>
-          <div className="pie-label">總消費</div>
-        </div>
-      </div>
-      <div className="pie-legend">
-        {data.map((item, idx) => (
-          <div key={idx} className="legend-item">
-            <span className="legend-color" style={{ background: colors[idx % colors.length] }}></span>
-            <span className="legend-name">{item.name}</span>
-            <span className="legend-value">{((item.value / total) * 100).toFixed(1)}%</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Line Chart Component for trends
-function LineChart({ data, title }) {
   const maxVal = Math.max(...data.map(d => d.value), 1);
   const minVal = Math.min(...data.map(d => d.value), 0);
   const range = maxVal - minVal || 1;
   
   const points = data.map((item, idx) => {
-    const x = (idx / (data.length - 1 || 1)) * 300 + 25;
-    const y = 150 - ((item.value - minVal) / range) * 120;
-    return `${x},${y}`;
-  }).join(' ');
+    const x = padding + (idx / (data.length - 1)) * chartWidth;
+    const y = padding + chartHeight - ((item.value - minVal) / range) * chartHeight;
+    return { x, y, ...item };
+  });
+  
+  const pathD = points.map((p, idx) => 
+    `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
+  ).join(' ');
+  
+  const areaD = pathD + ` L ${points[points.length-1].x} ${padding + chartHeight} L ${points[0].x} ${padding + chartHeight} Z`;
   
   return (
-    <div className="line-chart-container">
-      <div className="chart-title">{title}</div>
-      <svg viewBox="0 0 350 180" className="line-svg">
-        {/* Grid lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((p, i) => (
-          <line key={i} x1="25" y1={20 + p * 130} x2="330" y2={20 + p * 130} 
-                stroke="#f0f0f0" strokeWidth="1" />
+    <svg viewBox={`0 0 ${width} ${height}`} className="line-chart-svg">
+      {/* Grid lines */}
+      {[0, 0.25, 0.5, 0.75, 1].map((p, i) => (
+        <line 
+          key={i} 
+          x1={padding} 
+          y1={padding + p * chartHeight} 
+          x2={width - padding} 
+          y2={padding + p * chartHeight}
+          stroke="#f0f0f0" 
+          strokeWidth="1" 
+        />
+      ))}
+      
+      {/* Area fill */}
+      <path d={areaD} fill={color} fillOpacity="0.1" />
+      
+      {/* Line */}
+      <path d={pathD} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      
+      {/* Points */}
+      {points.map((p, idx) => (
+        <g key={idx}>
+          <circle cx={p.x} cy={p.y} r="6" fill="white" stroke={color} strokeWidth="3" />
+          <text x={p.x} y={p.y - 14} textAnchor="middle" fill="#333" fontSize="11" fontWeight="600">
+            NT$ {(p.value / 1000).toFixed(0)}K
+          </text>
+          <text x={p.x} y={height - 8} textAnchor="middle" fill="#999" fontSize="11">
+            {p.label}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// ==================== Pie Chart ====================
+function PieChart({ data, size = 140 }) {
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  if (total === 0) {
+    return (
+      <div className="empty-pie">
+        <PieChartOutlined style={{ fontSize: 32, color: '#d9d9d9' }} />
+        <Text type="secondary">無數據</Text>
+      </div>
+    );
+  }
+  
+  let cumulativePercent = 0;
+  const colors = ['#52c41a', '#1890ff', '#faad14', '#ff4d4f', '#722ed1', '#13c2c2'];
+  
+  const slices = data.map((item, idx) => {
+    const percent = item.value / total;
+    const startAngle = cumulativePercent * 360;
+    const endAngle = (cumulativePercent + percent) * 360;
+    cumulativePercent += percent;
+    
+    const startRad = (startAngle - 90) * Math.PI / 180;
+    const endRad = (endAngle - 90) * Math.PI / 180;
+    
+    const x1 = 50 + 42 * Math.cos(startRad);
+    const y1 = 50 + 42 * Math.sin(startRad);
+    const x2 = 50 + 42 * Math.cos(endRad);
+    const y2 = 50 + 42 * Math.sin(endRad);
+    
+    const largeArc = percent > 0.5 ? 1 : 0;
+    
+    return {
+      path: percent >= 0.999 
+        ? `M 50 50 L 50 8 A 42 42 0 1 1 49.99 8 Z`
+        : `M 50 50 L ${x1} ${y1} A 42 42 0 ${largeArc} 1 ${x2} ${y2} Z`,
+      color: colors[idx % colors.length],
+      name: item.name,
+      percent: (percent * 100).toFixed(1)
+    };
+  });
+  
+  return (
+    <div className="pie-chart-wrapper">
+      <svg viewBox="0 0 100 100" className="pie-svg">
+        {slices.map((s, idx) => (
+          <path key={idx} d={s.path} fill={s.color} stroke="white" strokeWidth="1" />
         ))}
-        {/* Line */}
-        <polyline points={points} fill="none" stroke="#1890ff" strokeWidth="3" />
-        {/* Points */}
-        {data.map((item, idx) => {
-          const x = (idx / (data.length - 1 || 1)) * 300 + 25;
-          const y = 150 - ((item.value - minVal) / range) * 120;
-          return (
-            <g key={idx}>
-              <circle cx={x} cy={y} r="5" fill="#1890ff" stroke="white" strokeWidth="2" />
-              <text x={x} y={y - 12} textAnchor="middle" fill="#333" fontSize="11" fontWeight="bold">
-                NT$ {(item.value / 1000).toFixed(0)}K
-              </text>
-              <text x={x} y="170" textAnchor="middle" fill="#666" fontSize="11">{item.label}</text>
-            </g>
-          );
-        })}
+        <circle cx="50" cy="50" r="28" fill="white" />
       </svg>
+      <div className="pie-center-info">
+        <div className="pie-total">NT$ {(total / 1000).toFixed(0)}K</div>
+        <div className="pie-sub">總消費</div>
+      </div>
+      <div className="pie-legend">
+        {slices.map((s, idx) => (
+          <div key={idx} className="legend-row">
+            <span className="legend-dot" style={{ background: s.color }} />
+            <span className="legend-name">{s.name}</span>
+            <span className="legend-pct">{s.percent}%</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
+// ==================== Main Component ====================
 export default function TableAnalysis() {
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [months, setMonths] = useState([]);
@@ -220,98 +249,104 @@ export default function TableAnalysis() {
     window.print();
   };
 
-  // Prepare chart data
+  // Chart data preparation
   const customBarData = selectedMonths.map(m => ({
-    name: m,
+    label: m.slice(5),
     value: getMonthTotal(m).custom.total
   }));
 
   const cadreBarData = selectedMonths.map(m => ({
-    name: m,
+    label: m.slice(5),
     value: getMonthTotal(m).cadre.total
   }));
 
-  const customTop3 = (month) => {
-    const data = allData[month]?.custom || [];
-    return data.slice(0, 3).map(r => ({
-      name: r.幹部,
-      value: Number(r.總消費) || 0
-    }));
-  };
-
-  const cadreTop3 = (month) => {
-    const data = allData[month]?.cadre || [];
-    return data.slice(0, 3).map(r => ({
-      name: r.公關,
-      value: Number(r.總消費) || 0
-    }));
-  };
-
-  // Line chart data for trends
-  const customTrendData = selectedMonths.map((m, idx) => ({
-    label: m,
+  const customTrendData = selectedMonths.map(m => ({
+    label: m.slice(5),
     value: getMonthTotal(m).custom.total
   }));
 
-  const cadreTrendData = selectedMonths.map((m, idx) => ({
-    label: m,
+  const cadreTrendData = selectedMonths.map(m => ({
+    label: m.slice(5),
     value: getMonthTotal(m).cadre.total
   }));
 
+  const customTop3 = (month) => 
+    (allData[month]?.custom || []).slice(0, 3).map(r => ({
+      name: r.幹部,
+      value: Number(r.總消費) || 0
+    }));
+
+  const cadreTop3 = (month) => 
+    (allData[month]?.cadre || []).slice(0, 3).map(r => ({
+      name: r.公關,
+      value: Number(r.總消費) || 0
+    }));
+
   return (
-    <div className="table-analysis-container">
-      {/* Control Header - Hidden when printing */}
-      <div className="control-header print-hidden">
-        <div>
-          <Title level={3}>📊 訂桌分析報表</Title>
-          <Text type="secondary">多月份成長/衰退趨勢分析（適合老闆報備）</Text>
+    <div className="ta-container">
+      {/* Header */}
+      <div className="ta-header print-hide">
+        <div className="ta-header-left">
+          <Title level={2} className="ta-title">訂桌分析報表</Title>
+          <Text className="ta-subtitle">多月份成長/衰退趨勢分析 · 適合老闆報備</Text>
         </div>
-        <Space>
+        <Space className="ta-header-right">
           <Select
             mode="multiple"
             value={selectedMonths}
             onChange={handleMonthChange}
-            style={{ width: 280 }}
-            placeholder="選擇月份（建議3-6個月）"
-            maxTagCount={3}
+            style={{ width: 260 }}
+            placeholder="選擇月份"
+            maxTagCount={2}
+            className="ta-month-select"
           >
             {months.map(m => (
               <Select.Option key={m} value={m}>{m}</Select.Option>
             ))}
           </Select>
-          <Button type="primary" icon={<PrinterOutlined />} onClick={handlePrint}>
-            列印A4報表
+          <Button 
+            type="primary" 
+            icon={<PrinterOutlined />} 
+            onClick={handlePrint}
+            className="ta-print-btn"
+          >
+            列印報表
           </Button>
         </Space>
       </div>
 
-      {/* Print Header */}
-      <div className="print-section print-summary-section">
-        <div className="report-title">日月星辰 KTV 訂桌分析報告</div>
-        <div className="report-period">分析期間：{selectedMonths.join(' 至 ')} 月</div>
+      {/* Report Title - Print Only */}
+      <div className="ta-print-title print-only">
+        <h1>日月星辰 KTV 訂桌分析報告</h1>
+        <p>分析期間：{selectedMonths.join(' 至 ')} 月</p>
       </div>
 
       {/* Summary Cards */}
-      <Row gutter={24} className="summary-row">
+      <Row gutter={[20, 20]} className="ta-summary-row">
         <Col span={12}>
-          <Card className="summary-card custom-card" loading={loading}>
-            <div className="card-header">
-              <TrophyOutlined />
-              <span>自訂桌統計</span>
+          <Card className="ta-card ta-custom-card" loading={loading}>
+            <div className="ta-card-header">
+              <div className="ta-card-icon ta-custom-icon">
+                <TrophyOutlined />
+              </div>
+              <div className="ta-card-info">
+                <span className="ta-card-title">自訂桌統計</span>
+                <span className="ta-card-desc">幹部自訂桌消費分析</span>
+              </div>
             </div>
-            <Row gutter={16}>
+            <Row gutter={[12, 12]} className="ta-summary-items">
               {selectedMonths.map((m, idx) => {
                 const d = getMonthTotal(m);
                 const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
                 const growth = prevD ? getGrowthRate(d.custom.total, prevD.custom.total) : null;
                 return (
                   <Col key={m} span={8}>
-                    <div className="summary-item">
-                      <div className="summary-month">{m}</div>
-                      <div className="summary-amount">NT$ {d.custom.total.toLocaleString()}</div>
-                      <div className="summary-detail">{d.custom.count} 桌</div>
+                    <div className="ta-summary-item">
+                      <div className="ta-month-tag">{m.slice(5)}</div>
+                      <div className="ta-amount">NT$ {d.custom.total.toLocaleString()}</div>
+                      <div className="ta-detail">{d.custom.count} 桌</div>
                       {growth && (
-                        <div className={`growth-badge ${growth.isGrowth ? 'growth' : 'decline'}`}>
+                        <div className={`ta-growth ${growth.isGrowth ? 'ta-growth-up' : 'ta-growth-down'}`}>
                           {growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
                           {Math.abs(growth.rate)}%
                         </div>
@@ -324,24 +359,29 @@ export default function TableAnalysis() {
           </Card>
         </Col>
         <Col span={12}>
-          <Card className="summary-card cadre-card" loading={loading}>
-            <div className="card-header">
-              <TrophyOutlined style={{ color: '#faad14' }} />
-              <span>幹部訂桌統計</span>
+          <Card className="ta-card ta-cadre-card" loading={loading}>
+            <div className="ta-card-header">
+              <div className="ta-card-icon ta-cadre-icon">
+                <TeamOutlined />
+              </div>
+              <div className="ta-card-info">
+                <span className="ta-card-title">幹部訂桌統計</span>
+                <span className="ta-card-desc">公關訂桌消費分析</span>
+              </div>
             </div>
-            <Row gutter={16}>
+            <Row gutter={[12, 12]} className="ta-summary-items">
               {selectedMonths.map((m, idx) => {
                 const d = getMonthTotal(m);
                 const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1]) : null;
                 const growth = prevD ? getGrowthRate(d.cadre.total, prevD.cadre.total) : null;
                 return (
                   <Col key={m} span={8}>
-                    <div className="summary-item">
-                      <div className="summary-month">{m}</div>
-                      <div className="summary-amount">NT$ {d.cadre.total.toLocaleString()}</div>
-                      <div className="summary-detail">{d.cadre.length} 公關</div>
+                    <div className="ta-summary-item">
+                      <div className="ta-month-tag">{m.slice(5)}</div>
+                      <div className="ta-amount">NT$ {d.cadre.total.toLocaleString()}</div>
+                      <div className="ta-detail">{d.cadre.length} 公關</div>
                       {growth && (
-                        <div className={`growth-badge ${growth.isGrowth ? 'growth' : 'decline'}`}>
+                        <div className={`ta-growth ${growth.isGrowth ? 'ta-growth-up' : 'ta-growth-down'}`}>
                           {growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
                           {Math.abs(growth.rate)}%
                         </div>
@@ -356,52 +396,56 @@ export default function TableAnalysis() {
       </Row>
 
       {/* Charts Section */}
-      <Row gutter={24}>
-        {/* Custom Table Bar Chart */}
+      <Divider className="ta-section-divider print-hide">
+        <LineChartOutlined /> 趨勢分析
+      </Divider>
+
+      <Row gutter={[20, 20]} className="ta-charts-row">
         <Col span={12}>
-          <Card title={<Space><BarChartOutlined />自訂桌月度趨勢</Space>} loading={loading}>
-            <BarChart data={customBarData} title="" color="#1890ff" height={200} />
+          <Card className="ta-card" title={<span className="ta-card-label">自訂桌月度消費</span>}>
+            <BarChart data={customBarData} color="#52c41a" />
           </Card>
         </Col>
-
-        {/* Cadre Table Bar Chart */}
         <Col span={12}>
-          <Card title={<Space><BarChartOutlined />幹部訂桌月度趨勢</Space>} loading={loading}>
-            <BarChart data={cadreBarData} title="" color="#faad14" height={200} />
+          <Card className="ta-card" title={<span className="ta-card-label">幹部訂桌月度消費</span>}>
+            <BarChart data={cadreBarData} color="#faad14" />
           </Card>
         </Col>
       </Row>
 
-      {/* Line Charts for Trends */}
-      <Row gutter={24}>
+      <Row gutter={[20, 20]} className="ta-charts-row">
         <Col span={12}>
-          <Card title={<Space><BarChartOutlined />自訂桌成長趨勢</Space>} loading={loading}>
-            <LineChart data={customTrendData} title="" />
+          <Card className="ta-card" title={<span className="ta-card-label">自訂桌成長趨勢</span>}>
+            <LineChart data={customTrendData} color="#52c41a" />
           </Card>
         </Col>
         <Col span={12}>
-          <Card title={<Space><BarChartOutlined />幹部訂桌成長趨勢</Space>} loading={loading}>
-            <LineChart data={cadreTrendData} title="" />
+          <Card className="ta-card" title={<span className="ta-card-label">幹部訂桌成長趨勢</span>}>
+            <LineChart data={cadreTrendData} color="#faad14" />
           </Card>
         </Col>
       </Row>
 
-      {/* Pie Charts for Top Contributors */}
-      <Row gutter={24}>
+      {/* TOP 3 Charts */}
+      <Divider className="ta-section-divider print-hide">
+        <PieChartOutlined /> TOP 3 占比分析
+      </Divider>
+
+      <Row gutter={[20, 20]}>
         {selectedMonths.map(m => (
-          <Col span={12} key={m}>
-            <Card title={<span>{m} 自訂桌 TOP 3</span>} loading={loading}>
-              <PieChart data={customTop3(m)} title="" />
+          <Col span={8} key={m}>
+            <Card className="ta-card ta-pie-card" title={<span className="ta-card-label">{m} 自訂桌 TOP 3</span>}>
+              <PieChart data={customTop3(m)} />
             </Card>
           </Col>
         ))}
       </Row>
 
-      <Row gutter={24}>
+      <Row gutter={[20, 20]} className="ta-pie-row-2">
         {selectedMonths.map(m => (
-          <Col span={12} key={m}>
-            <Card title={<span>{m} 幹部訂桌 TOP 3</span>} loading={loading}>
-              <PieChart data={cadreTop3(m)} title="" />
+          <Col span={8} key={m}>
+            <Card className="ta-card ta-pie-card" title={<span className="ta-card-label">{m} 幹部訂桌 TOP 3</span>}>
+              <PieChart data={cadreTop3(m)} />
             </Card>
           </Col>
         ))}
