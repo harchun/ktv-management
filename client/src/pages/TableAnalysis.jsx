@@ -105,7 +105,7 @@ function PrintReport({ customSummary, cadreSummary, months, allData }) {
                     {s.growth && s.growth.rate !== 0 && (
                       <span className={s.growth.isGrowth ? 'up' : 'down'}>
                         {s.growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
-                        {Math.abs(s.growth.rate).toFixed(2)}%
+                        {s.growth.rate.toFixed(2)}%
                       </span>
                     )}
                   </td>
@@ -123,7 +123,7 @@ function PrintReport({ customSummary, cadreSummary, months, allData }) {
                     {s.growth && s.growth.rate !== 0 && (
                       <span className={s.growth.isGrowth ? 'up' : 'down'}>
                         {s.growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
-                        {Math.abs(s.growth.rate).toFixed(2)}%
+                        {s.growth.rate.toFixed(2)}%
                       </span>
                     )}
                   </td>
