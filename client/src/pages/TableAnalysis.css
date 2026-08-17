@@ -59,7 +59,7 @@
 
 /* ==================== Print Container ==================== */
 .print-container {
-  display: none;
+  display: block;
 }
 
 .print-page {
@@ -70,6 +70,8 @@
   box-sizing: border-box;
   page-break-after: always;
   page-break-inside: avoid;
+  margin: 0 auto 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .print-page:last-child {
@@ -414,8 +416,4 @@
 }
 
 /* ==================== Screen Preview ==================== */
-@media screen {
-  .print-container {
-    display: none;
-  }
-}
+/* Print container always visible on screen for preview */
