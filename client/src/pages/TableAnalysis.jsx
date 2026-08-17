@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Card,
   Table,
@@ -10,27 +10,33 @@ import {
   Col,
   Statistic,
   Alert,
-  Spin
+  Button,
+  Checkbox,
+  Modal,
+  DatePicker
 } from 'antd';
 import {
   TrophyOutlined,
   RiseOutlined,
   FallOutlined,
   TableOutlined,
-  DollarOutlined
+  DollarOutlined,
+  PrinterOutlined,
+  BarChartOutlined
 } from '@ant-design/icons';
 import api from '../utils/api';
+import dayjs from 'dayjs';
+import './TableAnalysis.css';
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 export default function TableAnalysis() {
-  const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedMonths, setSelectedMonths] = useState([]);
   const [months, setMonths] = useState([]);
-  const [customTables, setCustomTables] = useState([]);
-  const [cadreTables, setCadreTables] = useState([]);
+  const [allData, setAllData] = useState({});
   const [loading, setLoading] = useState(false);
-  const [customGrowth, setCustomGrowth] = useState(null);
-  const [cadreGrowth, setCadreGrowth] = useState(null);
+  const printRef = useRef(null);
 
   useEffect(() => {
     api.get('/stats/months')
@@ -38,71 +44,61 @@ export default function TableAnalysis() {
         const data = res.data;
         const sorted = [...data].sort().reverse();
         setMonths(sorted);
-        if (sorted.length > 0) setSelectedMonth(sorted[0]);
+        // Default: last 3 months
+        setSelectedMonths(sorted.slice(0, 3));
       })
       .catch(err => console.error('Failed to load months:', err));
   }, []);
 
   useEffect(() => {
-    if (!selectedMonth) return;
+    if (selectedMonths.length === 0) return;
 
     setLoading(true);
-    Promise.all([
-      api.get(`/stats/table-usage?month=${selectedMonth}`),
-      api.get(`/stats/cadre-table?month=${selectedMonth}`)
-    ])
-      .then(([customRes, cadreRes]) => {
-        const customData = customRes.data || [];
-        const cadreData = cadreRes.data || [];
-        setCustomTables(customData);
-        setCadreTables(cadreData);
-        calculateGrowth(selectedMonth, customData, cadreData);
+    const promises = selectedMonths.map(m =>
+      Promise.all([
+        api.get(`/stats/table-usage?month=${m}`),
+        api.get(`/stats/cadre-table?month=${m}`)
+      ])
+    );
+
+    Promise.all(promises)
+      .then(results => {
+        const data = {};
+        selectedMonths.forEach((m, i) => {
+          data[m] = {
+            custom: results[i][0].data || [],
+            cadre: results[i][1].data || []
+          };
+        });
+        setAllData(data);
       })
       .catch(err => console.error('Failed to load data:', err))
       .finally(() => setLoading(false));
-  }, [selectedMonth]);
+  }, [selectedMonths]);
 
-  const calculateGrowth = async (currentMonth, currentCustom, currentCadre) => {
-    const currentIndex = months.indexOf(currentMonth);
-    if (currentIndex <= 0) return;
+  const getMonthTotal = (month, type) => {
+    const data = allData[month];
+    if (!data) return { custom: { total: 0, count: 0 }, cadre: { total: 0, count: 0 } };
+    const customTotal = data.custom.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+    const cadreTotal = data.cadre.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+    return {
+      custom: { total: customTotal, count: data.custom.length },
+      cadre: { total: cadreTotal, count: data.cadre.length }
+    };
+  };
 
-    const prevMonth = months[currentIndex - 1];
+  const getGrowthRate = (current, previous) => {
+    if (!previous || previous === 0) return { rate: 0, isGrowth: true };
+    const rate = ((current - previous) / previous * 100).toFixed(2);
+    return { rate: parseFloat(rate), isGrowth: current >= previous };
+  };
 
-    try {
-      // 自訂桌成長率
-      if (currentCustom && prevMonth) {
-        const prevRes = await api.get(`/stats/table-usage?month=${prevMonth}`);
-        const prevData = prevRes.data || [];
-        const currentTotal = currentCustom.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-        const prevTotal = prevData.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-        const currentTables = currentCustom.length;
-        const prevTables = prevData.length;
+  const handleMonthChange = (values) => {
+    setSelectedMonths(values.sort().reverse());
+  };
 
-        setCustomGrowth({
-          consumption: prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal * 100).toFixed(2) : 0,
-          tables: prevTables > 0 ? ((currentTables - prevTables) / prevTables * 100).toFixed(2) : 0,
-          isGrowth: currentTotal >= prevTotal
-        });
-      }
-
-      // 幹桌成長率
-      if (currentCadre && prevMonth) {
-        const prevRes = await api.get(`/stats/cadre-table?month=${prevMonth}`);
-        const prevData = prevRes.data || [];
-        const currentTotal = currentCadre.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-        const prevTotal = prevData.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-        const currentTables = currentCadre.length;
-        const prevTables = prevData.length;
-
-        setCadreGrowth({
-          consumption: prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal * 100).toFixed(2) : 0,
-          tables: prevTables > 0 ? ((currentTables - prevTables) / prevTables * 100).toFixed(2) : 0,
-          isGrowth: currentTotal >= prevTotal
-        });
-      }
-    } catch (err) {
-      console.error('Failed to calculate growth:', err);
-    }
+  const handlePrint = () => {
+    window.print();
   };
 
   const getRankStyle = (index) => {
@@ -112,285 +108,433 @@ export default function TableAnalysis() {
     return {};
   };
 
-  const customColumns = [
-    {
-      title: '排名',
-      dataIndex: 'rank',
-      key: 'rank',
-      width: 60,
-      render: (rank, _, index) => (
-        <span style={getRankStyle(index)}>{index + 1}</span>
-      )
-    },
-    {
-      title: '幹部',
-      dataIndex: '幹部',
-      key: '幹部',
-      render: (name) => <Text strong>{name}</Text>
-    },
-    {
-      title: '總消費',
-      dataIndex: '總消費',
-      key: '總消費',
-      render: (val) => <Text type="danger">NT$ {Number(val).toLocaleString()}</Text>
-    },
-    {
-      title: '桌數',
-      dataIndex: '桌數',
-      key: '桌數',
-      width: 80,
-      render: (val) => <Tag color="blue">{val}</Tag>
-    }
-  ];
-
-  const cadreColumns = [
-    {
-      title: '排名',
-      dataIndex: 'rank',
-      key: 'rank',
-      width: 60,
-      render: (rank, _, index) => (
-        <span style={getRankStyle(index)}>{index + 1}</span>
-      )
-    },
-    {
-      title: '公關',
-      dataIndex: '公關',
-      key: '公關',
-      render: (name) => <Text strong>{name}</Text>
-    },
-    {
-      title: '總消費',
-      dataIndex: '總消費',
-      key: '總消費',
-      render: (val) => <Text type="danger">NT$ {Number(val).toLocaleString()}</Text>
-    },
-    {
-      title: '紀錄數',
-      dataIndex: '紀錄數',
-      key: '紀錄數',
-      width: 80,
-      render: (val) => <Tag color="green">{val}</Tag>
-    }
-  ];
-
-  const growthBadge = (growth) => {
-    if (!growth) return null;
-    const isGrowth = parseFloat(growth.consumption) >= 0;
-    return (
-      <Tag color={isGrowth ? 'success' : 'error'} className="ml-2">
-        {isGrowth ? <RiseOutlined /> : <FallOutlined />}
-        {Math.abs(growth.consumption)}%
-      </Tag>
-    );
-  };
-
-  const renderSummaryRow = (data, label) => (
-    <Table.Summary.Row style={{ background: '#f0f0f0' }}>
-      <Table.Summary.Cell index={0}><Text strong>合計</Text></Table.Summary.Cell>
-      <Table.Summary.Cell index={1}><Text strong>{data.length} 人</Text></Table.Summary.Cell>
-      <Table.Summary.Cell index={2}>
-        <Text type="danger" strong>
-          NT$ {data.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0).toLocaleString()}
-        </Text>
-      </Table.Summary.Cell>
-      <Table.Summary.Cell index={3}>
-        <Tag color="blue" style={{ fontWeight: 'bold' }}>{data.length} {label}</Tag>
-      </Table.Summary.Cell>
-    </Table.Summary.Row>
-  );
+  // Print view
+  if (typeof window !== 'undefined' && window.location.hash === '#print') {
+    return <PrintView allData={allData} months={selectedMonths} />;
+  }
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-        <Col>
-          <Title level={2}>📊 訂桌分析</Title>
-          <Text type="secondary">分析自訂桌統計與幹桌統計的月份成長/衰退趨勢</Text>
-        </Col>
-        <Col>
+    <div className="table-analysis-container">
+      {/* Header */}
+      <div className="analysis-header print-header-hidden">
+        <div>
+          <Title level={2}>📊 訂桌分析報表</Title>
+          <Text type="secondary">多月份成長/衰退趨勢分析（適合老闆報備）</Text>
+        </div>
+        <Space>
           <Select
-            value={selectedMonth}
-            onChange={setSelectedMonth}
-            style={{ width: 150 }}
-            size="large"
-            placeholder="選擇月份"
+            mode="multiple"
+            value={selectedMonths}
+            onChange={handleMonthChange}
+            style={{ width: 280 }}
+            placeholder="選擇月份（建議3-6個月）"
+            maxTagCount={3}
           >
             {months.map(m => (
               <Select.Option key={m} value={m}>{m}</Select.Option>
             ))}
           </Select>
+          <Button type="primary" icon={<PrinterOutlined />} onClick={handlePrint}>
+            列印A4報表
+          </Button>
+        </Space>
+      </div>
+
+      {/* Summary Cards */}
+      <Row gutter={16} className="print-summary">
+        <Col span={12}>
+          <Card className="summary-card custom-card">
+            <div className="card-header">
+              <TrophyOutlined />
+              <span>自訂桌統計</span>
+            </div>
+            <Row gutter={8}>
+              {selectedMonths.map(m => {
+                const d = getMonthTotal(m, 'custom');
+                const idx = selectedMonths.indexOf(m);
+                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1], 'custom') : null;
+                const growth = prevD ? getGrowthRate(d.total, prevD.total) : null;
+                return (
+                  <Col key={m} span={8}>
+                    <Statistic
+                      title={<span className="month-label">{m}</span>}
+                      value={d.total}
+                      prefix={<DollarOutlined />}
+                      suffix="NT$"
+                      precision={0}
+                      valueStyle={{ fontSize: 16 }}
+                    />
+                    {growth && (
+                      <Text type={growth.isGrowth ? 'success' : 'danger'} className="growth-text">
+                        {growth.isGrowth ? '↑' : '↓'} {Math.abs(growth.rate)}%
+                      </Text>
+                    )}
+                  </Col>
+                );
+              })}
+            </Row>
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card className="summary-card cadre-card">
+            <div className="card-header">
+              <TrophyOutlined style={{ color: '#faad14' }} />
+              <span>幹桌統計</span>
+            </div>
+            <Row gutter={8}>
+              {selectedMonths.map(m => {
+                const d = getMonthTotal(m, 'cadre');
+                const idx = selectedMonths.indexOf(m);
+                const prevD = idx > 0 ? getMonthTotal(selectedMonths[idx - 1], 'cadre') : null;
+                const growth = prevD ? getGrowthRate(d.total, prevD.total) : null;
+                return (
+                  <Col key={m} span={8}>
+                    <Statistic
+                      title={<span className="month-label">{m}</span>}
+                      value={d.total}
+                      prefix={<DollarOutlined />}
+                      suffix="NT$"
+                      precision={0}
+                      valueStyle={{ fontSize: 16 }}
+                    />
+                    {growth && (
+                      <Text type={growth.isGrowth ? 'success' : 'danger'} className="growth-text">
+                        {growth.isGrowth ? '↑' : '↓'} {Math.abs(growth.rate)}%
+                      </Text>
+                    )}
+                  </Col>
+                );
+              })}
+            </Row>
+          </Card>
         </Col>
       </Row>
 
-      {/* 自訂桌統計區段 */}
+      {/* Trend Chart Section */}
       <Card
-        title={
-          <Space>
-            <TrophyOutlined />
-            <span>自訂桌統計</span>
-            {customGrowth && growthBadge(customGrowth)}
-          </Space>
-        }
-        loading={loading}
-        extra={
-          customGrowth && (
-            <Space direction="vertical" size={0}>
-              <Text type="secondary">較上月：</Text>
-              <Text type={customGrowth.isGrowth ? 'success' : 'danger'} strong>
-                {customGrowth.isGrowth ? '↑' : '↓'} 消費 {Math.abs(customGrowth.consumption)}%
-              </Text>
-            </Space>
-          )
-        }
-        style={{ marginBottom: 24 }}
+        title={<Space><BarChartOutlined />月度趨勢對比</Space>}
+        className="trend-card print-header-hidden"
       >
-        {customTables.length > 0 ? (
-          <>
-            <Row gutter={16} style={{ marginBottom: 16 }}>
-              <Col span={6}>
-                <Statistic
-                  title="本月總消費"
-                  value={customTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0)}
-                  prefix={<DollarOutlined />}
-                  suffix="NT$"
-                  precision={0}
-                />
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title="本月桌數"
-                  value={customTables.length}
-                  prefix={<TableOutlined />}
-                />
-              </Col>
-              {customGrowth && (
-                <>
-                  <Col span={6}>
-                    <Statistic
-                      title="上月總消費"
-                      value={customTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0) * (1 - customGrowth.consumption / 100)}
-                      prefix={<DollarOutlined />}
-                      suffix="NT$"
-                      precision={0}
-                    />
-                  </Col>
-                  <Col span={6}>
-                    <Statistic
-                      title="上月桌數"
-                      value={Math.round(customTables.length / (1 + customGrowth.tables / 100))}
-                      prefix={<TableOutlined />}
-                    />
-                  </Col>
-                </>
-              )}
-            </Row>
-
-            <Table
-              dataSource={customTables}
-              columns={customColumns}
-              rowKey="幹部"
-              pagination={false}
-              size="middle"
-              summary={() => (
-                <Table.Summary fixed>
-                  {renderSummaryRow(customTables, '桌')}
-                </Table.Summary>
-              )}
-            />
-          </>
-        ) : (
-          <Alert
-            message={selectedMonth ? `本月暫無自訂桌統計數據` : "請選擇月份"}
-            type="info"
-            showIcon
-          />
-        )}
+        <TrendChart allData={allData} months={selectedMonths} />
       </Card>
 
-      {/* 幹桌統計區段 */}
-      <Card
-        title={
-          <Space>
-            <TrophyOutlined style={{ color: '#faad14' }} />
-            <span>幹桌統計</span>
-            {cadreGrowth && growthBadge(cadreGrowth)}
-          </Space>
-        }
-        loading={loading}
-        extra={
-          cadreGrowth && (
-            <Space direction="vertical" size={0}>
-              <Text type="secondary">較上月：</Text>
-              <Text type={cadreGrowth.isGrowth ? 'success' : 'error'} strong>
-                {cadreGrowth.isGrowth ? '↑' : '↓'} 消費 {Math.abs(cadreGrowth.consumption)}%
-              </Text>
-            </Space>
-          )
-        }
-        style={{ marginBottom: 24 }}
-      >
-        {cadreTables.length > 0 ? (
-          <>
-            <Row gutter={16} style={{ marginBottom: 16 }}>
-              <Col span={6}>
-                <Statistic
-                  title="本月總消費"
-                  value={cadreTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0)}
-                  prefix={<DollarOutlined />}
-                  suffix="NT$"
-                  precision={0}
-                />
-              </Col>
-              <Col span={6}>
-                <Statistic
-                  title="本月紀錄數"
-                  value={cadreTables.length}
-                  prefix={<TableOutlined />}
-                />
-              </Col>
-              {cadreGrowth && (
-                <>
-                  <Col span={6}>
-                    <Statistic
-                      title="上月總消費"
-                      value={cadreTables.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0) * (1 - cadreGrowth.consumption / 100)}
-                      prefix={<DollarOutlined />}
-                      suffix="NT$"
-                      precision={0}
-                    />
-                  </Col>
-                  <Col span={6}>
-                    <Statistic
-                      title="上月紀錄數"
-                      value={Math.round(cadreTables.length / (1 + cadreGrowth.tables / 100))}
-                      prefix={<TableOutlined />}
-                    />
-                  </Col>
-                </>
-              )}
-            </Row>
-
-            <Table
-              dataSource={cadreTables}
-              columns={cadreColumns}
-              rowKey="公關訂桌"
-              pagination={false}
-              size="middle"
-              summary={() => (
-                <Table.Summary fixed>
-                  {renderSummaryRow(cadreTables, '筆')}
-                </Table.Summary>
-              )}
-            />
-          </>
-        ) : (
-          <Alert
-            message={selectedMonth ? `本月暫無幹桌統計數據` : "請選擇月份"}
-            type="info"
-            showIcon
-          />
-        )}
-      </Card>
+      {/* Detailed Tables */}
+      <Row gutter={16}>
+        <Col span={12}>
+          <Card
+            title={<Space><TrophyOutlined />自訂桌統計明細</Space>}
+            loading={loading}
+          >
+            {selectedMonths.map(m => {
+              const data = allData[m]?.custom || [];
+              if (data.length === 0) return null;
+              return (
+                <div key={m} className="month-section">
+                  <Text strong className="month-title">{m}</Text>
+                  <Table
+                    dataSource={data}
+                    columns={[
+                      { title: '排名', dataIndex: 'rank', width: 50, render: (_, __, index) => <span style={getRankStyle(index)}>{index + 1}</span> },
+                      { title: '幹部', dataIndex: '幹部', render: n => <Text strong>{n}</Text> },
+                      { title: '總消費', dataIndex: '總消費', render: v => <Text type="danger">NT$ {Number(v).toLocaleString()}</Text> },
+                      { title: '桌數', dataIndex: '桌數', width: 60, render: v => <Tag color="blue">{v}</Tag> }
+                    ]}
+                    rowKey="幹部"
+                    pagination={false}
+                    size="small"
+                    summary={() => (
+                      <Table.Summary>
+                        <Table.Summary.Row style={{ background: '#f0f0f0' }}>
+                          <Table.Summary.Cell><Text strong>合計</Text></Table.Summary.Cell>
+                          <Table.Summary.Cell><Text strong>{data.length}人</Text></Table.Summary.Cell>
+                          <Table.Summary.Cell>
+                            <Text type="danger" strong>NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()}</Text>
+                          </Table.Summary.Cell>
+                          <Table.Summary.Cell><Tag color="blue">{data.length}桌</Tag></Table.Summary.Cell>
+                        </Table.Summary.Row>
+                      </Table.Summary>
+                    )}
+                  />
+                </div>
+              );
+            })}
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card
+            title={<Space><TrophyOutlined style={{ color: '#faad14' }} />幹桌統計明細</Space>}
+            loading={loading}
+          >
+            {selectedMonths.map(m => {
+              const data = allData[m]?.cadre || [];
+              if (data.length === 0) return null;
+              return (
+                <div key={m} className="month-section">
+                  <Text strong className="month-title">{m}</Text>
+                  <Table
+                    dataSource={data}
+                    columns={[
+                      { title: '排名', dataIndex: 'rank', width: 50, render: (_, __, index) => <span style={getRankStyle(index)}>{index + 1}</span> },
+                      { title: '公關', dataIndex: '公關', render: n => <Text strong>{n}</Text> },
+                      { title: '總消費', dataIndex: '總消費', render: v => <Text type="danger">NT$ {Number(v).toLocaleString()}</Text> },
+                      { title: '紀錄數', dataIndex: '紀錄數', width: 60, render: v => <Tag color="green">{v}</Tag> }
+                    ]}
+                    rowKey="公關"
+                    pagination={false}
+                    size="small"
+                    summary={() => (
+                      <Table.Summary>
+                        <Table.Summary.Row style={{ background: '#f0f0f0' }}>
+                          <Table.Summary.Cell><Text strong>合計</Text></Table.Summary.Cell>
+                          <Table.Summary.Cell><Text strong>{data.length}人</Text></Table.Summary.Cell>
+                          <Table.Summary.Cell>
+                            <Text type="danger" strong>NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()}</Text>
+                          </Table.Summary.Cell>
+                          <Table.Summary.Cell><Tag color="green">{data.length}筆</Tag></Table.Summary.Cell>
+                        </Table.Summary.Row>
+                      </Table.Summary>
+                    )}
+                  />
+                </div>
+              );
+            })}
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }
+
+// Print View Component
+function PrintView({ allData, months }) {
+  const getMonthTotal = (month, type) => {
+    const data = allData[month];
+    if (!data) return { custom: { total: 0, count: 0 }, cadre: { total: 0, count: 0 } };
+    const customTotal = data.custom.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+    const cadreTotal = data.cadre.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+    return {
+      custom: { total: customTotal, count: data.custom.length },
+      cadre: { total: cadreTotal, count: data.cadre.length }
+    };
+  };
+
+  return (
+    <div className="print-report">
+      <div className="print-header">
+        <h1>日月星辰 KTV 訂桌分析報告</h1>
+        <p>分析期間：{months[0]} ~ {months[months.length - 1]}</p>
+        <p>報告日期：{dayjs().format('YYYY年MM月DD日')}</p>
+      </div>
+
+      {/* Summary Table */}
+      <div className="print-section">
+        <h2>一、月度統計摘要</h2>
+        <table className="print-table">
+          <thead>
+            <tr>
+              <th rowSpan="2">統計項目</th>
+              {months.map(m => <th key={m}>{m}</th>)}
+              <th rowSpan="2">趨勢</th>
+            </tr>
+            <tr>
+              {months.map(m => <th key={`sub-${m}`}>消費金額</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>自訂桌統計</td>
+              {months.map(m => {
+                const d = getMonthTotal(m, 'custom');
+                return <td key={m}>NT$ {d.custom.total.toLocaleString()}</td>;
+              })}
+              <td>
+                {months.length >= 2 && (
+                  <span className={getGrowthRate(
+                    getMonthTotal(months[months.length - 1], 'custom').custom.total,
+                    getMonthTotal(months[months.length - 2], 'custom').custom.total
+                  ).isGrowth ? 'positive' : 'negative'}>
+                    {getGrowthRate(
+                      getMonthTotal(months[months.length - 1], 'custom').custom.total,
+                      getMonthTotal(months[months.length - 2], 'custom').custom.total
+                    ).rate > 0 ? '↑' : '↓'}
+                    {Math.abs(getGrowthRate(
+                      getMonthTotal(months[months.length - 1], 'custom').custom.total,
+                      getMonthTotal(months[months.length - 2], 'custom').custom.total
+                    ).rate).toFixed(1)}%
+                  </span>
+                )}
+              </td>
+            </tr>
+            <tr>
+              <td>幹桌統計</td>
+              {months.map(m => {
+                const d = getMonthTotal(m, 'cadre');
+                return <td key={m}>NT$ {d.cadre.total.toLocaleString()}</td>;
+              })}
+              <td>
+                {months.length >= 2 && (
+                  <span className={getGrowthRate(
+                    getMonthTotal(months[months.length - 1], 'cadre').cadre.total,
+                    getMonthTotal(months[months.length - 2], 'cadre').cadre.total
+                  ).isGrowth ? 'positive' : 'negative'}>
+                    {getGrowthRate(
+                      getMonthTotal(months[months.length - 1], 'cadre').cadre.total,
+                      getMonthTotal(months[months.length - 2], 'cadre').cadre.total
+                    ).rate > 0 ? '↑' : '↓'}
+                    {Math.abs(getGrowthRate(
+                      getMonthTotal(months[months.length - 1], 'cadre').cadre.total,
+                      getMonthTotal(months[months.length - 2], 'cadre').cadre.total
+                    ).rate).toFixed(1)}%
+                  </span>
+                )}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Custom Tables Detail */}
+      <div className="print-section">
+        <h2>二、自訂桌統計明細</h2>
+        {months.map(m => {
+          const data = allData[m]?.custom || [];
+          if (data.length === 0) return null;
+          return (
+            <div key={m} className="print-month-group">
+              <h3>{m}月</h3>
+              <table className="print-table small">
+                <thead>
+                  <tr>
+                    <th>排名</th>
+                    <th>幹部</th>
+                    <th>總消費</th>
+                    <th>桌數</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((row, i) => (
+                    <tr key={row.幹部}>
+                      <td>{i + 1}</td>
+                      <td>{row.幹部}</td>
+                      <td>NT$ {Number(row.總消費).toLocaleString()}</td>
+                      <td>{row.桌數}</td>
+                    </tr>
+                  ))}
+                  <tr className="summary-row">
+                    <td colSpan="2"><strong>合計</strong></td>
+                    <td><strong>NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()}</strong></td>
+                    <td><strong>{data.length}桌</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Cadre Tables Detail */}
+      <div className="print-section">
+        <h2>三、幹桌統計明細</h2>
+        {months.map(m => {
+          const data = allData[m]?.cadre || [];
+          if (data.length === 0) return null;
+          return (
+            <div key={m} className="print-month-group">
+              <h3>{m}月</h3>
+              <table className="print-table small">
+                <thead>
+                  <tr>
+                    <th>排名</th>
+                    <th>公關</th>
+                    <th>總消費</th>
+                    <th>紀錄數</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((row, i) => (
+                    <tr key={row.公關}>
+                      <td>{i + 1}</td>
+                      <td>{row.公關}</td>
+                      <td>NT$ {Number(row.總消費).toLocaleString()}</td>
+                      <td>{row.紀錄數}</td>
+                    </tr>
+                  ))}
+                  <tr className="summary-row">
+                    <td colSpan="2"><strong>合計</strong></td>
+                    <td><strong>NT$ {data.reduce((s, r) => s + (Number(r.總消費) || 0), 0).toLocaleString()}</strong></td>
+                    <td><strong>{data.length}筆</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="print-footer">
+        <p>報告生成時間：{dayjs().format('YYYY-MM-DD HH:mm:ss')}</p>
+        <p>日月星辰 KTV 管理系統</p>
+      </div>
+    </div>
+  );
+}
+
+// Trend Chart Component
+function TrendChart({ allData, months }) {
+  const getTotals = () => {
+    return months.map(m => {
+      const customData = allData[m]?.custom || [];
+      const cadreData = allData[m]?.cadre || [];
+      const customTotal = customData.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+      const cadreTotal = cadreData.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
+      return { month: m, custom: customTotal, cadre: cadreTotal };
+    });
+  };
+
+  const data = getTotals();
+  const maxVal = Math.max(...data.map(d => Math.max(d.custom, d.cadre)));
+
+  return (
+    <div className="trend-chart">
+      <div className="chart-header">
+        <span className="legend-item">
+          <span className="legend-color custom-color"></span>
+          自訂桌統計
+        </span>
+        <span className="legend-item">
+          <span className="legend-color cadre-color"></span>
+          幹桌統計
+        </span>
+      </div>
+      <div className="chart-body">
+        {data.map((d, i) => (
+          <div key={d.month} className="chart-column">
+            <div className="bar-group">
+              <div
+                className="bar custom-bar"
+                style={{ height: `${(d.custom / maxVal) * 150}px` }}
+                title={`自訂桌: NT$ ${d.custom.toLocaleString()}`}
+              />
+              <div
+                className="bar cadre-bar"
+                style={{ height: `${(d.cadre / maxVal) * 150}px` }}
+                title={`幹桌: NT$ ${d.cadre.toLocaleString()}`}
+              />
+            </div>
+            <div className="bar-values">
+              <span className="custom-value">NT${(d.custom / 1000).toFixed(0)}k</span>
+              <span className="cadre-value">NT${(d.cadre / 1000).toFixed(0)}k</span>
+            </div>
+            <div className="month-label">{d.month}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const getGrowthRate = (current, previous) => {
+  if (!previous || previous === 0) return { rate: 0, isGrowth: true };
+  const rate = ((current - previous) / previous * 100);
+  return { rate: parseFloat(rate.toFixed(2)), isGrowth: current >= previous };
+};
