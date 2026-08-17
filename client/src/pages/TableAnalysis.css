@@ -1,8 +1,8 @@
 /* ============================================
-   Table Analysis - PPT Style Report
+   Table Analysis - Print Optimized A4 Report
    ============================================ */
 
-/* ==================== Page Layout ==================== */
+/* ==================== Screen Styles ==================== */
 .ta-page {
   min-height: 100vh;
   background: #f5f7fa;
@@ -10,7 +10,7 @@
 
 .ta-controls {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 24px 32px;
+  padding: 20px 32px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -41,13 +41,6 @@
   font-weight: 600;
 }
 
-.ta-print-btn:hover {
-  background: #f8f9fa !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* ==================== Print Report ==================== */
 .print-report {
   max-width: 210mm;
   margin: 0 auto;
@@ -57,8 +50,6 @@
 /* ==================== Slide Base ==================== */
 .slide {
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   margin-bottom: 24px;
   overflow: hidden;
   page-break-after: always;
@@ -71,7 +62,7 @@
 
 /* ==================== Cover Slide ==================== */
 .cover-slide {
-  min-height: 280mm;
+  height: 297mm;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -84,65 +75,67 @@
 }
 
 .cover-logo {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 24px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 32px;
+  margin: 0 auto 24px;
 }
 
 .logo-icon {
-  font-size: 64px;
+  font-size: 56px;
   color: #fff;
 }
 
 .cover-title {
-  font-size: 48px;
+  font-size: 42px;
   font-weight: 700;
-  margin: 0 0 16px;
-  letter-spacing: 4px;
+  margin: 0 0 12px;
+  letter-spacing: 3px;
 }
 
 .cover-subtitle {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 300;
-  margin: 0 0 48px;
+  margin: 0 0 40px;
   opacity: 0.9;
 }
 
 .cover-period,
 .cover-date {
-  font-size: 18px;
-  margin: 8px 0;
-  opacity: 0.8;
+  font-size: 16px;
+  margin: 6px 0;
+  opacity: 0.85;
 }
 
 /* ==================== Summary Slide ==================== */
 .summary-slide {
-  padding: 48px;
-  min-height: 280mm;
+  padding: 40px;
+  height: 297mm;
+  display: flex;
+  flex-direction: column;
 }
 
 .slide-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 40px;
+  gap: 12px;
+  margin-bottom: 32px;
 }
 
 .slide-number {
-  font-size: 48px;
+  font-size: 42px;
   font-weight: 700;
   color: #667eea;
-  opacity: 0.3;
+  opacity: 0.25;
   line-height: 1;
 }
 
 .slide-title {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 600;
   color: #1a1a2e;
   margin: 0;
@@ -151,33 +144,28 @@
 .summary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 32px;
+  gap: 24px;
+  flex: 1;
 }
 
 .summary-card {
   background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
-  border-radius: 20px;
-  padding: 32px;
+  border-radius: 16px;
+  padding: 28px;
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
   border: 1px solid #e8e8e8;
-  transition: all 0.3s ease;
-}
-
-.summary-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
 .card-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 16px;
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 36px;
+  font-size: 32px;
   color: #fff;
   flex-shrink: 0;
 }
@@ -187,25 +175,25 @@
 }
 
 .card-label {
-  font-size: 14px;
+  font-size: 13px;
   color: #999;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .card-total {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 700;
   color: #1a1a2e;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .card-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 14px;
+  gap: 10px;
+  font-size: 13px;
   color: #666;
 }
 
@@ -213,9 +201,9 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 14px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -231,20 +219,22 @@
 
 /* ==================== Chart Slide ==================== */
 .chart-slide {
-  padding: 48px;
-  min-height: 280mm;
+  padding: 40px;
+  height: 297mm;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-container {
   background: #fafbfc;
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 32px;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  flex: 1;
 }
 
 .trend-chart {
   width: 100%;
-  overflow: hidden;
 }
 
 .trend-svg {
@@ -254,25 +244,25 @@
 
 .bar-chart-container {
   background: #fafbfc;
-  border-radius: 16px;
-  padding: 32px;
+  border-radius: 12px;
+  padding: 24px;
 }
 
 .bar-chart {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .bar-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .bar-label {
-  width: 60px;
-  font-size: 14px;
+  width: 50px;
+  font-size: 13px;
   font-weight: 600;
   color: #666;
   text-align: right;
@@ -280,21 +270,20 @@
 
 .bar-track {
   flex: 1;
-  height: 32px;
+  height: 28px;
   background: #e8e8e8;
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: 16px;
-  transition: width 0.5s ease;
+  border-radius: 14px;
 }
 
 .bar-value {
-  width: 100px;
-  font-size: 14px;
+  width: 90px;
+  font-size: 13px;
   font-weight: 600;
   color: #333;
 }
@@ -303,7 +292,7 @@
 .donut-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+  gap: 24px;
 }
 
 .donut-item {
@@ -311,42 +300,42 @@
 }
 
 .donut-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .donut-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .donut-svg {
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
 }
 
 .donut-legend {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 11px;
   color: #666;
 }
 
 .legend-dot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -362,7 +351,7 @@
 
 /* ==================== Footer Slide ==================== */
 .footer-slide {
-  min-height: 100mm;
+  height: 297mm;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -375,14 +364,14 @@
 }
 
 .footer-text {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   letter-spacing: 2px;
 }
 
 .footer-date {
-  font-size: 16px;
+  font-size: 14px;
   opacity: 0.6;
   margin: 0;
 }
@@ -390,8 +379,13 @@
 /* ==================== Print Styles ==================== */
 @media print {
   @page {
-    size: A4;
+    size: A4 portrait;
     margin: 0;
+  }
+  
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
   body {
@@ -407,6 +401,7 @@
   .print-report {
     max-width: 100%;
     padding: 0;
+    margin: 0;
   }
   
   .slide {
@@ -416,6 +411,7 @@
     page-break-after: always;
     page-break-inside: avoid;
     height: 297mm;
+    width: 210mm;
     overflow: hidden;
   }
   
@@ -428,11 +424,24 @@
   .bar-chart-container {
     break-inside: avoid;
   }
+  
+  /* Ensure gradients print */
+  .cover-slide,
+  .footer-slide,
+  .card-icon,
+  .bar-fill {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }
 
-/* ==================== Screen Styles ==================== */
+/* ==================== Screen Preview ==================== */
 @media screen {
   .print-report {
     max-width: 210mm;
+  }
+  
+  .slide {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   }
 }
