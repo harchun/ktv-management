@@ -20,22 +20,38 @@ const { Title, Text } = Typography;
 
 // ==================== Print Report Component ====================
 function PrintReport({ customSummary, cadreSummary, months, allData }) {
-  // Calculate growth rates
+  // Calculate growth rates - sort chronologically first
   const getGrowth = (current, previous) => {
     if (!previous || previous === 0) return { rate: 0, isGrowth: true };
     const rate = ((current - previous) / previous * 100);
     return { rate, isGrowth: rate >= 0 };
   };
 
-  const customGrowth = getGrowth(
-    customSummary[customSummary.length - 1]?.total || 0,
-    customSummary[customSummary.length - 2]?.total || 0
-  );
+  // Sort summaries chronologically for growth calculation
+  const sortedCustomSummary = [...customSummary].sort((a, b) => a.month.localeCompare(b.month));
+  const sortedCadreSummary = [...cadreSummary].sort((a, b) => a.month.localeCompare(b.month));
 
-  const cadreGrowth = getGrowth(
-    cadreSummary[cadreSummary.length - 1]?.total || 0,
-    cadreSummary[cadreSummary.length - 2]?.total || 0
-  );
+  // Calculate growth for each month based on chronological order
+  const customSummaryWithGrowth = sortedCustomSummary.map((s, i) => {
+    const prev = i > 0 ? sortedCustomSummary[i-1] : null;
+    const growth = prev ? getGrowth(s.total, prev.total) : null;
+    return { ...s, growth };
+  });
+
+  const cadreSummaryWithGrowth = sortedCadreSummary.map((s, i) => {
+    const prev = i > 0 ? sortedCadreSummary[i-1] : null;
+    const growth = prev ? getGrowth(s.total, prev.total) : null;
+    return { ...s, growth };
+  });
+
+  // Calculate overall growth for cards (latest month vs previous)
+  const customGrowth = customSummaryWithGrowth.length > 1 
+    ? getGrowth(sortedCustomSummary[sortedCustomSummary.length - 1].total, sortedCustomSummary[sortedCustomSummary.length - 2].total)
+    : { rate: 0, isGrowth: true };
+
+  const cadreGrowth = cadreSummaryWithGrowth.length > 1
+    ? getGrowth(sortedCadreSummary[sortedCadreSummary.length - 1].total, sortedCadreSummary[sortedCadreSummary.length - 2].total)
+    : { rate: 0, isGrowth: true };
 
   return (
     <div className="a4-report">
@@ -50,7 +66,7 @@ function PrintReport({ customSummary, cadreSummary, months, allData }) {
           <div className="cover-divider" />
           <p className="cover-period">
             <span className="label">分析期間</span>
-            <span className="value">{months.join(' ~ ')}</span>
+            <span className="value">{months.slice().sort().reverse().join(' ~ ')}</span>
           </p>
           <p className="cover-date">
             <span className="label">報告日期</span>
@@ -80,20 +96,16 @@ function PrintReport({ customSummary, cadreSummary, months, allData }) {
               <tr className="section-header">
                 <td colSpan="4">自訂桌統計</td>
               </tr>
-              {customSummary.map((s, i) => (
-                <tr key={s.month} className={i === customSummary.length - 1 ? 'latest' : ''}>
+              {customSummaryWithGrowth.map((s, i) => (
+                <tr key={s.month} className={i === customSummaryWithGrowth.length - 1 ? 'latest' : ''}>
                   <td>{s.month}</td>
                   <td className="amount">NT$ {s.total.toLocaleString()}</td>
                   <td>{s.count} 桌</td>
                   <td className="growth">
-                    {i > 0 && (
-                      <span className={customSummary[i-1]?.total > 0 ? (getGrowth(s.total, customSummary[i-1].total).isGrowth ? 'up' : 'down') : ''}>
-                        {i > 0 && getGrowth(s.total, customSummary[i-1].total).rate !== 0 && (
-                          <>
-                            {getGrowth(s.total, customSummary[i-1].total).isGrowth ? <RiseOutlined /> : <FallOutlined />}
-                            {Math.abs(getGrowth(s.total, customSummary[i-1].total).rate).toFixed(2)}%
-                          </>
-                        )}
+                    {s.growth && s.growth.rate !== 0 && (
+                      <span className={s.growth.isGrowth ? 'up' : 'down'}>
+                        {s.growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
+                        {Math.abs(s.growth.rate).toFixed(2)}%
                       </span>
                     )}
                   </td>
@@ -102,24 +114,16 @@ function PrintReport({ customSummary, cadreSummary, months, allData }) {
               <tr className="section-header">
                 <td colSpan="4">幹部訂桌統計</td>
               </tr>
-              {cadreSummary.map((s, i) => (
-                <tr key={s.month} className={i === cadreSummary.length - 1 ? 'latest' : ''}>
+              {cadreSummaryWithGrowth.map((s, i) => (
+                <tr key={s.month} className={i === cadreSummaryWithGrowth.length - 1 ? 'latest' : ''}>
                   <td>{s.month}</td>
                   <td className="amount">NT$ {s.total.toLocaleString()}</td>
                   <td>{s.count} 公關</td>
                   <td className="growth">
-                    {i > 0 && (
-                      <span className={
-                        cadreSummary[i-1]?.total > 0
-                          ? (getGrowth(s.total, cadreSummary[i-1].total).isGrowth ? 'up' : 'down')
-                          : ''
-                      }>
-                        {i > 0 && getGrowth(s.total, cadreSummary[i-1].total).rate !== 0 && (
-                          <>
-                            {getGrowth(s.total, cadreSummary[i-1].total).isGrowth ? <RiseOutlined /> : <FallOutlined />}
-                            {Math.abs(getGrowth(s.total, cadreSummary[i-1].total).rate).toFixed(2)}%
-                          </>
-                        )}
+                    {s.growth && s.growth.rate !== 0 && (
+                      <span className={s.growth.isGrowth ? 'up' : 'down'}>
+                        {s.growth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
+                        {Math.abs(s.growth.rate).toFixed(2)}%
                       </span>
                     )}
                   </td>
@@ -137,10 +141,10 @@ function PrintReport({ customSummary, cadreSummary, months, allData }) {
             <div className="card-info">
               <div className="card-label">自訂桌統計</div>
               <div className="card-value">
-                NT$ {customSummary[customSummary.length - 1]?.total.toLocaleString() || '0'}
+                NT$ {sortedCustomSummary[sortedCustomSummary.length - 1]?.total.toLocaleString() || '0'}
               </div>
               <div className="card-meta">
-                <span>{customSummary[customSummary.length - 1]?.count || 0} 桌</span>
+                <span>{sortedCustomSummary[sortedCustomSummary.length - 1]?.count || 0} 桌</span>
                 {customGrowth.rate !== 0 && (
                   <span className={customGrowth.isGrowth ? 'up' : 'down'}>
                     {customGrowth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
@@ -158,10 +162,10 @@ function PrintReport({ customSummary, cadreSummary, months, allData }) {
             <div className="card-info">
               <div className="card-label">幹部訂桌統計</div>
               <div className="card-value">
-                NT$ {cadreSummary[cadreSummary.length - 1]?.total.toLocaleString() || '0'}
+                NT$ {sortedCadreSummary[sortedCadreSummary.length - 1]?.total.toLocaleString() || '0'}
               </div>
               <div className="card-meta">
-                <span>{cadreSummary[cadreSummary.length - 1]?.count || 0} 公關</span>
+                <span>{sortedCadreSummary[sortedCadreSummary.length - 1]?.count || 0} 公關</span>
                 {cadreGrowth.rate !== 0 && (
                   <span className={cadreGrowth.isGrowth ? 'up' : 'down'}>
                     {cadreGrowth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
