@@ -134,12 +134,13 @@ function AppContent() {
           </h1>
         </div>
         <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={menuItems}
-          onClick={({ key }) => { navigate(key); if (isMobile) setCollapsed(true); }}
-          inlineCollapsed={collapsed && !isMobile}
+        theme="dark"
+        mode="inline"
+        selectedKeys={[location.pathname]}
+        items={menuItems}
+        onClick={({ key }) => { navigate(key); if (isMobile) setCollapsed(true); }}
+        inlineCollapsed={collapsed && !isMobile}
+        style={{ touchAction: 'manipulation' }}
         />
       </Sider>
 
