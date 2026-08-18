@@ -51,6 +51,25 @@ function AppContent() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Force re-render when window width changes
+  useEffect(() => {
+    let resizeTimeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const mobile = window.innerWidth <= 768;
+        if (isMobile !== mobile) {
+          setIsMobile(mobile);
+        }
+      }, 100);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
+    };
+  }, [isMobile]);
+
   useEffect(() => {
     if (token) {
       try {
