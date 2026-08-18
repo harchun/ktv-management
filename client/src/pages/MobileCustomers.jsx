@@ -294,16 +294,15 @@ export default function MobileCustomers() {
             沒有近40天來訪的客戶
           </div>
         ) : (
-          dataSource.map((item, idx) => (
-            <Collapse 
-              key={idx} 
-              ghost 
-              style={{ marginBottom: 8 }}
-              defaultActive={idx === 0}
-              expandIcon={({ isActive }) => (
-                <DownOutlined style={{ color: '#9b59b6', transform: isActive ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-              )}
-            >
+          <Collapse
+            ghost
+            style={{ marginBottom: 8 }}
+            activeKey={dataSource.map(item => item.幹部)}
+            expandIcon={({ isActive }) => (
+              <DownOutlined style={{ color: '#9b59b6', transform: isActive ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+            )}
+          >
+            {dataSource.map((item, idx) => (
               <Panel
                 header={
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -318,6 +317,7 @@ export default function MobileCustomers() {
                   </div>
                 }
                 key={item.幹部}
+                value={item.幹部}
               >
                 <div style={{ padding: '8px 0' }}>
                   {item.客戶列表?.map((client, cIdx) => (
@@ -352,8 +352,8 @@ export default function MobileCustomers() {
                   ))}
                 </div>
               </Panel>
-            </Collapse>
-          ))
+            ))
+          </Collapse>
         )}
       </div>
 
