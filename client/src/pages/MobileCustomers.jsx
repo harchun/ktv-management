@@ -51,9 +51,45 @@ export default function MobileCustomers() {
   const fetchInactiveCustomers = async () => {
     try {
       const res = await api.get('/inactive-customers');
-      setInactiveCustomers(res.data || []);
+      // axios response: res.data is the actual API response (array or object)
+      console.log('=== AXIOS RESPONSE DEBUG ===');
+      console.log('res type:', typeof res);
+      console.log('res keys:', Object.keys(res));
+      console.log('res.data type:', typeof res.data);
+      console.log('res.data isArray:', Array.isArray(res.data));
+      console.log('res.status:', res.status);
+      console.log('res.data value:', JSON.stringify(res.data).substring(0, 500));
+      const apiData = res.data;
+      window.__DEBUG_API_RESPONSE__ = apiData;
+      window.__DEBUG_API_STATUS__ = res.status;
+      window.__DEBUG_API_DATA_TYPE__ = typeof apiData;
+      window.__DEBUG_API_DATA_IS_ARRAY__ = Array.isArray(apiData);
+      console.log('=== INACTIVE CUSTOMERS DEBUG ===');
+      console.log('API response type:', typeof apiData);
+      console.log('API response isArray:', Array.isArray(apiData));
+      console.log('API response status:', res.status);
+      console.log('API response length:', Array.isArray(apiData) ? apiData.length : 'not array');
+      if (apiData && Array.isArray(apiData)) {
+        console.log('First cadre 幹部編號:', apiData[0]?.幹部編號);
+        console.log('First cadre 幹部:', apiData[0]?.幹部);
+        console.log('First cadre 客戶列表 length:', apiData[0]?.客戶列表?.length);
+        console.log('First client 客戶名:', apiData[0]?.客戶列表?.[0]?.客戶名);
+        console.log('First client 最後來訪:', apiData[0]?.客戶列表?.[0]?.最後來訪);
+      }
+      const data = Array.isArray(apiData) ? apiData : [];
+      console.log('Setting state to length:', data.length);
+      setInactiveCustomers(data);
+      window.__DEBUG_INACTIVE_STATE__ = data;
+      console.log('State set to length:', data.length);
+      console.log('================================');
     } catch (err) {
+      window.__DEBUG_API_ERROR__ = err.message;
+      console.error('=== INACTIVE CUSTOMERS ERROR ===');
       console.error('Error loading inactive customers', err);
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+      console.error('================================');
+      setInactiveCustomers([]);
     }
   };
 
@@ -331,57 +367,63 @@ export default function MobileCustomers() {
             message={`近40天無來訪客戶 (${inactiveCustomers.length} 位幹部)`}
             style={{ background: 'rgba(255, 193, 7, 0.1)', borderColor: '#ffc107', marginBottom: 12 }}
           />
-          {inactiveCustomers.map((item, idx) => (
-            <Card 
-              key={idx} 
-              style={{ ...cardStyle, background: 'rgba(255, 193, 7, 0.05)' }}
-              title={
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={{ color: '#ffc107', fontWeight: 'bold' }}>
-                    <UserOutlined style={{ marginRight: 8 }} />
-                    {item.幹部}
-                    {item.幹部暱稱 && <Text style={{ color: '#999', fontSize: 12, marginLeft: 6, fontWeight: 'normal' }}>({item.幹部暱稱})</Text>}
-                  </Text>
-                  <Text style={{ color: '#999', fontSize: 12 }}>
-                    {item.客戶列表?.length || 0} 位客戶
-                  </Text>
-                </div>
-              }
-            >
-              <div style={{ padding: '8px 0' }}>
-                {item.客戶列表?.map((client, cIdx) => (
-                  <div key={cIdx} style={{
-                    background: 'rgba(255, 193, 7, 0.1)',
-                    border: '1px solid #ffc107',
-                    borderRadius: 8,
-                    padding: '8px 10px',
-                    marginBottom: 6,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}>
-                    <div>
-                      <Text style={{ color: '#ffc107', fontSize: 13, fontWeight: 500 }}>{client.客戶名 || '-'}</Text>
-                      <div style={{ marginTop: 4, fontSize: 11, color: '#666', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <CalendarOutlined style={{ color: '#ffc107' }} />
-                        最後來訪: {client.最後來訪 ? formatDate(client.最後來訪) : '-'}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {inactiveCustomers.map((item, idx) => {
+              const cadreKey = `inactive-${item.幹部編號 || idx}`;
+              console.log('Rendering inactive cadre:', cadreKey, 'idx:', idx, 'item:', item?.幹部);
+              return (
+              <Card
+                key={cadreKey}
+                style={{ ...cardStyle, background: 'rgba(255, 193, 7, 0.05)', marginBottom: 0 }}
+                title={
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={{ color: '#ffc107', fontWeight: 'bold' }}>
+                      <UserOutlined style={{ marginRight: 8 }} />
+                      {String(item.幹部 || `幹部${idx + 1}`)}
+                      {item.幹部暱稱 && <Text style={{ color: '#999', fontSize: 12, marginLeft: 6, fontWeight: 'normal' }}>({String(item.幹部暱稱)})</Text>}
+                    </Text>
+                    <Text style={{ color: '#999', fontSize: 12 }}>
+                      {Array.isArray(item.客戶列表) ? item.客戶列表.length : 0} 位客戶
+                    </Text>
+                  </div>
+                }
+              >
+                <div style={{ padding: '8px 0' }}>
+                  {Array.isArray(item.客戶列表) ? item.客戶列表.map((client, cIdx) => (
+                    <div key={`client-${idx}-${cIdx}-${client.客戶名 || cIdx}`} style={{
+                      background: 'rgba(255, 193, 7, 0.1)',
+                      border: '1px solid #ffc107',
+                      borderRadius: 8,
+                      padding: '8px 10px',
+                      marginBottom: 6,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}>
+                      <div>
+                        <Text style={{ color: '#ffc107', fontSize: 13, fontWeight: 500 }}>{String(client.客戶名 || '-')}</Text>
+                        <div style={{ marginTop: 4, fontSize: 11, color: '#666', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <CalendarOutlined style={{ color: '#ffc107' }} />
+                          最後來訪: {client.最後來訪 ? formatDate(client.最後來訪) : '-'}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {client.公關訂桌 ? (
+                          <Tag style={{ background: 'rgba(255, 215, 0, 0.2)', borderColor: '#ffc107', color: '#ffc107', border: 'none', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>
+                            🎯 {String(client.公關訂桌)}
+                          </Tag>
+                        ) : (
+                          <Text style={{ color: '#666', fontSize: 12 }}>-</Text>
+                        )}
+                        <Text style={{ color: '#ffc107', fontSize: 12 }}>{Number(client.來訪次數) || 0} 來訪</Text>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      {client.公關訂桌 ? (
-                        <Tag style={{ background: 'rgba(255, 215, 0, 0.2)', borderColor: '#ffc107', color: '#ffc107', border: 'none', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>
-                          🎯 {client.公關訂桌}
-                        </Tag>
-                      ) : (
-                        <Text style={{ color: '#666', fontSize: 12 }}>-</Text>
-                      )}
-                      <Text style={{ color: '#ffc107', fontSize: 12 }}>{client.來訪次數} 來訪</Text>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          ))}
+                  )) : null}
+                </div>
+              </Card>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

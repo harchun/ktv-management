@@ -33,9 +33,14 @@ function authenticate(req, res, next) {
 // ==================== AUTH ====================
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const [rows] = await pool.execute('SELECT * FROM users WHERE 帳號 = ?', [username]);
-    if (!rows.length || !bcrypt.compareSync(password, rows[0].密碼)) {
+    const { username, password, 帳號, 密碼 } = req.body;
+    const user_name = 帳號 || username;
+    const user_pass = 密碼 || password;
+    if (!user_name || !user_pass) {
+      return res.status(400).json({ error: '帳號或密碼不能為空' });
+    }
+    const [rows] = await pool.execute('SELECT * FROM users WHERE 帳號 = ?', [user_name]);
+    if (!rows.length || !bcrypt.compareSync(user_pass, rows[0].密碼)) {
       return res.status(401).json({ error: '帳號或密碼錯誤' });
     }
     const token = jwt.sign({ id: rows[0].用戶編號, username: rows[0].帳號, role: rows[0].角色 }, JWT_SECRET, { expiresIn: '24h' });
