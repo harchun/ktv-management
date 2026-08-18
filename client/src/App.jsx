@@ -28,23 +28,27 @@ import MobileDashboard from './pages/MobileDashboard';
 const { Header, Sider, Content } = Layout;
 
 function AppContent() {
-  const [collapsed, setCollapsed] = useState(false);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [user, setUser] = useState(null);
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const handleResize = () => {
+    const checkMobile = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-      if (mobile) setCollapsed(true);
-      else setCollapsed(false);
+      // On mobile, start with sidebar closed
+      if (mobile) {
+        setCollapsed(true);
+      } else {
+        setCollapsed(false);
+      }
     };
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   useEffect(() => {
