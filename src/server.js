@@ -415,7 +415,7 @@ app.get('/api/inactive-customers', authenticate, async (req, res) => {
       FROM daily_sales ds
       LEFT JOIN cadres cad ON ds.\`幹部\` = cad.\`姓名\`
       LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
-      WHERE 1=1
+      WHERE cad.\`等級\` = '一線'
       GROUP BY cad.\`等級\`, ds.\`客戶名\`
       HAVING MAX(ds.\`日期\`) < DATE_SUB(CURDATE(), INTERVAL 40 DAY)
          OR MAX(ds.\`日期\`) IS NULL
