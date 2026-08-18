@@ -30,45 +30,20 @@ const { Header, Sider, Content } = Layout;
 function AppContent() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [user, setUser] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [collapsed, setCollapsed] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Update isMobile when window resizes
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth <= 768;
-      setIsMobile(mobile);
-      // On mobile, start with sidebar closed
-      if (mobile) {
-        setCollapsed(true);
-      } else {
-        setCollapsed(false);
-      }
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Force re-render when window width changes
-  useEffect(() => {
-    let resizeTimeout;
     const handleResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        const mobile = window.innerWidth <= 768;
-        if (isMobile !== mobile) {
-          setIsMobile(mobile);
-        }
-      }, 100);
+      setIsMobile(window.innerWidth <= 768);
+      setCollapsed(window.innerWidth > 768 ? false : true);
     };
     window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(resizeTimeout);
-    };
-  }, [isMobile]);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (token) {
