@@ -403,29 +403,49 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
 // ==================== INACTIVE CUSTOMERS ====================
 app.get('/api/inactive-customers', authenticate, async (req, res) => {
   try {
+    // Get cadre list (only 一線)
+    const [cadres] = await pool.execute("SELECT `幹部編號`, `姓名`, `暱稱` FROM cadres WHERE `等級` = '一線' ORDER BY `幹部編號`");
+
+    if (cadres.length === 0) {
+      return res.json([]);
+    }
+
+    const cadreNames = cadres.map(c => c.姓名);
+    const placeholders = cadreNames.map(() => '?').join(',');
+
+    // Get inactive customers grouped by cadre
     const [rows] = await pool.execute(
-      `SELECT
-        cad. \`等級\`,
-        ds. \`客戶名\`,
-        MAX(ds. \`日期\`) as 最後來訪,
-        MAX(ds. \`公關訂桌\`) as 公關訂桌編號,
-        MAX(g. \`姓名\`) as 公關訂桌,
-        MAX(g. \`暱稱\`) as 公關暱稱,
-        COUNT(*) as 來訪次數
-      FROM daily_sales ds
-      LEFT JOIN cadres cad ON ds.\`幹部\` = cad.\`姓名\`
-      LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
-      WHERE cad.\`等級\` = '一線'
-      GROUP BY cad.\`等級\`, ds.\`客戶名\`
-      HAVING MAX(ds.\`日期\`) < DATE_SUB(CURDATE(), INTERVAL 40 DAY)
-         OR MAX(ds.\`日期\`) IS NULL
-      ORDER BY 來訪次數 DESC`
+      `SELECT ds.\`幹部\`,
+        COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`) as 客戶名,
+        COUNT(*) as 來訪次數,
+        MAX(ds.\`日期\`) as 最後來訪,
+        MAX(ds.\`公關訂桌\`) as 公關訂桌編號,
+        MAX(g.\`姓名\`) as 公關訂桌
+       FROM daily_sales ds
+       LEFT JOIN customer_contacts cc ON ds.\`客戶編號\` = cc.\`客戶編號\`
+       LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
+       WHERE ds.\`幹部\` IN (${placeholders})
+       GROUP BY ds.\`幹部\`, COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`)
+       HAVING MAX(ds.\`日期\`) < DATE_SUB(CURDATE(), INTERVAL 40 DAY)
+          OR MAX(ds.\`日期\`) IS NULL
+       ORDER BY ds.\`幹部\`, 來訪次數 DESC`,
+      cadreNames
     );
-    // Fallback to ID if 姓名 is null
-    const result = rows.map(r => ({
-      ...r,
-      公關訂桌: r.公關訂桌 || r.公關暱稱 || r.公關訂桌編號 || null
-    }));
+
+    // Group by cadre
+    const result = cadres.map(cadre => ({
+      幹部編號: cadre.幹部編號,
+      幹部: cadre.姓名 || '未知',
+      幹部暱稱: cadre.暱稱 || null,
+      客戶列表: rows.filter(r => r.幹部 === cadre.姓名).map(r => ({
+        客戶名: r.客戶名,
+        來訪次數: r.來訪次數,
+        最後來訪: r.最後來訪,
+        公關訂桌編號: r.公關訂桌編號,
+        公關訂桌: r.公關訂桌 || null
+      }))
+    })).filter(c => c.客戶列表.length > 0);
+
     res.json(result);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

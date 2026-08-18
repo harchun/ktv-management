@@ -90,11 +90,12 @@ export default function MobileCustomers() {
       </div>
     `).join('');
 
-    // Build content for inactive customers
-    const inactiveContent = inactiveCustomers.length > 0 ? `
+    // Build content for inactive customers (grouped by cadre)
+    const inactiveContent = inactiveCustomers.length > 0 ? inactiveCustomers.map((item, idx) => `
       <div class="cadre-page">
         <h1 class="page-title">日月星辰 KTV 近40天無來訪客戶</h1>
-        <p class="cadre-info">共 ${inactiveCustomers.length} 位</p>
+        <h2 class="cadre-title">${item.幹部}${item.幹部暱稱 ? ' (' + item.幹部暱稱 + ')' : ''}</h2>
+        <p class="cadre-info">客戶數: ${item.客戶列表?.length || 0} 位</p>
         <table class="customer-table">
           <thead>
             <tr>
@@ -105,7 +106,7 @@ export default function MobileCustomers() {
             </tr>
           </thead>
           <tbody>
-            ${inactiveCustomers.map(client => `
+            ${(item.客戶列表 || []).map(client => `
               <tr>
                 <td class="col-name">${client.客戶名 || '-'}</td>
                 <td class="col-date">${client.最後來訪 ? formatDate(client.最後來訪) : '-'}</td>
@@ -116,7 +117,7 @@ export default function MobileCustomers() {
           </tbody>
         </table>
       </div>
-    ` : '';
+    `).join('') : '';
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -327,41 +328,60 @@ export default function MobileCustomers() {
             type="warning"
             icon={<WarningOutlined />}
             showIcon
-            message={`近40天無來訪客戶 (${inactiveCustomers.length} 位)`}
+            message={`近40天無來訪客戶 (${inactiveCustomers.length} 位幹部)`}
             style={{ background: 'rgba(255, 193, 7, 0.1)', borderColor: '#ffc107', marginBottom: 12 }}
           />
-          <div style={{ padding: '8px 0' }}>
-            {inactiveCustomers.map((client, idx) => (
-              <div key={idx} style={{
-                background: 'rgba(255, 193, 7, 0.1)',
-                border: '1px solid #ffc107',
-                borderRadius: 8,
-                padding: '8px 10px',
-                marginBottom: 6,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}>
-                <div>
-                  <Text style={{ color: '#ffc107', fontSize: 13, fontWeight: 500 }}>{client.客戶名 || '-'}</Text>
-                  <div style={{ marginTop: 4, fontSize: 11, color: '#666', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <CalendarOutlined style={{ color: '#ffc107' }} />
-                    最後來訪: {client.最後來訪 ? formatDate(client.最後來訪) : '-'}
+          {inactiveCustomers.map((item, idx) => (
+            <Card 
+              key={idx} 
+              style={{ ...cardStyle, background: 'rgba(255, 193, 7, 0.05)' }}
+              title={
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ color: '#ffc107', fontWeight: 'bold' }}>
+                    <UserOutlined style={{ marginRight: 8 }} />
+                    {item.幹部}
+                    {item.幹部暱稱 && <Text style={{ color: '#999', fontSize: 12, marginLeft: 6, fontWeight: 'normal' }}>({item.幹部暱稱})</Text>}
+                  </Text>
+                  <Text style={{ color: '#999', fontSize: 12 }}>
+                    {item.客戶列表?.length || 0} 位客戶
+                  </Text>
+                </div>
+              }
+            >
+              <div style={{ padding: '8px 0' }}>
+                {item.客戶列表?.map((client, cIdx) => (
+                  <div key={cIdx} style={{
+                    background: 'rgba(255, 193, 7, 0.1)',
+                    border: '1px solid #ffc107',
+                    borderRadius: 8,
+                    padding: '8px 10px',
+                    marginBottom: 6,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                    <div>
+                      <Text style={{ color: '#ffc107', fontSize: 13, fontWeight: 500 }}>{client.客戶名 || '-'}</Text>
+                      <div style={{ marginTop: 4, fontSize: 11, color: '#666', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <CalendarOutlined style={{ color: '#ffc107' }} />
+                        最後來訪: {client.最後來訪 ? formatDate(client.最後來訪) : '-'}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {client.公關訂桌 ? (
+                        <Tag style={{ background: 'rgba(255, 215, 0, 0.2)', borderColor: '#ffc107', color: '#ffc107', border: 'none', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>
+                          🎯 {client.公關訂桌}
+                        </Tag>
+                      ) : (
+                        <Text style={{ color: '#666', fontSize: 12 }}>-</Text>
+                      )}
+                      <Text style={{ color: '#ffc107', fontSize: 12 }}>{client.來訪次數} 來訪</Text>
+                    </div>
                   </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {client.公關訂桌 ? (
-                    <Tag style={{ background: 'rgba(255, 193, 7, 0.2)', borderColor: '#ffc107', color: '#ffc107', border: 'none', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>
-                      🎯 {client.公關訂桌}
-                    </Tag>
-                  ) : (
-                    <Text style={{ color: '#666', fontSize: 12 }}>-</Text>
-                  )}
-                  <Text style={{ color: '#ffc107', fontSize: 12 }}>{client.來訪次數} 來訪</Text>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </Card>
+          ))}
         </div>
       )}
     </div>
