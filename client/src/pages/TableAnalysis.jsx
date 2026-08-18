@@ -78,7 +78,7 @@ function PrintReport({ customSummary, cadreSummary, months, allData }) {
       {/* Page 2: Summary */}
       <div className="page summary-page">
         <div className="page-header">
-          <span className="page-number">01</span>
+          <span className="page-number">訂桌</span>
           <h2 className="page-title">月度消費摘要</h2>
         </div>
         
