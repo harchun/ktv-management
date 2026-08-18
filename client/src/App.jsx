@@ -77,15 +77,15 @@ function AppContent() {
   };
 
   const menuItems = [
-    { key: '/daily-sales', icon: <FileTextOutlined />, label: '每日營業表' },
-    { key: '/cadres', icon: <TrophyOutlined />, label: '幹部管理' },
-    { key: '/customers', icon: <ContactsOutlined />, label: '客戶管理' },
-    { key: '/customer-relations', icon: <ContactsOutlined />, label: '客戶關係' },
-    { key: '/table-usage', icon: <TrophyOutlined />, label: '自訂桌統計' },
-    { key: '/cadre-table', icon: <TrophyOutlined />, label: '幹桌統計' },
+    { key: isMobile ? '/mobile/daily-sales' : '/daily-sales', icon: <FileTextOutlined />, label: '每日營業表' },
+    { key: isMobile ? '/mobile/cadres' : '/cadres', icon: <TrophyOutlined />, label: '幹部管理' },
+    { key: isMobile ? '/mobile/customers' : '/customers', icon: <ContactsOutlined />, label: '客戶管理' },
+    { key: isMobile ? '/mobile/relations' : '/customer-relations', icon: <ContactsOutlined />, label: '客戶關係' },
+    { key: isMobile ? '/mobile/relations' : '/table-usage', icon: <TrophyOutlined />, label: '自訂桌統計' },
+    { key: isMobile ? '/mobile/relations' : '/cadre-table', icon: <TrophyOutlined />, label: '幹桌統計' },
     { key: '/table-analysis', icon: <TrophyOutlined />, label: '訂桌分析' },
-    { key: '/gossip-management', icon: <UserOutlined />, label: '公關管理' },
-    { key: '/broker-management', icon: <UserOutlined />, label: '經紀人管理' },
+    { key: isMobile ? '/mobile/gossip' : '/gossip-management', icon: <UserOutlined />, label: '公關管理' },
+    { key: isMobile ? '/mobile/broker' : '/broker-management', icon: <UserOutlined />, label: '經紀人管理' },
     { key: '/settings', icon: <SettingOutlined />, label: '系統設定' },
   ];
 
