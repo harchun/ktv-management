@@ -35,11 +35,7 @@ body {
     font-size: 14px;
   }
 
-  /* Hide Sider on mobile by default */
-  .ant-layout-sider {
-    position: fixed !important;
-    z-index: 1000 !important;
-  }
+  /* Mobile: sidebar position handled in JS with transform */
 
   /* Make tables scrollable horizontally */
   .ant-table-wrapper {

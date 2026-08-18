@@ -93,7 +93,7 @@ function AppContent() {
     return <Login onLogin={(t) => { setToken(t); localStorage.setItem('token', t); }} />;
   }
 
-  const siderWidth = isMobile ? 0 : (collapsed ? 80 : 200);
+  const siderWidth = isMobile ? 200 : (collapsed ? 80 : 200);
   const siderStyle = {
     background: '#0c0c1d',
     overflow: 'auto',
@@ -106,7 +106,7 @@ function AppContent() {
     ...(isMobile && collapsed ? { transform: 'translateX(-100%)' } : {}),
   };
 
-  const contentMargin = isMobile ? 0 : siderWidth;
+  const contentMargin = 0;
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -115,7 +115,10 @@ function AppContent() {
         collapsed={collapsed}
         onCollapse={setCollapsed}
         theme="dark"
-        style={siderStyle}
+        style={{
+          ...siderStyle,
+          width: siderWidth,
+        }}
         width={200}
       >
         <div style={{ padding: '16px 12px', textAlign: 'center', borderBottom: '1px solid #333' }}>
