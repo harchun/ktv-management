@@ -276,9 +276,9 @@ app.get('/api/stats/daily-summary', authenticate, async (req, res) => {
 // ==================== CUSTOMER RELATIONS ====================
 app.get('/api/customer-relations', authenticate, async (req, res) => {
   try {
-    // Get all one-line cadres
+    // Get all cadres regardless of level
     const [cadreRows] = await pool.execute(`
-      SELECT 姓名 FROM cadres WHERE 等級 = '一線'
+      SELECT 姓名 FROM cadres
     `);
     
     const oneLineCadres = cadreRows.map(r => r.姓名);
