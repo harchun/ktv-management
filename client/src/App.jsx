@@ -81,8 +81,8 @@ function AppContent() {
     { key: isMobile ? '/mobile/cadres' : '/cadres', icon: <TrophyOutlined />, label: '幹部管理' },
     { key: isMobile ? '/mobile/customers' : '/customers', icon: <ContactsOutlined />, label: '客戶管理' },
     { key: isMobile ? '/mobile/relations' : '/customer-relations', icon: <ContactsOutlined />, label: '客戶關係' },
-    { key: isMobile ? '/mobile/relations' : '/table-usage', icon: <TrophyOutlined />, label: '自訂桌統計' },
-    { key: isMobile ? '/mobile/relations' : '/cadre-table', icon: <TrophyOutlined />, label: '幹桌統計' },
+    { key: isMobile ? '/mobile/table-usage' : '/table-usage', icon: <TrophyOutlined />, label: '自訂桌統計' },
+    { key: isMobile ? '/mobile/cadre-table' : '/cadre-table', icon: <TrophyOutlined />, label: '幹桌統計' },
     { key: '/table-analysis', icon: <TrophyOutlined />, label: '訂桌分析' },
     { key: isMobile ? '/mobile/gossip' : '/gossip-management', icon: <UserOutlined />, label: '公關管理' },
     { key: isMobile ? '/mobile/broker' : '/broker-management', icon: <UserOutlined />, label: '經紀人管理' },
@@ -201,6 +201,8 @@ function AppContent() {
             <Route path="/mobile/cadres" element={<MobileCadres />} />
             <Route path="/mobile/customers" element={<MobileCustomers />} />
             <Route path="/mobile/relations" element={<MobileCustomers />} />
+            <Route path="/mobile/table-usage" element={<TableUsage />} />
+            <Route path="/mobile/cadre-table" element={<CadreTable />} />
             <Route path="/mobile/gossip" element={<MobileGossip />} />
             <Route path="/mobile/broker" element={<MobileBroker />} />
             <Route path="/mobile" element={<MobileDashboard />} />
