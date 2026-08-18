@@ -30,20 +30,12 @@ const { Header, Sider, Content } = Layout;
 function AppContent() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [user, setUser] = useState(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [collapsed, setCollapsed] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Update isMobile when window resizes
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-      setCollapsed(window.innerWidth > 768 ? false : true);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // Determine mobile mode based on URL path
+  const isMobile = location.pathname.startsWith('/mobile');
 
   useEffect(() => {
     if (token) {
@@ -185,6 +177,17 @@ function AppContent() {
           borderRadius: 8,
         }}>
           <Routes>
+            {/* Mobile routes first */}
+            <Route path="/mobile" element={<MobileDashboard />} />
+            <Route path="/mobile/daily-sales" element={<MobileDailySales />} />
+            <Route path="/mobile/cadres" element={<MobileCadres />} />
+            <Route path="/mobile/customers" element={<MobileCustomers />} />
+            <Route path="/mobile/relations" element={<MobileCustomers />} />
+            <Route path="/mobile/table-usage" element={<TableUsage />} />
+            <Route path="/mobile/cadre-table" element={<CadreTable />} />
+            <Route path="/mobile/gossip" element={<MobileGossip />} />
+            <Route path="/mobile/broker" element={<MobileBroker />} />
+            {/* Desktop routes */}
             <Route path="/daily-sales" element={<DailySales />} />
             <Route path="/cadres" element={<Cadres />} />
             <Route path="/customer-relations" element={<MobileCustomers />} />
@@ -195,15 +198,6 @@ function AppContent() {
             <Route path="/broker-management" element={<BrokerManagement />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/customers" element={<Customers />} />
-            <Route path="/mobile/daily-sales" element={<MobileDailySales />} />
-            <Route path="/mobile/cadres" element={<MobileCadres />} />
-            <Route path="/mobile/customers" element={<MobileCustomers />} />
-            <Route path="/mobile/relations" element={<MobileCustomers />} />
-            <Route path="/mobile/table-usage" element={<TableUsage />} />
-            <Route path="/mobile/cadre-table" element={<CadreTable />} />
-            <Route path="/mobile/gossip" element={<MobileGossip />} />
-            <Route path="/mobile/broker" element={<MobileBroker />} />
-            <Route path="/mobile" element={<MobileDashboard />} />
             <Route path="*" element={<Navigate to="/daily-sales" replace />} />
           </Routes>
         </Content>
