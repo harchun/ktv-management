@@ -190,7 +190,7 @@ function AppContent() {
             {/* Desktop routes */}
             <Route path="/daily-sales" element={<DailySales />} />
             <Route path="/cadres" element={<Cadres />} />
-            <Route path="/customer-relations" element={<MobileCustomers />} />
+            <Route path="/customer-relations" element={<CustomerRelations />} />
             <Route path="/table-usage" element={<TableUsage />} />
             <Route path="/cadre-table" element={<CadreTable />} />
             <Route path="/table-analysis" element={<TableAnalysis />} />
