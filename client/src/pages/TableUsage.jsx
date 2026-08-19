@@ -11,10 +11,13 @@ API.interceptors.request.use(config => {
 
 const { Option } = Select;
 
+const LEVELS = ['全部', '一線', '常董', '公關', '管理層', '行政', '場部', '一般'];
+
 export default function TableUsage() {
   const [data, setData] = useState([]);
   const [months, setMonths] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedLevel, setSelectedLevel] = useState('全部');
   const [loading, setLoading] = useState(false);
   const [expandedRows, setExpandedRows] = useState({});
   const [loadingDetails, setLoadingDetails] = useState({});
@@ -29,10 +32,11 @@ export default function TableUsage() {
     } catch (e) { console.error('載入月份失敗', e); }
   };
 
-  const fetchData = async (month) => {
+  const fetchData = async (month, level) => {
     setLoading(true);
     try {
-      const params = month ? { month } : {};
+      const params = { month };
+      if (level && level !== '全部') params.level = level;
       const res = await API.get('/stats/table-usage', { params });
       setData(res.data);
       setExpandedRows({});
@@ -58,9 +62,9 @@ export default function TableUsage() {
 
   useEffect(() => {
     if (selectedMonth) {
-      fetchData(selectedMonth);
+      fetchData(selectedMonth, selectedLevel);
     }
-  }, [selectedMonth]);
+  }, [selectedMonth, selectedLevel]);
 
   const totalConsumption = data.reduce((sum, row) => sum + (Number(row.總消費) || 0), 0);
   const totalVisits = data.reduce((sum, row) => sum + (Number(row.次數) || 0), 0);
@@ -91,15 +95,22 @@ export default function TableUsage() {
         extra={
           <Space>
             <span style={{ color: '#aaa' }}>選擇月份:</span>
-            <Select 
-              value={selectedMonth} 
+            <Select
+              value={selectedMonth}
               onChange={setSelectedMonth}
               style={{ width: 140 }}
               placeholder="選擇月份"
             >
               {months.map(m => <Option key={m} value={m}>{m}</Option>)}
             </Select>
-            <span style={{ color: '#aaa', marginLeft: 16 }}>等級: 公關</span>
+            <span style={{ color: '#aaa', marginLeft: 16 }}>等級:</span>
+            <Select
+              value={selectedLevel}
+              onChange={setSelectedLevel}
+              style={{ width: 120 }}
+            >
+              {LEVELS.map(l => <Option key={l} value={l}>{l}</Option>)}
+            </Select>
           </Space>
         }
       >

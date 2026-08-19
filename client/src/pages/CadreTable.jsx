@@ -11,10 +11,13 @@ API.interceptors.request.use(config => {
 
 const { Option } = Select;
 
+const LEVELS = ['全部', '一線', '常董', '公關', '管理層', '行政', '場部', '一般'];
+
 export default function CadreTable() {
   const [data, setData] = useState([]);
   const [months, setMonths] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedLevel, setSelectedLevel] = useState('全部');
   const [loading, setLoading] = useState(false);
   const [expandedRows, setExpandedRows] = useState({});
   const [loadingDetails, setLoadingDetails] = useState({});
@@ -29,10 +32,11 @@ export default function CadreTable() {
     } catch (e) { console.error('載入月份失敗', e); }
   };
 
-  const fetchData = async (month) => {
+  const fetchData = async (month, level) => {
     setLoading(true);
     try {
-      const params = month ? { month } : {};
+      const params = { month };
+      if (level && level !== '全部') params.level = level;
       const res = await API.get('/stats/cadre-table', { params });
       setData(res.data);
       setExpandedRows({});
@@ -58,9 +62,9 @@ export default function CadreTable() {
 
   useEffect(() => {
     if (selectedMonth) {
-      fetchData(selectedMonth);
+      fetchData(selectedMonth, selectedLevel);
     }
-  }, [selectedMonth]);
+  }, [selectedMonth, selectedLevel]);
 
   const totalConsumption = data.reduce((sum, row) => sum + (Number(row.總消費) || 0), 0);
 
@@ -83,17 +87,28 @@ export default function CadreTable() {
 
   return (
     <div>
-      <Card 
-        title="幹桌統計" 
+      <Card
+        title="幹桌統計"
         extra={
-          <Select 
-            value={selectedMonth} 
-            onChange={setSelectedMonth}
-            style={{ width: 140 }}
-            placeholder="選擇月份"
-          >
-            {months.map(m => <Option key={m} value={m}>{m}</Option>)}
-          </Select>
+          <Space>
+            <span style={{ color: '#aaa' }}>選擇月份:</span>
+            <Select
+              value={selectedMonth}
+              onChange={setSelectedMonth}
+              style={{ width: 140 }}
+              placeholder="選擇月份"
+            >
+              {months.map(m => <Option key={m} value={m}>{m}</Option>)}
+            </Select>
+            <span style={{ color: '#aaa', marginLeft: 16 }}>等級:</span>
+            <Select
+              value={selectedLevel}
+              onChange={setSelectedLevel}
+              style={{ width: 120 }}
+            >
+              {LEVELS.map(l => <Option key={l} value={l}>{l}</Option>)}
+            </Select>
+          </Space>
         }
       >
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
