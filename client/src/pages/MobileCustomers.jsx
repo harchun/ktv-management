@@ -106,7 +106,7 @@ export default function MobileCustomers() {
           )}
         >
           {dataSource.map((item, idx) => (
-            <Panel header={`林金福(福哥(1101))`} key={idx}>
+            <Panel header={`${item.幹部}(${item.幹部暱稱})`} key={idx}>
               <div>
                 {Array.isArray(item.客戶列表) && item.客戶列表.length > 0 ? (
                   item.客戶列表.map((client, i) => (
@@ -155,7 +155,7 @@ export default function MobileCustomers() {
             )}
           >
             {inactiveCustomers.map((item, idx) => (
-              <Panel header={`${item.幹部} (${item.幹部編號}) - ${item.客戶數} 位客戶`} key={idx}>
+              <Panel header={`${item.幹部} (${item.幹部編號}) - ${item.客戶列表?.length || 0} 位客戶`} key={idx}>
                 <div>
                   {Array.isArray(item.客戶列表) && item.客戶列表.length > 0 ? (
                     item.客戶列表.map((client, i) => (
