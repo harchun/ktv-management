@@ -209,6 +209,52 @@ app.delete('/api/daily-sales/:id', authenticate, async (req, res) => {
 });
 
 // Stats
+app.get('/api/stats/months', authenticate, async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      'SELECT DISTINCT LEFT(`日期`, 7) as month FROM daily_sales ORDER BY month DESC'
+    );
+    res.json(rows.map(r => r.month));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/stats/table-usage', authenticate, async (req, res) => {
+  try {
+    const { month } = req.query;
+    let sql = `SELECT
+      cad.\`幹部編號\`,
+      cad.\`姓名\` as 幹部,
+      COUNT(ds.\`營業編號\`) as 次數,
+      SUM(ds.\`業績\`) as 總消費,
+      GROUP_CONCAT(DISTINCT ds.\`客戶名\`) as 客戶列表
+      FROM daily_sales ds
+      LEFT JOIN cadres cad ON ds.\`幹部編號\` = cad.\`幹部編號\`
+      WHERE 1=1`;
+    const params = [];
+    if (month) { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
+    sql += ' GROUP BY cad.\`幹部編號\`, cad.\`姓名\` ORDER BY 總消費 DESC';
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
+  try {
+    const { month } = req.query;
+    let sql = `SELECT
+      ds.\`公關訂桌\` as 公關,
+      COUNT(ds.\`營業編號\`) as 紀錄數,
+      SUM(ds.\`業績\`) as 總消費
+      FROM daily_sales ds
+      WHERE ds.\`公關訂桌\` IS NOT NULL AND ds.\`公關訂桌\` != ''`;
+    const params = [];
+    if (month) { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
+    sql += ' GROUP BY ds.\`公關訂桌\` ORDER BY 總消費 DESC';
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/stats/summary', authenticate, async (req, res) => {
   try {
     const { start, end } = req.query;
