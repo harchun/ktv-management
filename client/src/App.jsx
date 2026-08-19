@@ -92,7 +92,7 @@ function AppContent() {
     ...(isMobile && collapsed ? { transform: 'translateX(-100%)' } : {}),
   };
 
-  const contentMargin = 0;
+  const contentMargin = isMobile ? 0 : (collapsed ? 80 : 200);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>

@@ -152,7 +152,7 @@ export default function DailySales() {
   ];
 
   const columns = [
-    { title: '編號', dataIndex: '營業編號', key: 'id', width: 60 },
+    { title: '編號', dataIndex: '營業編號', key: 'id', width: 140 },
     { title: '日期', dataIndex: '日期', key: 'date', width: 100, render: formatDate },
     { title: '幹部', dataIndex: '幹部姓名', key: 'cadre', width: 80 },
     { title: '房號', dataIndex: '房號', key: 'room', width: 70 },
