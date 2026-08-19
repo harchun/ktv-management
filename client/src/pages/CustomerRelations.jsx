@@ -170,7 +170,7 @@ export default function CustomerRelations() {
                     <TrophyOutlined style={{ color: '#f39c12', fontSize: 18 }} />
                     <span style={{ color: '#f39c12', fontWeight: 600, fontSize: 16 }}>{cadre.幹部}</span>
                     <span style={{ color: '#3498db', fontSize: 13 }}>
-                      {cadre.客戶列表.length} 位客戶 · {cadre.來訪次數} 次 · {cadre.總人數} 人
+                      {cadre.客戶列表.length} 位客戶 · {cadre.來訪次數} 次
                     </span>
                   </div>
                 }
