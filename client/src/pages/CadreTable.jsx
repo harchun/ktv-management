@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Card, Select, Row, Col, Statistic, Spin } from 'antd';
+import { Table, Card, Select, Row, Col, Statistic, Spin, Space, message } from 'antd';
 import axios from 'axios';
 
 const API = axios.create({ baseURL: '/api' });
@@ -19,8 +19,6 @@ export default function CadreTable() {
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('全部');
   const [loading, setLoading] = useState(false);
-  const [expandedRows, setExpandedRows] = useState({});
-  const [loadingDetails, setLoadingDetails] = useState({});
 
   const fetchMonths = async () => {
     try {
@@ -39,21 +37,8 @@ export default function CadreTable() {
       if (level && level !== '全部') params.level = level;
       const res = await API.get('/stats/cadre-table', { params });
       setData(res.data);
-      setExpandedRows({});
     } catch (e) { message.error('載入失敗'); }
     finally { setLoading(false); }
-  };
-
-  const fetchDetails = async (gossip) => {
-    if (expandedRows[gossip]) return;
-    setLoadingDetails(prev => ({ ...prev, [gossip]: true }));
-    try {
-      const params = { gossip };
-      if (selectedMonth) params.month = selectedMonth;
-      const res = await API.get('/stats/cadre-table-details', { params });
-      setExpandedRows(prev => ({ ...prev, [gossip]: res.data }));
-    } catch (e) { message.error('載入明細失敗'); }
-    finally { setLoadingDetails(prev => ({ ...prev, [gossip]: false })); }
   };
 
   useEffect(() => {
@@ -146,53 +131,6 @@ export default function CadreTable() {
           scroll={{ x: 600 }}
           size="small"
           className="table-striped"
-          expandable={{
-            expandedRowRender: (record) => {
-              const gossip = record.公關;
-              const details = expandedRows[gossip];
-              const isLoading = loadingDetails[gossip];
-              
-              if (isLoading) {
-                return (
-                  <div style={{ textAlign: 'center', padding: 16 }}>
-                    <Spin />
-                  </div>
-                );
-              }
-              
-              if (!details || details.length === 0) {
-                return (
-                  <div style={{ color: '#888', padding: 16, textAlign: 'center' }}>
-                    暫無明細資料
-                  </div>
-                );
-              }
-
-              const detailColumns = [
-                { title: '幹部', dataIndex: '幹部', width: 100 },
-                { title: '客戶名', dataIndex: '客戶名', width: 100 },
-                { title: '消費金額', dataIndex: '總消費', width: 120, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
-              ];
-
-              return (
-                <Table
-                  columns={detailColumns}
-                  dataSource={details}
-                  rowKey={(r) => `${r.幹部}-${r.客戶名}`}
-                  pagination={false}
-                  size="small"
-                  bordered
-                  className="detail-table"
-                />
-              );
-            },
-            rowExpandable: (record) => true,
-            onExpand: (expanded, record) => {
-              if (expanded) {
-                fetchDetails(record.公關);
-              }
-            }
-          }}
         />
       </Card>
     </div>
