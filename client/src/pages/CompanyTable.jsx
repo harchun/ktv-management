@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Table, Card, Select, Row, Col, Statistic, Space } from 'antd';
+import { Table, Card, Select, Row, Col, Statistic, Space, Button } from 'antd';
+import { PrinterOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const API = axios.create({ baseURL: '/api' });
@@ -60,6 +61,106 @@ export default function CompanyTable() {
     }
   }, [selectedMonth]);
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('請允許彈出視窗以列印');
+      return;
+    }
+
+    const monthStr = selectedMonth || '全部';
+    const tableRows = data.map(row => `
+      <tr>
+        <td>${row.日期 ? row.日期.split('T')[0] : '-'}</td>
+        <td>${row.客戶 || '-'}</td>
+        <td>${row.房號 || '-'}</td>
+        <td style="text-align:right">NT$ ${Math.round(row.總消費 || 0).toLocaleString('zh-TW')}</td>
+        <td>${row.備註 || '-'}</td>
+      </tr>
+    `).join('\n');
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>公司桌統計 ${monthStr}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page { size: A4; margin: 15mm; }
+    body {
+      font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+      background: white;
+      color: #000;
+      font-size: 12px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 20px;
+      margin-bottom: 5px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+      font-weight: bold;
+      text-align: center;
+    }
+    td:nth-child(4), td:nth-child(5) {
+      text-align: right;
+    }
+    .footer {
+      margin-top: 20px;
+      text-align: right;
+      font-size: 10px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>公司桌統計</h1>
+  <div class="subtitle">月份：${monthStr} | 總消費金額：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 客戶數：${data.length} 人</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:12%">日期</th>
+        <th style="width:20%">客戶</th>
+        <th style="width:10%">房號</th>
+        <th style="width:25%">總消費金額</th>
+        <th style="width:33%">備註</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRows}
+    </tbody>
+  </table>
+  <div class="footer">列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
+  <script>
+    window.onload = function() { window.print(); window.close(); }
+  </script>
+</body>
+</html>`;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   const totalConsumption = data.reduce((sum, row) => sum + (Number(row.總消費) || 0), 0);
 
   const columns = [
@@ -88,6 +189,9 @@ export default function CompanyTable() {
               <Option value="全部">全部</Option>
               {months.map(m => <Option key={m} value={m}>{m}</Option>)}
             </Select>
+            <Button icon={<PrinterOutlined />} onClick={handlePrint} style={{ marginLeft: 8 }}>
+              列印
+            </Button>
           </Space>
         }
       >
