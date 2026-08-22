@@ -64,19 +64,11 @@ export default function CompanyTable() {
   const totalCompanyAmount = data.reduce((sum, row) => sum + (Number(row.公司吸收額) || 0), 0);
 
   const columns = [
-    { title: '排名', dataIndex: 'rank', key: 'rank', width: 70, render: (val) => (
-      <span style={{
-        fontWeight: 'bold',
-        color: val <= 3 ? '#f39c12' : '#fff',
-        background: val <= 3 ? 'rgba(243,156,18,0.2)' : 'transparent',
-        padding: '2px 8px',
-        borderRadius: 4
-      }}>{val}</span>
-    )},
+    { title: '日期', dataIndex: '日期', key: '日期', width: 110, render: (val) => val || '-' },
     { title: '客戶', dataIndex: '客戶', key: '客戶', width: 150, render: (val) => val || '-' },
     { title: '公司吸收額', dataIndex: '公司吸收額', key: '公司吸收額', width: 120, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
     { title: '總消費金額', dataIndex: '總消費', key: '總消費', width: 130, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
-    { title: '紀錄數', dataIndex: '紀錄數', key: '紀錄數', width: 80 },
+    { title: '備註', dataIndex: '備註', key: '備註', width: 150, render: (val) => val || '-' },
   ];
 
   const tableData = data.map((row, idx) => ({ ...row, rank: idx + 1 }));

@@ -742,11 +742,11 @@ app.get('/api/stats/cadre-table-details', authenticate, async (req, res) => {
 app.get('/api/stats/company-table', authenticate, async (req, res) => {
   try {
     const { month } = req.query;
-    let sql = `SELECT
+    const sql = `SELECT
       ds.\`客戶名\` as 客戶,
+      ds.\`備註\` as 備註,
       SUM(ds.\`公司吸收額\`) as 公司吸收額,
-      SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費,
-      COUNT(*) as 紀錄數
+      SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
       FROM daily_sales ds
       WHERE ds.\`幹部\` = '公司桌'
       AND ds.\`客戶名\` IS NOT NULL
@@ -758,8 +758,8 @@ app.get('/api/stats/company-table', authenticate, async (req, res) => {
       params.push(month);
     }
 
-    sql += ' GROUP BY ds.`客戶名`';
-    sql += ' ORDER BY 總消費 DESC';
+    sql += ' GROUP BY ds.`客戶名`, ds.`備註`';
+    sql += ' ORDER BY 日期 DESC';
     const [rows] = await pool.execute(sql, params);
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
