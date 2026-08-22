@@ -16,6 +16,7 @@ import BrokerManagement from './pages/BrokerManagement';
 import Settings from './pages/Settings';
 import TableUsage from './pages/TableUsage';
 import CadreTable from './pages/CadreTable';
+import CompanyTable from './pages/CompanyTable';
 import TableAnalysis from './pages/TableAnalysis';
 import MobileDailySales from './pages/MobileDailySales';
 import MobileCadres from './pages/MobileCadres';
@@ -69,6 +70,7 @@ function AppContent() {
     { key: isMobile ? '/mobile/relations' : '/customer-relations', icon: <ContactsOutlined />, label: '客戶關係' },
     { key: isMobile ? '/mobile/table-usage' : '/table-usage', icon: <TrophyOutlined />, label: '自訂桌統計' },
     { key: isMobile ? '/mobile/cadre-table' : '/cadre-table', icon: <TrophyOutlined />, label: '幹桌統計' },
+    { key: isMobile ? '/mobile/company-table' : '/company-table', icon: <TrophyOutlined />, label: '公司桌統計' },
     { key: '/table-analysis', icon: <TrophyOutlined />, label: '訂桌分析' },
     { key: isMobile ? '/mobile/gossip' : '/gossip-management', icon: <UserOutlined />, label: '公關管理' },
     { key: isMobile ? '/mobile/broker' : '/broker-management', icon: <UserOutlined />, label: '經紀人管理' },
@@ -185,6 +187,7 @@ function AppContent() {
             <Route path="/mobile/relations" element={<MobileCustomers />} />
             <Route path="/mobile/table-usage" element={<TableUsage />} />
             <Route path="/mobile/cadre-table" element={<CadreTable />} />
+            <Route path="/mobile/company-table" element={<CompanyTable />} />
             <Route path="/mobile/gossip" element={<MobileGossip />} />
             <Route path="/mobile/broker" element={<MobileBroker />} />
             {/* Desktop routes */}
@@ -193,6 +196,7 @@ function AppContent() {
             <Route path="/customer-relations" element={<CustomerRelations />} />
             <Route path="/table-usage" element={<TableUsage />} />
             <Route path="/cadre-table" element={<CadreTable />} />
+            <Route path="/company-table" element={<CompanyTable />} />
             <Route path="/table-analysis" element={<TableAnalysis />} />
             <Route path="/gossip-management" element={<GossipManagement />} />
             <Route path="/broker-management" element={<BrokerManagement />} />

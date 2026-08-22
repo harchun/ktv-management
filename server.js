@@ -345,6 +345,61 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
   }
 });
 
+// ==================== INACTIVE CUSTOMERS ====================
+app.get('/api/inactive-customers', authenticate, async (req, res) => {
+  try {
+    // Get all cadres
+    const [cadreRows] = await pool.execute('SELECT 姓名 FROM cadres');
+    const cadreNames = cadreRows.map(r => r.姓名);
+    
+    // Build dynamic WHERE clause
+    const likeConditions = cadreNames.map(name => `ds.幹部 LIKE ?`).join(' OR ');
+    const likeParams = cadreNames.map(name => `%${name}%`);
+    
+    // Find customers inactive for 40+ days
+    const sql = `
+      SELECT
+        ds.幹部,
+        ds.客戶名,
+        MAX(ds.日期) as 最後來訪,
+        COUNT(*) as 來訪次數
+      FROM daily_sales ds
+      WHERE ds.客戶名 IS NOT NULL AND ds.客戶名 != ''
+        AND ds.日期 < DATE_SUB(CURDATE(), INTERVAL 40 DAY)
+        AND (${likeConditions})
+      GROUP BY ds.幹部, ds.客戶名
+      ORDER BY ds.幹部, 最後來訪 ASC
+    `;
+    const [rows] = await pool.execute(sql, likeParams);
+
+    // Group by cadre
+    const cadreMap = {};
+    rows.forEach(row => {
+      const cadre = row.幹部;
+      if (!cadreMap[cadre]) {
+        cadreMap[cadre] = {
+          幹部: cadre,
+          客戶列表: []
+        };
+      }
+      cadreMap[cadre].客戶列表.push({
+        客戶名: row.客戶名,
+        來訪次數: row.來訪次數,
+        最後來訪: row.最後來訪
+      });
+    });
+    
+    const result = Object.values(cadreMap).map(cadre => ({
+      ...cadre,
+      總客戶數: cadre.客戶列表.length
+    }));
+    
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ==================== BROKERS ====================
 app.get('/api/brokers', authenticate, async (req, res) => {
   try {
@@ -677,6 +732,35 @@ app.get('/api/stats/cadre-table-details', authenticate, async (req, res) => {
     }
     
     sql += ' GROUP BY ds.\`日期\`, ds.\`幹部\`, ds.\`客戶名\`';
+    sql += ' ORDER BY 總消費 DESC';
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Company table stats (公司桌)
+app.get('/api/stats/company-table', authenticate, async (req, res) => {
+  try {
+    const { month } = req.query;
+    let sql = `SELECT
+      ds.\`客戶名\` as 客戶,
+      SUM(ds.\`公司吸收額\`) as 公司吸收額,
+      SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費,
+      COUNT(*) as 紀錄數
+      FROM daily_sales ds
+      WHERE ds.\`幹部\` = '公司桌'
+      AND ds.\`客戶名\` IS NOT NULL
+      AND ds.\`客戶名\` != ''`;
+    const params = [];
+
+    if (month) {
+      sql += ' AND DATE_FORMAT(ds.\`日期\`, "%Y-%m") = ?';
+      params.push(month);
+    } else {
+      sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)';
+    }
+
+    sql += ' GROUP BY ds.\`客戶名\`';
     sql += ' ORDER BY 總消費 DESC';
     const [rows] = await pool.execute(sql, params);
     res.json(rows);
