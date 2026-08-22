@@ -64,7 +64,7 @@ export default function CompanyTable() {
   const totalCompanyAmount = data.reduce((sum, row) => sum + (Number(row.公司吸收額) || 0), 0);
 
   const columns = [
-    { title: '日期', dataIndex: '日期', key: '日期', width: 110, render: (val) => val || '-' },
+    { title: '日期', dataIndex: '日期', key: '日期', width: 110, render: (val) => val ? val.split('T')[0] : '-' },
     { title: '客戶', dataIndex: '客戶', key: '客戶', width: 150, render: (val) => val || '-' },
     { title: '公司吸收額', dataIndex: '公司吸收額', key: '公司吸收額', width: 120, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
     { title: '總消費金額', dataIndex: '總消費', key: '總消費', width: 130, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
