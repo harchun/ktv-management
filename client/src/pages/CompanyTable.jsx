@@ -103,15 +103,6 @@ export default function CompanyTable() {
           </Col>
           <Col span={8}>
             <Statistic
-              title="公司吸收額總計"
-              value={totalCompanyAmount}
-              prefix="NT$"
-              precision={0}
-              valueStyle={{ color: '#27ae60' }}
-            />
-          </Col>
-          <Col span={8}>
-            <Statistic
               title="統計月份"
               value={selectedMonth || '全部'}
               valueStyle={{ color: '#fff' }}
