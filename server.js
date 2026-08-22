@@ -753,14 +753,12 @@ app.get('/api/stats/company-table', authenticate, async (req, res) => {
       AND ds.\`客戶名\` != ''`;
     const params = [];
 
-    if (month) {
-      sql += ' AND DATE_FORMAT(ds.\`日期\`, "%Y-%m") = ?';
+    if (month && month !== '全部') {
+      sql += ' AND DATE_FORMAT(ds.`日期`, "%Y-%m") = ?';
       params.push(month);
-    } else {
-      sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)';
     }
 
-    sql += ' GROUP BY ds.\`客戶名\`';
+    sql += ' GROUP BY ds.`客戶名`';
     sql += ' ORDER BY 總消費 DESC';
     const [rows] = await pool.execute(sql, params);
     res.json(rows);
