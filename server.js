@@ -767,5 +767,32 @@ app.get('/api/stats/company-table', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Company table stats details (公司桌明細)
+app.get('/api/stats/company-table-details', authenticate, async (req, res) => {
+  try {
+    const { customer, month } = req.query;
+    let sql = `SELECT
+      ds.\`日期\`, ds.\`房號\`, ds.\`客戶名\`,
+      SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費,
+      ds.\`備註\`
+      FROM daily_sales ds
+      WHERE ds.\`幹部\` = '公司桌'
+      AND ds.\`客戶名\` = ?`;
+    const params = [customer];
+
+    if (month) {
+      sql += ' AND DATE_FORMAT(ds.\`日期\`, "%Y-%m") = ?';
+      params.push(month);
+    } else {
+      sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)';
+    }
+
+    sql += ' GROUP BY ds.\`日期\`, ds.\`房號\`, ds.\`客戶名\`, ds.\`備註\`';
+    sql += ' ORDER BY ds.\`日期\` DESC, 總消費 DESC';
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 KTV Backend running on port ${PORT}`));

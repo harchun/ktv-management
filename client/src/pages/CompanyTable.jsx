@@ -16,6 +16,8 @@ export default function CompanyTable() {
   const [months, setMonths] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('');
   const [loading, setLoading] = useState(false);
+  const [expandedRows, setExpandedRows] = useState({});
+  const [loadingDetails, setLoadingDetails] = useState({});
 
   const fetchMonths = async () => {
     try {
@@ -33,8 +35,21 @@ export default function CompanyTable() {
       const params = { month };
       const res = await API.get('/stats/company-table', { params });
       setData(res.data);
+      setExpandedRows({});
     } catch (e) { console.error('載入失敗', e); }
     finally { setLoading(false); }
+  };
+
+  const fetchDetails = async (customer) => {
+    if (expandedRows[customer]) return;
+    setLoadingDetails(prev => ({ ...prev, [customer]: true }));
+    try {
+      const params = { customer };
+      if (selectedMonth) params.month = selectedMonth;
+      const res = await API.get('/stats/company-table-details', { params });
+      setExpandedRows(prev => ({ ...prev, [customer]: res.data }));
+    } catch (e) { console.error('載入明細失敗', e); }
+    finally { setLoadingDetails(prev => ({ ...prev, [customer]: false })); }
   };
 
   useEffect(() => {
@@ -123,6 +138,55 @@ export default function CompanyTable() {
           scroll={{ x: 600 }}
           size="small"
           className="table-striped"
+          expandable={{
+            expandedRowRender: (record) => {
+              const customer = record.客戶;
+              const details = expandedRows[customer];
+              const isLoading = loadingDetails[customer];
+              
+              if (isLoading) {
+                return (
+                  <div style={{ textAlign: 'center', padding: 16 }}>
+                    載入中...
+                  </div>
+                );
+              }
+              
+              if (!details || details.length === 0) {
+                return (
+                  <div style={{ color: '#888', padding: 16, textAlign: 'center' }}>
+                    暫無明細資料
+                  </div>
+                );
+              }
+
+              const detailColumns = [
+                { title: '日期', dataIndex: '日期', width: 110, render: (val) => val ? val.split('T')[0] : '-' },
+                { title: '房號', dataIndex: '房號', width: 80 },
+                { title: '客戶名', dataIndex: '客戶名', width: 100 },
+                { title: '消費金額', dataIndex: '總消費', width: 120, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
+                { title: '備註', dataIndex: '備註', width: 150, render: (val) => val || '-' },
+              ];
+
+              return (
+                <Table
+                  columns={detailColumns}
+                  dataSource={details}
+                  rowKey={(r, idx) => `${r.日期}-${idx}`}
+                  pagination={false}
+                  size="small"
+                  bordered
+                  className="detail-table"
+                />
+              );
+            },
+            rowExpandable: (record) => true,
+            onExpand: (expanded, record) => {
+              if (expanded) {
+                fetchDetails(record.客戶);
+              }
+            }
+          }}
         />
       </Card>
     </div>
