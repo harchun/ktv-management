@@ -742,8 +742,9 @@ app.get('/api/stats/cadre-table-details', authenticate, async (req, res) => {
 app.get('/api/stats/company-table', authenticate, async (req, res) => {
   try {
     const { month } = req.query;
-    const sql = `SELECT
+    let sql = `SELECT
       ds.\`客戶名\` as 客戶,
+      MAX(ds.\`日期\`) as 日期,
       ds.\`備註\` as 備註,
       SUM(ds.\`公司吸收額\`) as 公司吸收額,
       SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
