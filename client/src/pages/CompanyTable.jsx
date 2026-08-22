@@ -23,9 +23,7 @@ export default function CompanyTable() {
     try {
       const res = await API.get('/stats/months');
       setMonths(res.data);
-      if (res.data.length > 0 && !selectedMonth) {
-        setSelectedMonth(res.data[0]);
-      }
+      setSelectedMonth('全部');
     } catch (e) { console.error('載入月份失敗', e); }
   };
 
@@ -96,6 +94,7 @@ export default function CompanyTable() {
               style={{ width: 140 }}
               placeholder="選擇月份"
             >
+              <Option value="全部">全部</Option>
               {months.map(m => <Option key={m} value={m}>{m}</Option>)}
             </Select>
           </Space>
