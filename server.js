@@ -780,11 +780,9 @@ app.get('/api/stats/company-table-details', authenticate, async (req, res) => {
       AND ds.\`客戶名\` = ?`;
     const params = [customer];
 
-    if (month) {
-      sql += ' AND DATE_FORMAT(ds.\`日期\`, "%Y-%m") = ?';
+    if (month && month !== '全部') {
+      sql += ' AND DATE_FORMAT(ds.`日期`, "%Y-%m") = ?';
       params.push(month);
-    } else {
-      sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)';
     }
 
     sql += ' GROUP BY ds.\`日期\`, ds.\`房號\`, ds.\`客戶名\`, ds.\`備註\`';
