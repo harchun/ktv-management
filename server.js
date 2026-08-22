@@ -745,8 +745,8 @@ app.get('/api/stats/company-table', authenticate, async (req, res) => {
     let sql = `SELECT
       ds.\`客戶名\` as 客戶,
       MAX(ds.\`日期\`) as 日期,
+      MAX(ds.\`房號\`) as 房號,
       ds.\`備註\` as 備註,
-      SUM(ds.\`公司吸收額\`) as 公司吸收額,
       SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
       FROM daily_sales ds
       WHERE ds.\`幹部\` = '公司桌'
