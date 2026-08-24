@@ -474,6 +474,7 @@ app.get('/api/inactive-customers', authenticate, async (req, res) => {
     const placeholders = cadreNames.map(() => '?').join(',');
 
     // Get inactive customers grouped by cadre
+    // Second section: 60+ days since last visit (not 40 days)
     const [rows] = await pool.execute(
       `SELECT ds.\`幹部\`,
         COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`) as 客戶名,
@@ -486,7 +487,7 @@ app.get('/api/inactive-customers', authenticate, async (req, res) => {
        LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
        WHERE ds.\`幹部\` IN (${placeholders})
        GROUP BY ds.\`幹部\`, COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`)
-       HAVING MAX(ds.\`日期\`) < DATE_SUB(CURDATE(), INTERVAL 40 DAY)
+       HAVING MAX(ds.\`日期\`) < DATE_SUB(CURDATE(), INTERVAL 60 DAY)
           OR MAX(ds.\`日期\`) IS NULL
        ORDER BY ds.\`幹部\`, 來訪次數 DESC`,
       cadreNames
