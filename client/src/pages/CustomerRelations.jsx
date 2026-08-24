@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Table, Input, Card, Statistic, Row, Col, Tag, Typography, Collapse, Alert, Button } from 'antd';
+import { useState, useEffect, useRef } from 'react';
+import { Table, Input, Card, Statistic, Row, Col, Tag, Typography, Collapse, Alert, Button, DatePicker } from 'antd';
 import { SearchOutlined, TrophyOutlined, UserOutlined, TeamOutlined, WarningOutlined, PrinterOutlined } from '@ant-design/icons';
 import api from '../utils/api';
 import { formatDate } from '../utils/formatDate';
+import dayjs from 'dayjs';
+import 'dayjs/locale/zh-tw';
+import { zhTW } from 'antd/locale';
 import './CustomerRelations.css';
 
 const cardStyle = {
@@ -155,18 +158,28 @@ export default function CustomerRelations() {
   const [inactiveCustomers, setInactiveCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
   const [stats, setStats] = useState({ totalCustomers: 0, totalCadres: 0, totalVisits: 0 });
   const [showPrintView, setShowPrintView] = useState(false);
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   const { Title } = Typography;
 
+  const dateRangeRef = useRef(dateRange);
+  dateRangeRef.current = dateRange;
+  const fetchingRef = useRef(false);
+
   const fetchData = async () => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     setLoading(true);
     try {
-      const res = await api.get('/customer-relations');
+      const params = {};
+      if (dateRangeRef.current?.[0]) params.start = dateRangeRef.current[0].format('YYYY-MM-DD');
+      if (dateRangeRef.current?.[1]) params.end = dateRangeRef.current[1].format('YYYY-MM-DD');
+      const res = await api.get('/customer-relations', { params });
       const data = Array.isArray(res.data) ? res.data : [];
       setDataSource(data);
-      
+
       const uniqueCustomers = new Set();
       data.forEach(item => {
         item.客戶列表?.forEach(c => uniqueCustomers.add(c.客戶名));
@@ -180,12 +193,16 @@ export default function CustomerRelations() {
       console.error('取得客戶關係資料失敗', err);
     } finally {
       setLoading(false);
+      fetchingRef.current = false;
     }
   };
 
   const fetchInactiveCustomers = async () => {
     try {
-      const res = await api.get('/inactive-customers');
+      const params = {};
+      if (dateRangeRef.current?.[0]) params.start = dateRangeRef.current[0].format('YYYY-MM-DD');
+      if (dateRangeRef.current?.[1]) params.end = dateRangeRef.current[1].format('YYYY-MM-DD');
+      const res = await api.get('/inactive-customers', { params });
       const data = Array.isArray(res.data) ? res.data : [];
       setInactiveCustomers(data);
     } catch (err) {
@@ -197,6 +214,37 @@ export default function CustomerRelations() {
 
   const handleSearch = (value) => {
     setSearchText(value);
+  };
+
+  const handleDateChange = (dates) => {
+    dateRangeRef.current = dates;
+    setDateRange(dates);
+    if (dates && dates[0] && dates[1]) {
+      fetchData();
+      fetchInactiveCustomers();
+    }
+  };
+
+  const handleQuickFilter = (type) => {
+    let range = null;
+    if (type === 'month') {
+      range = [dayjs().startOf('month'), dayjs().endOf('month')];
+    } else if (type === 'lastMonth') {
+      range = [dayjs().subtract(1, 'month').startOf('month'), dayjs().subtract(1, 'month').endOf('month')];
+    } else if (type === '3months') {
+      range = [dayjs().subtract(3, 'month').startOf('month'), dayjs().endOf('month')];
+    } else if (type === 'all') {
+      range = null;
+    }
+    dateRangeRef.current = range;
+    setDateRange(range);
+    if (range) {
+      fetchData();
+      fetchInactiveCustomers();
+    } else {
+      fetchData();
+      fetchInactiveCustomers();
+    }
   };
 
   const handlePrint = () => {
@@ -458,16 +506,26 @@ export default function CustomerRelations() {
             </Col>
           </Row>
 
-          {/* Search + Print */}
+          {/* Search + Date Filter + Print */}
           <div style={{ marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
             <Input.Search
               placeholder="搜尋幹部名或客戶名..."
               allowClear
-              style={{ flex: 1, minWidth: isMobile ? '100%' : 300 }}
+              style={{ flex: 1, minWidth: isMobile ? '100%' : 250 }}
               prefix={<SearchOutlined style={{ color: '#e74c3c' }} />}
               onChange={(e) => handleSearch(e.target.value)}
               onSearch={handleSearch}
             />
+            <DatePicker.RangePicker
+              locale={zhTW}
+              onChange={handleDateChange}
+              allowClear
+              style={{ minWidth: isMobile ? '100%' : 200 }}
+            />
+            <Button onClick={() => handleQuickFilter('month')}>本月</Button>
+            <Button onClick={() => handleQuickFilter('lastMonth')}>上月</Button>
+            <Button onClick={() => handleQuickFilter('3months')}>近3月</Button>
+            <Button onClick={() => handleQuickFilter('all')}>全部</Button>
             <Button
               type="primary"
               icon={<PrinterOutlined />}

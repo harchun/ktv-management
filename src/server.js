@@ -409,9 +409,13 @@ app.put('/api/settings', authenticate, async (req, res) => {
 // ==================== CUSTOMER RELATIONS ====================
 app.get('/api/customer-relations', authenticate, async (req, res) => {
   try {
-    // Get cadre summary (only 一線, last 60 days)
-    // Get cadre summary (only 一線, last 40 days)
-    const [cadres] = await pool.execute("SELECT cad.`幹部編號`, cad.`姓名`, cad.`暱稱`, COUNT(ds.`營業編號`) as 來訪次數, SUM(ds.`人數`) as 總人數 FROM daily_sales ds LEFT JOIN cadres cad ON ds.`幹部` = cad.`姓名` WHERE cad.`等級` = '一線' AND ds.`日期` >= DATE_SUB(CURDATE(), INTERVAL 40 DAY) GROUP BY cad.`幹部編號`, cad.`姓名`, cad.`暱稱` ORDER BY 來訪次數 DESC");
+    const { start, end } = req.query;
+    // Calculate date range: default to last 40 days if not specified
+    const dateFilter = start ? `ds.\`日期\` >= '${start}'` : `ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 40 DAY)`;
+    const dateFilterEnd = end ? `AND ds.\`日期\` <= '${end}'` : '';
+
+    // Get cadre summary (only 一線)
+    const [cadres] = await pool.execute(`SELECT cad.\`幹部編號\`, cad.\`姓名\`, cad.\`暱稱\`, COUNT(ds.\`營業編號\`) as 來訪次數, SUM(ds.\`人數\`) as 總人數 FROM daily_sales ds LEFT JOIN cadres cad ON ds.\`幹部\` = cad.\`姓名\` WHERE cad.\`等級\` = '一線' AND ${dateFilter} ${dateFilterEnd} GROUP BY cad.\`幹部編號\`, cad.\`姓名\`, cad.\`暱稱\` ORDER BY 來訪次數 DESC`);
 
     if (cadres.length === 0) {
       return res.json([]);
@@ -420,7 +424,7 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
     const cadreNames = cadres.map(c => c.姓名);
     const placeholders = cadreNames.map(() => '?').join(',');
 
-    // Get all customers in one query (last 60 days, min 3 visits)
+    // Get all customers (min 3 visits in date range)
     // JOIN customer_contacts to resolve null 客戶名 from 客戶編號
     const [customers] = await pool.execute(
       `SELECT ds.\`幹部\`,
@@ -432,7 +436,7 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
        LEFT JOIN customer_contacts cc ON ds.\`客戶編號\` = cc.\`客戶編號\`
        LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
        WHERE ds.\`幹部\` IN (${placeholders})
-         AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 40 DAY)
+         AND ${dateFilter} ${dateFilterEnd}
        GROUP BY ds.\`幹部\`, COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`)
        HAVING COUNT(*) >= 3
        ORDER BY ds.\`幹部\`, 來訪次數 DESC`,
