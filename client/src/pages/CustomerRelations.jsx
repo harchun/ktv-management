@@ -256,6 +256,63 @@ export default function CustomerRelations() {
     }
   };
 
+  const renderCadrePrint = (cadre, isInactive) => {
+    const label = isInactive ? '40天無來訪' : '主客名單';
+    const totalCustomers = cadre.客戶列表?.length || 0;
+    const totalVisits = cadre.來訪次數 || 0;
+
+    // Get the latest visit date for inactive customers
+    let lastVisitDate = null;
+    if (isInactive && cadre.客戶列表?.length > 0) {
+      lastVisitDate = cadre.客戶列表.reduce((latest, c) => {
+        const date = c.最後來訪 || c.最后来访;
+        return date && (!latest || date > latest) ? date : latest;
+      }, null);
+    }
+
+    const columns = isInactive
+      ? ['編號', '客戶名', '最後來訪', '公關訂桌']
+      : ['編號', '客戶名', '來訪次數'];
+
+    const rows = (cadre.客戶列表 || []).map((c, idx) =>
+      `<tr>
+        <td style="text-align:center">${idx + 1}</td>
+        <td>${c.客戶名 || ''}</td>
+        ${isInactive ? `
+          <td>${c.最後來訪 ? c.最後來訪.split('T')[0] : '-'}</td>
+          <td>${c.公關訂桌 || '-'}</td>
+        ` : `
+          <td style="text-align:center">${c.來訪次數 || 0} 次</td>
+        `}
+      </tr>`
+    ).join('');
+
+    return `
+<div class="cr-page">
+  <div class="cr-page-header">
+    <div>
+      <div class="cr-page-title">${cadre.幹部}</div>
+      <div class="cr-page-subtitle">${cadre.幹部暱稱 || ''}</div>
+    </div>
+    <span class="cr-badge ${isInactive ? 'cr-badge-warning' : 'cr-badge-main'}">${label}</span>
+  </div>
+  <div class="cr-stats-row">
+    <strong>${totalCustomers}</strong> 位客戶
+    ${!isInactive ? ` | <strong>${totalVisits}</strong> 次來訪` : ''}
+  </div>
+  <table class="cr-print-table">
+    <thead>
+      <tr>${columns.map(c => `<th>${c}</th>`).join('')}</tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="cr-page-footer">
+    <span>日月星辰酒店 KTV</span>
+    <span>${lastVisitDate ? new Date(lastVisitDate).toLocaleDateString('zh-TW') : ''}</span>
+  </div>
+</div>`;
+  };
+
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -359,63 +416,6 @@ export default function CustomerRelations() {
       printWindow.print();
       printWindow.close();
     };
-  };
-
-  const renderCadrePrint = (cadre, isInactive) => {
-    const label = isInactive ? '40天無來訪' : '主客名單';
-    const totalCustomers = cadre.客戶列表?.length || 0;
-    const totalVisits = cadre.來訪次數 || 0;
-
-    // Get the latest visit date for inactive customers
-    let lastVisitDate = null;
-    if (isInactive && cadre.客戶列表?.length > 0) {
-      lastVisitDate = cadre.客戶列表.reduce((latest, c) => {
-        const date = c.最後來訪 || c.最后来访;
-        return date && (!latest || date > latest) ? date : latest;
-      }, null);
-    }
-
-    const columns = isInactive
-      ? ['編號', '客戶名', '最後來訪', '公關訂桌']
-      : ['編號', '客戶名', '來訪次數'];
-
-    const rows = (cadre.客戶列表 || []).map((c, idx) =>
-      `<tr>
-        <td style="text-align:center">${idx + 1}</td>
-        <td>${c.客戶名 || ''}</td>
-        ${isInactive ? `
-          <td>${c.最後來訪 ? c.最後來訪.split('T')[0] : '-'}</td>
-          <td>${c.公關訂桌 || '-'}</td>
-        ` : `
-          <td style="text-align:center">${c.來訪次數 || 0} 次</td>
-        `}
-      </tr>`
-    ).join('');
-
-    return `
-<div class="cr-page">
-  <div class="cr-page-header">
-    <div>
-      <div class="cr-page-title">${cadre.幹部}</div>
-      <div class="cr-page-subtitle">${cadre.幹部暱稱 || ''}</div>
-    </div>
-    <span class="cr-badge ${isInactive ? 'cr-badge-warning' : 'cr-badge-main'}">${label}</span>
-  </div>
-  <div class="cr-stats-row">
-    <strong>${totalCustomers}</strong> 位客戶
-    ${!isInactive ? ` | <strong>${totalVisits}</strong> 次來訪` : ''}
-  </div>
-  <table class="cr-print-table">
-    <thead>
-      <tr>${columns.map(c => `<th>${c}</th>`).join('')}</tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table>
-  <div class="cr-page-footer">
-    <span>日月星辰酒店 KTV</span>
-    <span>${lastVisitDate ? new Date(lastVisitDate).toLocaleDateString('zh-TW') : ''}</span>
-  </div>
-</div>`;
   };
 
   const handleBack = () => {
