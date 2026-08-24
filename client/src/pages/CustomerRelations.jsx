@@ -561,7 +561,6 @@ export default function CustomerRelations() {
 
           <Collapse
             activeKey={filteredData.map((_, i) => String(i))}
-            accordion
             style={{ background: 'transparent' }}
           >
             {filteredData.map((cadre, idx) => (
@@ -598,7 +597,6 @@ export default function CustomerRelations() {
               </Title>
               <Collapse
                 activeKey={filteredInactive.map((_, i) => String(i))}
-                accordion
                 style={{ background: 'transparent' }}
               >
                 {filteredInactive.map((item, idx) => (
