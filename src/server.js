@@ -424,7 +424,7 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
     const cadreNames = cadres.map(c => c.姓名);
     const placeholders = cadreNames.map(() => '?').join(',');
 
-    // Get all customers (min 3 visits in date range)
+    // Get all customers (min 3 visits in date range, last visit within 40 days)
     // JOIN customer_contacts to resolve null 客戶名 from 客戶編號
     const [customers] = await pool.execute(
       `SELECT ds.\`幹部\`,
@@ -439,6 +439,7 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
          AND ${dateFilter} ${dateFilterEnd}
        GROUP BY ds.\`幹部\`, COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`)
        HAVING COUNT(*) >= 3
+         AND MAX(ds.\`日期\`) >= DATE_SUB(CURDATE(), INTERVAL 40 DAY)
        ORDER BY ds.\`幹部\`, 來訪次數 DESC`,
       cadreNames
     );
