@@ -163,6 +163,7 @@ function PrintReport({ dataSource, inactiveCustomers }) {
 
 // ==================== Main Component ====================
 export default function CustomerRelations() {
+  const today = new Date().toLocaleDateString('zh-TW');
   const [dataSource, setDataSource] = useState([]);
   const [inactiveCustomers, setInactiveCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
