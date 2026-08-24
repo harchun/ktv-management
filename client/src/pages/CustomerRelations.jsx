@@ -167,7 +167,7 @@ export default function CustomerRelations() {
   const [inactiveCustomers, setInactiveCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
+  const [dateRange, setDateRange] = useState(null);
   const [stats, setStats] = useState({ totalCustomers: 0, totalCadres: 0, totalVisits: 0 });
   const [showPrintView, setShowPrintView] = useState(false);
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
