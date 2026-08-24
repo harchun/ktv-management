@@ -560,7 +560,7 @@ export default function CustomerRelations() {
           </Title>
 
           <Collapse
-            defaultActiveKey={[0]}
+            activeKey={filteredData.map((_, i) => String(i))}
             accordion
             style={{ background: 'transparent' }}
           >
