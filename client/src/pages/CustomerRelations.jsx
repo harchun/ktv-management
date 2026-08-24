@@ -260,6 +260,7 @@ export default function CustomerRelations() {
     const label = isInactive ? '40天無來訪' : '主客名單';
     const totalCustomers = cadre.客戶列表?.length || 0;
     const totalVisits = cadre.來訪次數 || 0;
+    const today = new Date().toLocaleDateString('zh-TW');
 
     // Get the latest visit date for inactive customers
     let lastVisitDate = null;
@@ -308,7 +309,7 @@ export default function CustomerRelations() {
   </table>
   <div class="cr-page-footer">
     <span>日月星辰酒店 KTV</span>
-    <span>${lastVisitDate ? new Date(lastVisitDate).toLocaleDateString('zh-TW') : ''}</span>
+    <span>${isInactive && lastVisitDate ? new Date(lastVisitDate).toLocaleDateString('zh-TW') : today}</span>
   </div>
 </div>`;
   };
