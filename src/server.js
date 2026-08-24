@@ -410,8 +410,8 @@ app.put('/api/settings', authenticate, async (req, res) => {
 app.get('/api/customer-relations', authenticate, async (req, res) => {
   try {
     const { start, end } = req.query;
-    // Calculate date range: default to last 40 days if not specified
-    const dateFilter = start ? `ds.\`日期\` >= '${start}'` : `ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 40 DAY)`;
+    // Calculate date range: default to last 60 days if not specified
+    const dateFilter = start ? `ds.\`日期\` >= '${start}'` : `ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 60 DAY)`;
     const dateFilterEnd = end ? `AND ds.\`日期\` <= '${end}'` : '';
 
     // Get cadre summary (only 一線)
