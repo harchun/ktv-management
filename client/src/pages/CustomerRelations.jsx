@@ -31,6 +31,15 @@ function PrintPage({ cadre, isInactive = false, currentPage = 1, totalPages = 1 
   const totalCustomers = cadre.客戶列表?.length || 0;
   const totalVisits = cadre.來訪次數 || 0;
   
+  // Get the latest visit date for inactive customers
+  let lastVisitDate = null;
+  if (isInactive && cadre.客戶列表?.length > 0) {
+    lastVisitDate = cadre.客戶列表.reduce((latest, c) => {
+      const date = c.最後來訪 || c.最后来访;
+      return date && (!latest || date > latest) ? date : latest;
+    }, null);
+  }
+  
   const tableColumns = isInactive ?
     [
       { text: '編號', width: '50mm', align: 'center' },
