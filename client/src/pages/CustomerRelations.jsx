@@ -597,7 +597,7 @@ export default function CustomerRelations() {
                 ⚠️ 40天無來訪客戶
               </Title>
               <Collapse
-                activeKey={filteredData.map((_, i) => String(i))}
+                activeKey={filteredInactive.map((_, i) => String(i))}
                 accordion
                 style={{ background: 'transparent' }}
               >
