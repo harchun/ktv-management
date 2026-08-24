@@ -117,7 +117,7 @@ function PrintPage({ cadre, isInactive = false, currentPage = 1, totalPages = 1 
       
       <div className="cr-page-footer">
         <span>日月星辰酒店 KTV</span>
-        <span>{today}</span>
+        <span>{isInactive ? (lastVisitDate || today) : today}</span>
       </div>
     </div>
   );
@@ -357,6 +357,15 @@ export default function CustomerRelations() {
     const totalCustomers = cadre.客戶列表?.length || 0;
     const totalVisits = cadre.來訪次數 || 0;
 
+    // Get the latest visit date for inactive customers
+    let lastVisitDate = null;
+    if (isInactive && cadre.客戶列表?.length > 0) {
+      lastVisitDate = cadre.客戶列表.reduce((latest, c) => {
+        const date = c.最後來訪 || c.最后来访;
+        return date && (!latest || date > latest) ? date : latest;
+      }, null);
+    }
+
     const columns = isInactive
       ? ['編號', '客戶名', '最後來訪', '公關訂桌']
       : ['編號', '客戶名', '來訪次數'];
@@ -395,7 +404,7 @@ export default function CustomerRelations() {
   </table>
   <div class="cr-page-footer">
     <span>日月星辰酒店 KTV</span>
-    <span>${new Date().toLocaleDateString('zh-TW')}</span>
+    <span>${lastVisitDate ? new Date(lastVisitDate).toLocaleDateString('zh-TW') : ''}</span>
   </div>
 </div>`;
   };
