@@ -444,12 +444,18 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
       cadreNames
     );
 
+    // Calculate 來訪次數 from filtered customers (those meeting criteria)
+    const cadreVisits = {};
+    customers.forEach(c => {
+      cadreVisits[c.幹部] = (cadreVisits[c.幹部] || 0) + c.來訪次數;
+    });
+
     // Build result with public relations name priority
     const result = cadres.map(cadre => ({
       幹部編號: cadre.幹部編號,
       幹部: cadre.姓名 || '未知',
       幹部暱稱: cadre.暱稱 || null,
-      來訪次數: cadre.來訪次數,
+      來訪次數: cadreVisits[cadre.姓名] || 0,
       客戶列表: customers.filter(c => c.幹部 === cadre.姓名).map(c => ({
         ...c,
         公關訂桌: c.公關訂桌 || c.公關訂桌編號 || null
