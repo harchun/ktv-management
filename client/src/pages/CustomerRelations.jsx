@@ -262,14 +262,8 @@ export default function CustomerRelations() {
     const totalCustomers = cadre.客戶列表?.length || 0;
     const totalVisits = cadre.來訪次數 || 0;
 
-    // Get the latest visit date (both active and inactive)
-    let lastVisitDate = null;
-    if (cadre.客戶列表?.length > 0) {
-      lastVisitDate = cadre.客戶列表.reduce((latest, c) => {
-        const date = c.最後來訪 || c.最后来访;
-        return date && (!latest || date > latest) ? date : latest;
-      }, null);
-    }
+    // Use global last visit date for all print pages
+    const lastVisitDate = globalLastVisitDate;
 
     const columns = isInactive
       ? ['編號', '客戶名', '最後來訪', '公關訂桌']
