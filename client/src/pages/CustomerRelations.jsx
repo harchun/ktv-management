@@ -164,6 +164,10 @@ function PrintReport({ dataSource, inactiveCustomers }) {
 // ==================== Main Component ====================
 export default function CustomerRelations() {
   const today = new Date().toLocaleDateString('zh-TW');
+
+  // Get the latest visit date across all customers (for print footer)
+  const [globalLastVisitDate, setGlobalLastVisitDate] = useState(null);
+
   const [dataSource, setDataSource] = useState([]);
   const [inactiveCustomers, setInactiveCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -199,6 +203,18 @@ export default function CustomerRelations() {
         totalCadres: data.length,
         totalVisits: data.reduce((sum, item) => sum + item.來訪次數, 0)
       });
+
+      // Calculate global last visit date
+      let latestDate = null;
+      data.forEach(item => {
+        item.客戶列表?.forEach(c => {
+          const date = c.最後來訪 || c.最后来访;
+          if (date && (!latestDate || date > latestDate)) {
+            latestDate = date;
+          }
+        });
+      });
+      setGlobalLastVisitDate(latestDate);
     } catch (err) {
       console.error('取得客戶關係資料失敗', err);
     } finally {
@@ -215,6 +231,20 @@ export default function CustomerRelations() {
       const res = await api.get('/inactive-customers', { params });
       const data = Array.isArray(res.data) ? res.data : [];
       setInactiveCustomers(data);
+
+      // Calculate global last visit date from inactive customers
+      let latestDate = null;
+      data.forEach(item => {
+        item.客戶列表?.forEach(c => {
+          const date = c.最後來訪 || c.最后来访;
+          if (date && (!latestDate || date > latestDate)) {
+            latestDate = date;
+          }
+        });
+      });
+      if (latestDate && (!globalLastVisitDate || latestDate > globalLastVisitDate)) {
+        setGlobalLastVisitDate(latestDate);
+      }
     } catch (err) {
       console.error('取得40天無來訪客戶失敗', err);
     }
