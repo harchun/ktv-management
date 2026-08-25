@@ -507,7 +507,7 @@ app.get('/api/inactive-customers', authenticate, async (req, res) => {
         幹部編號: cadre.幹部編號,
         幹部: cadre.姓名 || '未知',
         幹部暱稱: cadre.暱稱 || null,
-        客戶列表: cadreRows.slice(0, 33).map(r => ({
+        客戶列表: cadreRows.slice(0, 32).map(r => ({
           客戶名: r.客戶名,
           來訪次數: r.來訪次數,
           最後來訪: r.最後來訪,
