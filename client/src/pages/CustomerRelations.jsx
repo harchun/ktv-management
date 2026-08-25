@@ -19,26 +19,20 @@ const { Panel } = Collapse;
 const MAX_ROWS_PER_PAGE = 22;
 
 // ==================== Single Page Component ====================
-function PrintPage({ cadre, isInactive = false, currentPage = 1, totalPages = 1 }) {
+function PrintPage({ cadre, isInactive = false, currentPage = 1, totalPages = 1, globalLastVisitDate }) {
   const today = new Date().toLocaleDateString('zh-TW');
   const customers = cadre.客戶列表?.slice(0, MAX_ROWS_PER_PAGE) || [];
   const startIdx = (currentPage - 1) * MAX_ROWS_PER_PAGE;
   const endIdx = startIdx + customers.length;
   const actualCustomers = cadre.客戶列表?.slice(startIdx, endIdx) || [];
   const hasMore = (cadre.客戶列表?.length || 0) > endIdx;
-  
+
   const label = isInactive ? '40天無來訪' : '主客名單';
   const totalCustomers = cadre.客戶列表?.length || 0;
   const totalVisits = cadre.來訪次數 || 0;
-  
-  // Get the latest visit date for all customers (both active and inactive)
-  let lastVisitDate = null;
-  if (cadre.客戶列表?.length > 0) {
-    lastVisitDate = cadre.客戶列表.reduce((latest, c) => {
-      const date = c.最後來訪 || c.最后来访;
-      return date && (!latest || date > latest) ? date : latest;
-    }, null);
-  }
+
+  // Use global last visit date (passed as prop)
+  const lastVisitDate = globalLastVisitDate;
   
   const tableColumns = isInactive ?
     [
@@ -147,6 +141,7 @@ function PrintReport({ dataSource, inactiveCustomers }) {
           isInactive={isInactive}
           currentPage={i + 1}
           totalPages={totalPages}
+          globalLastVisitDate={globalLastVisitDate}
         />
       );
     }
