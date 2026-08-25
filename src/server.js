@@ -481,6 +481,7 @@ app.get('/api/inactive-customers', authenticate, async (req, res) => {
 
     // Get inactive customers grouped by cadre
     // Second section: last visit > 40 days ago (not 60 days)
+    // Limit to recent 33 customers
     const [rows] = await pool.execute(
       `SELECT ds.\`幹部\`,
         COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`) as 客戶名,
@@ -495,7 +496,8 @@ app.get('/api/inactive-customers', authenticate, async (req, res) => {
        GROUP BY ds.\`幹部\`, COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`)
        HAVING MAX(ds.\`日期\`) < DATE_SUB(CURDATE(), INTERVAL 40 DAY)
           OR MAX(ds.\`日期\`) IS NULL
-       ORDER BY ds.\`幹部\`, 來訪次數 DESC`,
+       ORDER BY MAX(ds.\`日期\`) DESC
+       LIMIT 33`,
       cadreNames
     );
 
