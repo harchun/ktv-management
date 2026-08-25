@@ -480,8 +480,8 @@ app.get('/api/inactive-customers', authenticate, async (req, res) => {
     const placeholders = cadreNames.map(() => '?').join(',');
 
     // Get inactive customers grouped by cadre
-    // Second section: last visit > 40 days ago (not 60 days)
-    // Limit to recent 33 customers
+    // Second section: last visit > 40 days ago
+    // Limit to 33 customers per cadre (most recent)
     const [rows] = await pool.execute(
       `SELECT ds.\`幹部\`,
         COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`) as 客戶名,
@@ -496,24 +496,26 @@ app.get('/api/inactive-customers', authenticate, async (req, res) => {
        GROUP BY ds.\`幹部\`, COALESCE(ds.\`客戶名\`, cc.\`客戶姓名\`)
        HAVING MAX(ds.\`日期\`) < DATE_SUB(CURDATE(), INTERVAL 40 DAY)
           OR MAX(ds.\`日期\`) IS NULL
-       ORDER BY MAX(ds.\`日期\`) DESC
-       LIMIT 33`,
+       ORDER BY ds.\`幹部\`, MAX(ds.\`日期\`) DESC`,
       cadreNames
     );
 
-    // Group by cadre
-    const result = cadres.map(cadre => ({
-      幹部編號: cadre.幹部編號,
-      幹部: cadre.姓名 || '未知',
-      幹部暱稱: cadre.暱稱 || null,
-      客戶列表: rows.filter(r => r.幹部 === cadre.姓名).map(r => ({
-        客戶名: r.客戶名,
-        來訪次數: r.來訪次數,
-        最後來訪: r.最後來訪,
-        公關訂桌編號: r.公關訂桌編號,
-        公關訂桌: r.公關訂桌 || null
-      }))
-    })).filter(c => c.客戶列表.length > 0);
+    // Limit to 33 customers per cadre
+    const result = cadres.map(cadre => {
+      const cadreRows = rows.filter(r => r.幹部 === cadre.姓名);
+      return {
+        幹部編號: cadre.幹部編號,
+        幹部: cadre.姓名 || '未知',
+        幹部暱稱: cadre.暱稱 || null,
+        客戶列表: cadreRows.slice(0, 33).map(r => ({
+          客戶名: r.客戶名,
+          來訪次數: r.來訪次數,
+          最後來訪: r.最後來訪,
+          公關訂桌編號: r.公關訂桌編號,
+          公關訂桌: r.公關訂桌 || null
+        }))
+      };
+    }).filter(c => c.客戶列表.length > 0);
 
     res.json(result);
   } catch (e) { res.status(500).json({ error: e.message }); }
