@@ -244,16 +244,17 @@ app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
   try {
     const { month, level } = req.query;
     let sql = `SELECT
-      ds.\`公關訂桌\` as 公關,
+      g.\`姓名\` as 公關,
       COUNT(ds.\`營業編號\`) as 紀錄數,
       SUM(ds.\`業績\`) as 總消費
       FROM daily_sales ds
       LEFT JOIN cadres cad ON ds.\`幹部編號\` = cad.\`幹部編號\`
+      LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
       WHERE ds.\`公關訂桌\` IS NOT NULL AND ds.\`公關訂桌\` != ''`;
     const params = [];
     if (month) { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
     if (level && level !== '全部') { sql += ' AND cad.\`等級\` = ?'; params.push(level); }
-    sql += ' GROUP BY ds.\`公關訂桌\` ORDER BY 總消費 DESC';
+    sql += ' GROUP BY g.\`姓名\` ORDER BY 總消費 DESC';
     const [rows] = await pool.execute(sql, params);
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
