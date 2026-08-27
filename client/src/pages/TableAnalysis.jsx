@@ -208,10 +208,10 @@ function OperationAnalysis({ customData, cadreData }) {
     ? ((cadreData[cadreData.length - 1].total - cadreData[0].total) / cadreData[0].total * 100)
     : 0;
 
-  const bestCustomMonth = customMetrics.reduce((a, b) => a.amount > b.amount ? a : b);
-  const worstCustomMonth = customMetrics.reduce((a, b) => a.amount < b.amount ? a : b);
-  const bestCadreMonth = cadreMetrics.reduce((a, b) => a.amount > b.amount ? a : b);
-  const worstCadreMonth = cadreMetrics.reduce((a, b) => a.amount < b.amount ? a : b);
+  const bestCustomMonth = customMetrics.length > 0 ? customMetrics.reduce((a, b) => a.amount > b.amount ? a : b) : { month: '-', amount: 0 };
+  const worstCustomMonth = customMetrics.length > 0 ? customMetrics.reduce((a, b) => a.amount < b.amount ? a : b) : { month: '-', amount: 0 };
+  const bestCadreMonth = cadreMetrics.length > 0 ? cadreMetrics.reduce((a, b) => a.amount > b.amount ? a : b) : { month: '-', amount: 0 };
+  const worstCadreMonth = cadreMetrics.length > 0 ? cadreMetrics.reduce((a, b) => a.amount < b.amount ? a : b) : { month: '-', amount: 0 };
 
   const suggestions = [];
   
