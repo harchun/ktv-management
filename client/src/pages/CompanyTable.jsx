@@ -72,7 +72,7 @@ export default function CompanyTable() {
     const tableRows = data.map(row => `
       <tr>
         <td>${row.日期 ? row.日期.split('T')[0] : '-'}</td>
-        <td>${row.客戶 || '-'}</td>
+        <td>${row.客戶名 || '-'}</td>
         <td>${row.房號 || '-'}</td>
         <td style="text-align:right">NT$ ${Math.round(row.總消費 || 0).toLocaleString('zh-TW')}</td>
         <td>${row.備註 || '-'}</td>
@@ -165,7 +165,7 @@ export default function CompanyTable() {
 
   const columns = [
     { title: '日期', dataIndex: '日期', key: '日期', width: 110, render: (val) => val ? val.split('T')[0] : '-' },
-    { title: '客戶', dataIndex: '客戶', key: '客戶', width: 150, render: (val) => val || '-' },
+    { title: '客戶', dataIndex: '客戶名', key: '客戶名', width: 150, render: (val) => val || '-' },
     { title: '房號', dataIndex: '房號', key: '房號', width: 80, render: (val) => val || '-' },
     { title: '總消費金額', dataIndex: '總消費', key: '總消費', width: 130, render: (val) => `NT$ ${Math.round(val || 0).toLocaleString('zh-TW')}` },
     { title: '備註', dataIndex: '備註', key: '備註', width: 150, render: (val) => val || '-' },
@@ -217,7 +217,7 @@ export default function CompanyTable() {
         <Table
           columns={columns}
           dataSource={tableData}
-          rowKey={(record) => record.客戶}
+          rowKey={(record) => record.客戶名}
           loading={loading}
           pagination={{ pageSize: 50, showSizeChanger: false }}
           scroll={{ x: 600 }}
@@ -225,7 +225,7 @@ export default function CompanyTable() {
           className="table-striped"
           expandable={{
             expandedRowRender: (record) => {
-              const customer = record.客戶;
+              const customer = record.客戶名;
               const details = expandedRows[customer];
               const isLoading = loadingDetails[customer];
               
@@ -268,7 +268,7 @@ export default function CompanyTable() {
             rowExpandable: (record) => true,
             onExpand: (expanded, record) => {
               if (expanded) {
-                fetchDetails(record.客戶);
+                fetchDetails(record.客戶名);
               }
             }
           }}
