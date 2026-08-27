@@ -272,6 +272,46 @@ app.get('/api/stats/summary', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Company table statistics
+app.get('/api/stats/company-table', authenticate, async (req, res) => {
+  try {
+    const { month } = req.query;
+    let sql = `SELECT
+      MAX(LEFT(\`日期\`, 10)) as 日期,
+      \`客戶名\`,
+      MAX(\`房號\`) as 房號,
+      SUM(\`現金\` + \`信用\` + \`簽帳\` + \`其它\`) as 總消費,
+      MAX(\`備註\`) as 備註
+      FROM daily_sales
+      WHERE \`幹部\` = '公司桌'`;
+    const params = [];
+    if (month && month !== '全部') { sql += ' AND LEFT(\`日期\`, 7) = ?'; params.push(month); }
+    sql += ' GROUP BY \`客戶名\` ORDER BY 總消費 DESC';
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/stats/company-table-details', authenticate, async (req, res) => {
+  try {
+    const { customer } = req.query;
+    const { month } = req.query;
+    let sql = `SELECT
+      \`日期\`,
+      \`房號\`,
+      \`客戶名\`,
+      SUM(\`現金\` + \`信用\` + \`簽帳\` + \`其它\`) as 總消費,
+      MAX(\`備註\`) as 備註
+      FROM daily_sales
+      WHERE \`幹部\` = '公司桌' AND \`客戶名\` = ?`;
+    const params = [customer];
+    if (month && month !== '全部') { sql += ' AND LEFT(\`日期\`, 7) = ?'; params.push(month); }
+    sql += ' GROUP BY \`日期\`, \`房號\`, \`客戶名\` ORDER BY \`日期\` DESC';
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Cadre performance report
 app.get('/api/stats/cadre-performance', authenticate, async (req, res) => {
   try {
