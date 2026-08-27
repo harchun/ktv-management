@@ -118,7 +118,7 @@ function PrintReport({ customSummary, cadreSummary, months, allData }) {
                 <tr key={s.month} className={i === cadreSummaryWithGrowth.length - 1 ? 'latest' : ''}>
                   <td>{s.month}</td>
                   <td className="amount">NT$ {s.total.toLocaleString()}</td>
-                  <td>{s.count} 公關</td>
+                  <td>{s.count} 桌</td>
                   <td className="growth">
                     {s.growth && s.growth.rate !== 0 && (
                       <span className={s.growth.isGrowth ? 'up' : 'down'}>
@@ -165,7 +165,7 @@ function PrintReport({ customSummary, cadreSummary, months, allData }) {
                 NT$ {sortedCadreSummary[sortedCadreSummary.length - 1]?.total.toLocaleString() || '0'}
               </div>
               <div className="card-meta">
-                <span>{sortedCadreSummary[sortedCadreSummary.length - 1]?.count || 0} 公關</span>
+                <span>{sortedCadreSummary[sortedCadreSummary.length - 1]?.count || 0} 桌</span>
                 {cadreGrowth.rate !== 0 && (
                   <span className={cadreGrowth.isGrowth ? 'up' : 'down'}>
                     {cadreGrowth.isGrowth ? <RiseOutlined /> : <FallOutlined />}
@@ -213,7 +213,7 @@ export default function TableAnalysis() {
     setLoading(true);
     const promises = selectedMonths.map(m =>
       Promise.all([
-        api.get(`/stats/table-usage?month=${m}`),
+        api.get(`/stats/table-usage?month=${m}&level=公關`),
         api.get(`/stats/cadre-table?month=${m}`)
       ])
     );
@@ -245,14 +245,14 @@ export default function TableAnalysis() {
   const customSummary = selectedMonths.map(m => {
     const records = allData[m]?.custom || [];
     const total = records.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-    const count = records.length;
+    const count = records.reduce((sum, r) => sum + (Number(r.次數) || 0), 0);
     return { month: m, total, count };
   });
 
   const cadreSummary = selectedMonths.map(m => {
     const records = allData[m]?.cadre || [];
     const total = records.reduce((sum, r) => sum + (Number(r.總消費) || 0), 0);
-    const count = records.length;
+    const count = records.reduce((sum, r) => sum + (Number(r.紀錄數) || 0), 0);
     return { month: m, total, count };
   });
 
