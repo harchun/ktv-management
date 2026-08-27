@@ -368,8 +368,15 @@
 .analysis-content .analysis-item {
   margin-bottom: 12px;
   padding: 8px 12px;
-  background: #f8f9fa;
+  background: #fff;
   border-radius: 6px;
+  border: 1px solid #e8e8e8;
+  color: #1a1a2e;
+}
+
+.analysis-content .analysis-item text,
+.analysis-content .analysis-item Text {
+  color: #1a1a2e !important;
 }
 
 .suggestions-list .suggestion-item {
@@ -379,7 +386,9 @@
   padding: 10px 12px;
   margin-bottom: 8px;
   border-radius: 6px;
-  background: #f8f9fa;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  color: #1a1a2e;
 }
 
 .suggestions-list .suggestion-item.positive {
