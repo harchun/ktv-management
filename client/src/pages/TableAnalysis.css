@@ -416,32 +416,27 @@
     size: A4 portrait;
     margin: 0;
   }
-  
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  
+
   body {
     margin: 0;
     padding: 0;
     background: #fff;
   }
-  
+
   .ta-controls {
     display: none !important;
   }
-  
+
   .operation-analysis {
     display: none !important;
   }
-  
+
   .a4-report {
     max-width: 100%;
     margin: 0;
     padding: 0;
   }
-  
+
   .page {
     border-radius: 0;
     box-shadow: none;
@@ -453,23 +448,43 @@
     overflow: hidden;
     min-height: 1123px;
   }
-  
+
   .page:last-child {
     page-break-after: auto;
   }
-  
-  /* Ensure colors print correctly */
+
+  /* Force white background for all elements */
   .cover-page,
-  .footer-page,
-  .data-table th,
-  .data-table tr.section-header,
-  .card-icon,
-  .growth.up,
-  .growth.down,
-  .card-meta .up,
-  .card-meta .down {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  .footer-page {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .cover-title,
+  .cover-subtitle,
+  .cover-period .value,
+  .cover-date .value,
+  .footer-text {
+    color: #000 !important;
+  }
+
+  .data-table th {
+    background: #f0f0f0 !important;
+  }
+
+  .data-table tr.section-header {
+    background: #fff !important;
+    color: #000 !important;
+    border-bottom: 2px solid #000;
+  }
+
+  .summary-card {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+  }
+
+  .card-icon {
+    background: #f0f0f0 !important;
   }
 }
 
