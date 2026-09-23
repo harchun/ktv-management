@@ -120,7 +120,7 @@ function PrintPage({ cadre, isInactive = false, currentPage = 1, totalPages = 1,
       
       <div className="cr-page-footer">
         <span>日月星辰酒店 KTV</span>
-        <span>{lastVisitDate || today}</span>
+        <span>{today}</span>
       </div>
     </div>
   );
@@ -332,7 +332,7 @@ export default function CustomerRelations() {
   </table>
   <div class="cr-page-footer">
     <span>日月星辰酒店 KTV</span>
-    <span>${lastVisitDate ? new Date(lastVisitDate).toLocaleDateString('zh-TW') : today}</span>
+    <span>${today}</span>
   </div>
 </div>`;
   };
