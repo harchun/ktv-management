@@ -199,7 +199,8 @@ export default function CustomerRelations() {
         totalVisits: data.reduce((sum, item) => sum + item.來訪次數, 0)
       });
 
-      // Calculate global last visit date
+      // Calculate global last visit date (functional update: two parallel fetches
+      // each run with a stale closure — must merge, never overwrite)
       let latestDate = null;
       data.forEach(item => {
         item.客戶列表?.forEach(c => {
@@ -209,7 +210,9 @@ export default function CustomerRelations() {
           }
         });
       });
-      setGlobalLastVisitDate(latestDate);
+      if (latestDate) {
+        setGlobalLastVisitDate(prev => prev && Date.parse(prev) > Date.parse(latestDate) ? prev : latestDate);
+      }
     } catch (err) {
       console.error('取得客戶關係資料失敗', err);
     } finally {
@@ -237,8 +240,9 @@ export default function CustomerRelations() {
           }
         });
       });
-      if (latestDate && (!globalLastVisitDate || latestDate > globalLastVisitDate)) {
-        setGlobalLastVisitDate(latestDate);
+      // Merge functional update — never overwrite an already-larger date from the parallel fetch
+      if (latestDate) {
+        setGlobalLastVisitDate(prev => prev && Date.parse(prev) > Date.parse(latestDate) ? prev : latestDate);
       }
     } catch (err) {
       console.error('取得40天無來訪客戶失敗', err);
