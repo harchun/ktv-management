@@ -172,7 +172,6 @@ export default function TableUsage() {
     }
     .cadre-block {
       margin-bottom: 16px;
-      page-break-inside: avoid;
     }
     table {
       width: 100%;
@@ -195,6 +194,8 @@ export default function TableUsage() {
       margin-top: 6px;
       font-size: 11px;
     }
+    .detail-table thead { display: table-header-group; }
+    .detail-table tr { page-break-inside: avoid; }
     .detail-table th, .detail-table td {
       border: 1px solid #ccc;
       padding: 4px 8px;
