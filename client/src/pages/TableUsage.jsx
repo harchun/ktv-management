@@ -146,11 +146,14 @@ export default function TableUsage() {
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>自訂桌統計 ${monthStr}</title>
   <style>
-    html, body { overflow-x: hidden; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    @page { size: A4; margin: 15mm; }
+    @page { size: A4 portrait; margin: 12mm; }
+    html, body {
+      width: 100%;
+    }
     body {
       font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
       background: white;
