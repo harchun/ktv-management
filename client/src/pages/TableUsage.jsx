@@ -93,7 +93,7 @@ export default function TableUsage() {
 
     const monthStr = selectedMonth || '全部';
     const levelStr = selectedLevel || '全部';
-    const cadrePages = data.map((row, idx) => {
+    const bodySections = data.map((row, idx) => {
       const details = detailsMap[row.幹部] || [];
       const detailRows = details.map(d => `
         <tr>
@@ -112,41 +112,32 @@ export default function TableUsage() {
         </thead>
         <tbody>${detailRows}</tbody>
       </table>` : '';
-      const headerPart = idx === 0 ? `
-      <h1>自訂桌統計</h1>
-      <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>` : '';
-      const footerPart = idx === data.length - 1 ? `
-      <div class="footer">日月星辰酒店 KTV　|　列印日期：${new Date().toLocaleDateString('zh-TW')}</div>` : '';
       return `
-      <div class="tu-page">
-        ${headerPart}
-        <div class="cadre-block">
-          <div class="cadre-summary">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:8%">排名</th>
-                  <th style="width:14%">幹部</th>
-                  <th style="width:38%">客戶列表</th>
-                  <th style="width:24%">消費金額</th>
-                  <th style="width:16%">桌數</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style="text-align:center">${idx + 1}</td>
-                  <td>${row.幹部 || '-'}</td>
-                  <td>${row.客戶列表 || '-'}</td>
-                  <td style="text-align:right">NT$ ${Math.round(row.總消費 || 0).toLocaleString('zh-TW')}</td>
-                  <td style="text-align:center">${row.次數 || 0}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          ${details.length > 0 ? `<div class="detail-label">明細（${details.length} 筆）</div>` : ''}
-          ${detailTable}
+      <div class="cadre-block">
+        <div class="cadre-summary">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:8%">排名</th>
+                <th style="width:14%">幹部</th>
+                <th style="width:38%">客戶列表</th>
+                <th style="width:24%">消費金額</th>
+                <th style="width:16%">桌數</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="text-align:center">${idx + 1}</td>
+                <td>${row.幹部 || '-'}</td>
+                <td>${row.客戶列表 || '-'}</td>
+                <td style="text-align:right">NT$ ${Math.round(row.總消費 || 0).toLocaleString('zh-TW')}</td>
+                <td style="text-align:center">${row.次數 || 0}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        ${footerPart}
+        ${details.length > 0 ? `<div class="detail-label">明細（${details.length} 筆）</div>` : ''}
+        ${detailTable}
       </div>`;
     }).join('\n');
 
@@ -166,14 +157,9 @@ export default function TableUsage() {
       color: #000;
       font-size: 12px;
     }
-    .tu-page {
-      width: 210mm;
-      min-height: 297mm;
+    body {
       padding: 15mm 12mm;
-      page-break-after: always;
-      background: white;
     }
-    .tu-page:last-child { page-break-after: avoid; }
     h1 {
       text-align: center;
       font-size: 18px;
@@ -188,7 +174,8 @@ export default function TableUsage() {
       margin-bottom: 12px;
     }
     .cadre-block {
-      margin: 8px 0;
+      margin: 10mm 0;
+      page-break-inside: avoid;
     }
     table {
       width: 100%;
@@ -245,7 +232,10 @@ export default function TableUsage() {
   </style>
 </head>
 <body>
-  ${cadrePages}
+  <h1>自訂桌統計</h1>
+  <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>
+  ${bodySections}
+  <div class="footer">日月星辰酒店 KTV　|　列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
   <script>
     window.onload = function() { window.print(); window.close(); };
   </script>
