@@ -150,15 +150,12 @@ export default function TableUsage() {
   <title>自訂桌統計 ${monthStr}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    @page { size: A4; margin: 0; }
+    @page { size: A4; margin: 15mm 12mm; }
     html, body {
       font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
       background: white;
       color: #000;
       font-size: 12px;
-    }
-    body {
-      padding: 15mm 12mm;
     }
     h1 {
       text-align: center;
