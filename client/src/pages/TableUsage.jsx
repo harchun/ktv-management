@@ -150,15 +150,20 @@ export default function TableUsage() {
   <title>自訂桌統計 ${monthStr}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    @page { size: A4 portrait; margin: 12mm; }
+    @page { size: A4 portrait; margin: 18mm 10mm; }
     html, body {
       width: 100%;
+      font-size: 12px;
     }
     body {
       font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
       background: white;
       color: #000;
-      font-size: 12px;
+    }
+    .print-wrap {
+      width: 180mm;
+      max-width: 100%;
+      margin: 0 auto;
     }
     h1 {
       text-align: center;
@@ -222,12 +227,14 @@ export default function TableUsage() {
   </style>
 </head>
 <body>
+  <div class="print-wrap">
   <h1>自訂桌統計</h1>
   <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>
   ${bodySections}
   <div class="footer">列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
+  </div>
   <script>
-    window.onload = function() { window.print(); window.close(); }
+    window.onload = function() { window.print(); window.close(); };
   </script>
 </body>
 </html>`;
