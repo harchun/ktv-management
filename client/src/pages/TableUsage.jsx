@@ -150,7 +150,7 @@ export default function TableUsage() {
   <title>自訂桌統計 ${monthStr}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    @page { size: A4; margin: 12mm 10mm; }
+    @page { size: A4; margin: 20mm 12mm; }
     html, body {
       width: auto;
       font-size: 12px;
