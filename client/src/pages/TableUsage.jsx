@@ -150,7 +150,7 @@ export default function TableUsage() {
   <title>自訂桌統計 ${monthStr}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    @page { size: A4; margin: 20mm 12mm; }
+    @page { size: A4; margin: 15mm; }
     html, body {
       width: auto;
       font-size: 12px;
@@ -171,11 +171,10 @@ export default function TableUsage() {
       text-align: center;
       font-size: 11px;
       color: #666;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     .cadre-block {
-      margin: 12px 0;
-      page-break-inside: avoid;
+      margin: 10px 0 14px;
     }
     table {
       width: 100%;
@@ -184,7 +183,7 @@ export default function TableUsage() {
     }
     th, td {
       border: 1px solid #000;
-      padding: 8px;
+      padding: 6px 8px;
       text-align: left;
       overflow-wrap: break-word;
       word-break: break-word;
@@ -195,17 +194,18 @@ export default function TableUsage() {
       text-align: center;
     }
     .detail-table {
-      margin-top: 6px;
+      margin-top: 4px;
       font-size: 11px;
     }
     .detail-table thead {
       display: table-header-group;
-      page-break-after: avoid;
     }
-    .detail-table tr { page-break-inside: avoid; }
+    .detail-table tr {
+      page-break-inside: avoid;
+    }
     .detail-table th, .detail-table td {
       border: 1px solid #ccc;
-      padding: 4px 8px;
+      padding: 3px 8px;
     }
     .detail-table th {
       background: #f5f5f5;
@@ -215,10 +215,11 @@ export default function TableUsage() {
       font-size: 11px;
       font-weight: bold;
       color: #333;
-      margin: 8px 0 2px 0;
+      margin: 6px 0 2px;
+      page-break-after: avoid;
     }
     .footer {
-      margin: 12px 0;
+      margin-top: 15px;
       text-align: right;
       font-size: 10px;
       color: #666;
