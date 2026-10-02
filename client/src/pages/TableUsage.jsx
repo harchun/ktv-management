@@ -93,7 +93,7 @@ export default function TableUsage() {
 
     const monthStr = selectedMonth || '全部';
     const levelStr = selectedLevel || '全部';
-    const bodySections = data.map((row, idx) => {
+    const cadrePages = data.map((row, idx) => {
       const details = detailsMap[row.幹部] || [];
       const detailRows = details.map(d => `
         <tr>
@@ -112,32 +112,41 @@ export default function TableUsage() {
         </thead>
         <tbody>${detailRows}</tbody>
       </table>` : '';
+      const headerPart = idx === 0 ? `
+      <h1>自訂桌統計</h1>
+      <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>` : '';
+      const footerPart = idx === data.length - 1 ? `
+      <div class="footer">日月星辰酒店 KTV　|　列印日期：${new Date().toLocaleDateString('zh-TW')}</div>` : '';
       return `
-      <div class="cadre-block">
-        <div class="cadre-summary">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:8%">排名</th>
-                <th style="width:14%">幹部</th>
-                <th style="width:38%">客戶列表</th>
-                <th style="width:24%">消費金額</th>
-                <th style="width:16%">桌數</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="text-align:center">${idx + 1}</td>
-                <td>${row.幹部 || '-'}</td>
-                <td>${row.客戶列表 || '-'}</td>
-                <td style="text-align:right">NT$ ${Math.round(row.總消費 || 0).toLocaleString('zh-TW')}</td>
-                <td style="text-align:center">${row.次數 || 0}</td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="tu-page">
+        ${headerPart}
+        <div class="cadre-block">
+          <div class="cadre-summary">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:8%">排名</th>
+                  <th style="width:14%">幹部</th>
+                  <th style="width:38%">客戶列表</th>
+                  <th style="width:24%">消費金額</th>
+                  <th style="width:16%">桌數</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="text-align:center">${idx + 1}</td>
+                  <td>${row.幹部 || '-'}</td>
+                  <td>${row.客戶列表 || '-'}</td>
+                  <td style="text-align:right">NT$ ${Math.round(row.總消費 || 0).toLocaleString('zh-TW')}</td>
+                  <td style="text-align:center">${row.次數 || 0}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          ${details.length > 0 ? `<div class="detail-label">明細（${details.length} 筆）</div>` : ''}
+          ${detailTable}
         </div>
-        ${details.length > 0 ? `<div class="detail-label">明細（${details.length} 筆）</div>` : ''}
-        ${detailTable}
+        ${footerPart}
       </div>`;
     }).join('\n');
 
@@ -150,31 +159,36 @@ export default function TableUsage() {
   <title>自訂桌統計 ${monthStr}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    @page { size: A4; margin: 15mm; }
+    @page { size: A4; margin: 0; }
     html, body {
-      width: auto;
-      font-size: 12px;
-    }
-    body {
       font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
       background: white;
       color: #000;
+      font-size: 12px;
     }
+    .tu-page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 15mm 12mm;
+      page-break-after: always;
+      background: white;
+    }
+    .tu-page:last-child { page-break-after: avoid; }
     h1 {
       text-align: center;
-      font-size: 20px;
-      margin-bottom: 5px;
+      font-size: 18px;
+      margin-bottom: 4px;
       border-bottom: 2px solid #000;
-      padding-bottom: 10px;
+      padding-bottom: 8px;
     }
     .subtitle {
       text-align: center;
       font-size: 11px;
       color: #666;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }
     .cadre-block {
-      margin: 10px 0 14px;
+      margin: 8px 0;
     }
     table {
       width: 100%;
@@ -183,10 +197,11 @@ export default function TableUsage() {
     }
     th, td {
       border: 1px solid #000;
-      padding: 6px 8px;
+      padding: 5px 8px;
       text-align: left;
       overflow-wrap: break-word;
       word-break: break-word;
+      font-size: 11px;
     }
     th {
       background: #f0f0f0;
@@ -206,6 +221,7 @@ export default function TableUsage() {
     .detail-table th, .detail-table td {
       border: 1px solid #ccc;
       padding: 3px 8px;
+      font-size: 10px;
     }
     .detail-table th {
       background: #f5f5f5;
@@ -220,17 +236,16 @@ export default function TableUsage() {
     }
     .footer {
       margin-top: 15px;
-      text-align: right;
+      text-align: center;
       font-size: 10px;
-      color: #666;
+      color: #999;
+      border-top: 1px solid #eee;
+      padding-top: 8px;
     }
   </style>
 </head>
 <body>
-  <h1>自訂桌統計</h1>
-  <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>
-  ${bodySections}
-  <div class="footer">列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
+  ${cadrePages}
   <script>
     window.onload = function() { window.print(); window.close(); };
   </script>
