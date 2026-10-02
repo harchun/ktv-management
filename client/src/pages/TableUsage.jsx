@@ -93,7 +93,7 @@ export default function TableUsage() {
 
     const monthStr = selectedMonth || '全部';
     const levelStr = selectedLevel || '全部';
-    const bodySections = data.map((row, idx) => {
+    const cadreBlocks = data.map((row, idx) => {
       const details = detailsMap[row.幹部] || [];
       const detailRows = details.map(d => `
         <tr>
@@ -112,7 +112,7 @@ export default function TableUsage() {
         </thead>
         <tbody>${detailRows}</tbody>
       </table>` : '';
-      return `
+      const htmlBlock = `
       <div class="cadre-block">
         <div class="cadre-summary">
           <table>
@@ -139,7 +139,21 @@ export default function TableUsage() {
         ${details.length > 0 ? `<div class="detail-label">明細（${details.length} 筆）</div>` : ''}
         ${detailTable}
       </div>`;
-    }).join('\n');
+      // Height estimate (mm): summary base 28 + customer-list wrap + detail rows 6.5mm each
+      const listLen = (row.客戶列表 || '').length;
+      const est = 28 + Math.ceil(listLen / 18) * 5 + (details.length ? 6 + details.length * 6.5 : 0) + 6;
+      return { html: htmlBlock, est };
+    });
+
+    // Greedy packing: multiple cadres per A4 frame (not one per page); page 1 reserves 40mm for title
+    const frames = [];
+    let cur = '', curH = 40;
+    cadreBlocks.forEach((cb) => {
+      if (cur !== '' && curH + cb.est > 257) { frames.push(cur); cur = ''; curH = 0; }
+      cur += cb.html;
+      curH += cb.est;
+    });
+    if (cur !== '') frames.push(cur);
 
     const html = `
 <!DOCTYPE html>
@@ -150,13 +164,22 @@ export default function TableUsage() {
   <title>自訂桌統計 ${monthStr}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    @page { size: A4; margin: 15mm 12mm; }
+    @page { size: A4; margin: 0; }
     html, body {
       font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
       background: white;
       color: #000;
       font-size: 12px;
     }
+    .tu-page {
+      width: 210mm;
+      height: 297mm;
+      padding: 15mm;
+      page-break-after: always;
+      background: white;
+      overflow: hidden;
+    }
+    .tu-page:last-child { page-break-after: avoid; }
     h1 {
       text-align: center;
       font-size: 18px;
@@ -171,7 +194,7 @@ export default function TableUsage() {
       margin-bottom: 12px;
     }
     .cadre-block {
-      margin: 10mm 0;
+      margin: 0 0 6mm 0;
       page-break-inside: avoid;
     }
     table {
@@ -229,10 +252,13 @@ export default function TableUsage() {
   </style>
 </head>
 <body>
-  <h1>自訂桌統計</h1>
-  <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>
-  ${bodySections}
-  <div class="footer">日月星辰酒店 KTV　|　列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
+  ${frames.map((f, i) => `
+  <div class="tu-page">
+    ${i === 0 ? `<h1>自訂桌統計</h1>
+    <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>` : ''}
+    ${f}
+    ${i === frames.length - 1 ? `<div class="footer">日月星辰酒店 KTV　|　列印日期：${new Date().toLocaleDateString('zh-TW')}</div>` : ''}
+  </div>`).join('')}
   <script>
     window.onload = function() { window.print(); window.close(); };
   </script>
