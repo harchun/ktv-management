@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Card, Select, Row, Col, Statistic, Spin, Space, message } from 'antd';
+import { Table, Card, Select, Row, Col, Statistic, Spin, Space, Button, message } from 'antd';
 import axios from 'axios';
 
 const API = axios.create({ baseURL: '/api' });
@@ -52,6 +52,119 @@ export default function CadreTable() {
   }, [selectedMonth, selectedLevel]);
 
   const totalConsumption = data.reduce((sum, row) => sum + (Number(row.總消費) || 0), 0);
+  const totalRecords = data.reduce((sum, r) => sum + (Number(r.紀錄數) || 0), 0);
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('請允許彈出視窗以列印');
+      return;
+    }
+    const monthStr = selectedMonth || '全部';
+    const levelStr = selectedLevel || '全部';
+    // Group rows into blocks of 28 so each block starts with its own header;
+    // block padding carries the page edge safety margin (same pattern as TableUsage).
+    const ROWS_PER_BLOCK = 28;
+    const blocks = [];
+    for (let i = 0; i < data.length; i += ROWS_PER_BLOCK) {
+      const chunk = data.slice(i, i + ROWS_PER_BLOCK);
+      const rows = chunk.map((row, idx) => `
+        <tr>
+          <td style="text-align:center">${i + idx + 1}</td>
+          <td>${row.公關 || '-'}</td>
+          <td style="text-align:right">NT$ ${Math.round(row.總消費 || 0).toLocaleString('zh-TW')}</td>
+          <td style="text-align:center">${row.紀錄數 || 0}</td>
+        </tr>`).join('\n');
+      blocks.push(`
+      <div class="ct-block">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:8%">排名</th>
+              <th style="width:32%">公關</th>
+              <th style="width:35%">消費金額</th>
+              <th style="width:15%">紀錄數</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`);
+    }
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>幹桌統計 ${monthStr}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page { size: A4; margin: 0; }
+    html, body {
+      font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+      background: white;
+      color: #000;
+      font-size: 12px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 4px;
+      border-bottom: 2px solid #000;
+      padding: 15mm 12mm 8px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 11px;
+      color: #666;
+      padding: 0 12mm;
+      margin-bottom: 4mm;
+    }
+    .ct-block {
+      padding: 15mm 12mm 8mm;
+      page-break-inside: avoid;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 5px 8px;
+      text-align: left;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      font-size: 11px;
+    }
+    th {
+      background: #f0f0f0;
+      font-weight: bold;
+      text-align: center;
+    }
+    .footer {
+      margin-top: 5mm;
+      text-align: center;
+      font-size: 10px;
+      color: #999;
+      border-top: 1px solid #eee;
+      padding: 8px 12mm 15mm;
+    }
+  </style>
+</head>
+<body>
+  <h1>幹桌統計</h1>
+  <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 紀錄數：${totalRecords}</div>
+  ${blocks.join('\n')}
+  <div class="footer">日月星辰酒店 KTV　|　列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
+  <script>
+    window.onload = function() { window.print(); window.close(); };
+  </script>
+</body>
+</html>`;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
 
   const columns = [
     { title: '排名', dataIndex: 'rank', key: 'rank', width: 70, render: (val) => (
@@ -76,6 +189,7 @@ export default function CadreTable() {
         title="幹桌統計"
         extra={
           <Space>
+            <Button onClick={handlePrint}>HTML 列印</Button>
             <span style={{ color: '#aaa' }}>選擇月份:</span>
             <Select
               value={selectedMonth}
