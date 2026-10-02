@@ -71,7 +71,20 @@ export default function TableUsage() {
   const totalVisits = data.reduce((sum, row) => sum + (Number(row.次數) || 0), 0);
   const uniqueCustomers = new Set(data.map(r => r.客戶列表?.split(', ')).flat().filter(Boolean)).size;
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    // Fetch details for every cadre (parallel) so the print includes 明細
+    const detailsMap = {};
+    await Promise.all(data.map(async (row) => {
+      try {
+        const params = { cadre: row.幹部 };
+        if (selectedMonth) params.month = selectedMonth;
+        const res = await API.get('/stats/table-usage-details', { params });
+        detailsMap[row.幹部] = res.data || [];
+      } catch (e) {
+        detailsMap[row.幹部] = [];
+      }
+    }));
+
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       alert('請允許彈出視窗以列印');
@@ -80,15 +93,39 @@ export default function TableUsage() {
 
     const monthStr = selectedMonth || '全部';
     const levelStr = selectedLevel || '全部';
-    const tableRows = data.map((row, idx) => `
+    const bodyRows = data.map((row, idx) => {
+      const details = detailsMap[row.幹部] || [];
+      const detailRows = details.map(d => `
+        <tr>
+          <td style="padding:4px 8px; color:#555">${d.日期 ? new Date(d.日期).toISOString().slice(0, 10) : '-'}</td>
+          <td style="padding:4px 8px">${d.客戶名 || '-'}</td>
+          <td style="padding:4px 8px; text-align:right">NT$ ${Math.round(d.總消費 || 0).toLocaleString('zh-TW')}</td>
+        </tr>`).join('\n');
+      const detailBlock = details.length > 0 ? `
+        <tr class="detail-row">
+          <td colspan="5" style="border: none; padding: 0; background: #fafafa">
+            <div style="font-size:11px; font-weight:bold; color:#333; padding:4px 8px">明細（${details.length} 筆）</div>
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th style="width:20%">日期</th>
+                  <th style="width:40%">客戶名</th>
+                  <th style="width:40%">消費金額</th>
+                </tr>
+              </thead>
+              <tbody>${detailRows}</tbody>
+            </table>
+          </td>
+        </tr>` : '';
+      return `
       <tr>
         <td style="text-align:center">${idx + 1}</td>
         <td>${row.幹部 || '-'}</td>
         <td>${row.客戶列表 || '-'}</td>
         <td style="text-align:right">NT$ ${Math.round(row.總消費 || 0).toLocaleString('zh-TW')}</td>
         <td style="text-align:center">${row.次數 || 0}</td>
-      </tr>
-    `).join('\n');
+      </tr>${detailBlock}`;
+    }).join('\n');
 
     const html = `
 <!DOCTYPE html>
@@ -133,6 +170,20 @@ export default function TableUsage() {
       font-weight: bold;
       text-align: center;
     }
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 4px 8px;
+      font-size: 11px;
+    }
+    .detail-table th, .detail-table td {
+      border: 1px solid #ccc;
+      padding: 4px 8px;
+    }
+    .detail-table th {
+      background: #f5f5f5;
+      font-size: 10px;
+    }
     .footer {
       margin-top: 20px;
       text-align: right;
@@ -155,7 +206,7 @@ export default function TableUsage() {
       </tr>
     </thead>
     <tbody>
-      ${tableRows}
+      ${bodyRows}
     </tbody>
   </table>
   <div class="footer">列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
