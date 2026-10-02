@@ -159,11 +159,13 @@ export default function TableUsage() {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
+      table-layout: fixed;
     }
     th, td {
       border: 1px solid #000;
       padding: 8px;
       text-align: left;
+      overflow-wrap: break-word;
     }
     th {
       background: #f0f0f0;
