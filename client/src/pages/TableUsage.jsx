@@ -164,6 +164,7 @@ export default function TableUsage() {
       width: 180mm;
       max-width: 100%;
       margin: 0 auto;
+      padding: 8mm 5mm;
     }
     h1 {
       text-align: center;
