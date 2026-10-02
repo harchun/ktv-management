@@ -150,20 +150,15 @@ export default function TableUsage() {
   <title>自訂桌統計 ${monthStr}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    @page { size: A4 portrait; margin: 10mm; }
+    @page { size: A4; margin: 12mm 10mm; }
     html, body {
-      width: 100%;
+      width: auto;
       font-size: 12px;
     }
     body {
       font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
       background: white;
       color: #000;
-    }
-    .print-wrap {
-      width: 180mm;
-      max-width: 100%;
-      margin: 0 auto;
     }
     h1 {
       text-align: center;
@@ -179,7 +174,7 @@ export default function TableUsage() {
       margin-bottom: 20px;
     }
     .cadre-block {
-      margin: 12mm 0;
+      margin: 12px 0;
       page-break-inside: avoid;
     }
     table {
@@ -192,7 +187,7 @@ export default function TableUsage() {
       padding: 8px;
       text-align: left;
       overflow-wrap: break-word;
-      word-break: break-all;
+      word-break: break-word;
     }
     th {
       background: #f0f0f0;
@@ -206,9 +201,6 @@ export default function TableUsage() {
     .detail-table thead {
       display: table-header-group;
       page-break-after: avoid;
-    }
-    .detail-table thead th {
-      padding-top: 8px;
     }
     .detail-table tr { page-break-inside: avoid; }
     .detail-table th, .detail-table td {
@@ -226,7 +218,7 @@ export default function TableUsage() {
       margin: 8px 0 2px 0;
     }
     .footer {
-      margin: 12mm 0;
+      margin: 12px 0;
       text-align: right;
       font-size: 10px;
       color: #666;
@@ -234,12 +226,10 @@ export default function TableUsage() {
   </style>
 </head>
 <body>
-  <div class="print-wrap">
   <h1>自訂桌統計</h1>
   <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>
   ${bodySections}
   <div class="footer">列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
-  </div>
   <script>
     window.onload = function() { window.print(); window.close(); };
   </script>
