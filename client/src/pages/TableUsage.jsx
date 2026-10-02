@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Table, Card, Select, Space, Row, Col, Statistic, Spin } from 'antd';
+import { Table, Card, Select, Space, Row, Col, Statistic, Spin, Button } from 'antd';
+import { PrinterOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const API = axios.create({ baseURL: '/api' });
@@ -70,6 +71,104 @@ export default function TableUsage() {
   const totalVisits = data.reduce((sum, row) => sum + (Number(row.次數) || 0), 0);
   const uniqueCustomers = new Set(data.map(r => r.客戶列表?.split(', ')).flat().filter(Boolean)).size;
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('請允許彈出視窗以列印');
+      return;
+    }
+
+    const monthStr = selectedMonth || '全部';
+    const levelStr = selectedLevel || '全部';
+    const tableRows = data.map((row, idx) => `
+      <tr>
+        <td style="text-align:center">${idx + 1}</td>
+        <td>${row.幹部 || '-'}</td>
+        <td>${row.客戶列表 || '-'}</td>
+        <td style="text-align:right">NT$ ${Math.round(row.總消費 || 0).toLocaleString('zh-TW')}</td>
+        <td style="text-align:center">${row.次數 || 0}</td>
+      </tr>
+    `).join('\n');
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>自訂桌統計 ${monthStr}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page { size: A4; margin: 15mm; }
+    body {
+      font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+      background: white;
+      color: #000;
+      font-size: 12px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 20px;
+      margin-bottom: 5px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+      font-weight: bold;
+      text-align: center;
+    }
+    .footer {
+      margin-top: 20px;
+      text-align: right;
+      font-size: 10px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>自訂桌統計</h1>
+  <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:8%">排名</th>
+        <th style="width:14%">幹部</th>
+        <th style="width:38%">客戶列表</th>
+        <th style="width:24%">消費金額</th>
+        <th style="width:16%">桌數</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRows}
+    </tbody>
+  </table>
+  <div class="footer">列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
+  <script>
+    window.onload = function() { window.print(); window.close(); }
+  </script>
+</body>
+</html>`;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   const columns = [
     { title: '排名', dataIndex: 'rank', key: 'rank', width: 60, render: (val) => (
       <span style={{
@@ -111,6 +210,9 @@ export default function TableUsage() {
             >
               {LEVELS.map(l => <Option key={l} value={l}>{l}</Option>)}
             </Select>
+            <Button icon={<PrinterOutlined />} onClick={handlePrint} style={{ background: '#e74c3c', borderColor: '#e74c3c', color: '#fff', marginLeft: 8 }}>
+              列印
+            </Button>
           </Space>
         }
       >
