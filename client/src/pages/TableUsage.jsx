@@ -97,7 +97,7 @@ export default function TableUsage() {
       const details = detailsMap[row.幹部] || [];
       const detailRows = details.map(d => `
         <tr>
-          <td>${d.日期 ? new Date(d.日期).toISOString().slice(0, 10) : '-'}</td>
+          <td>${d.日期 ? String(d.日期).slice(0, 10) : '-'}</td>
           <td>${d.客戶名 || '-'}</td>
           <td style="text-align:right">NT$ ${Math.round(d.總消費 || 0).toLocaleString('zh-TW')}</td>
         </tr>`).join('\n');
@@ -150,7 +150,7 @@ export default function TableUsage() {
   <title>自訂桌統計 ${monthStr}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    @page { size: A4 portrait; margin: 22mm 12mm; }
+    @page { size: A4 portrait; margin: 10mm; }
     html, body {
       width: 100%;
       font-size: 12px;
@@ -164,7 +164,6 @@ export default function TableUsage() {
       width: 180mm;
       max-width: 100%;
       margin: 0 auto;
-      padding: 8mm 5mm;
     }
     h1 {
       text-align: center;
@@ -180,7 +179,8 @@ export default function TableUsage() {
       margin-bottom: 20px;
     }
     .cadre-block {
-      margin-bottom: 16px;
+      margin: 12mm 0;
+      page-break-inside: avoid;
     }
     table {
       width: 100%;
@@ -203,7 +203,13 @@ export default function TableUsage() {
       margin-top: 6px;
       font-size: 11px;
     }
-    .detail-table thead { display: table-header-group; }
+    .detail-table thead {
+      display: table-header-group;
+      page-break-after: avoid;
+    }
+    .detail-table thead th {
+      padding-top: 8px;
+    }
     .detail-table tr { page-break-inside: avoid; }
     .detail-table th, .detail-table td {
       border: 1px solid #ccc;
@@ -220,7 +226,7 @@ export default function TableUsage() {
       margin: 8px 0 2px 0;
     }
     .footer {
-      margin-top: 20px;
+      margin: 12mm 0;
       text-align: right;
       font-size: 10px;
       color: #666;
