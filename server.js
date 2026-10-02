@@ -664,11 +664,12 @@ app.get('/api/stats/months', authenticate, async (req, res) => {
 app.get('/api/stats/table-usage-details', authenticate, async (req, res) => {
   try {
     const { cadre, month } = req.query;
-    let sql = `SELECT 
+    let sql = `SELECT
       ds.\`日期\`, ds.\`客戶名\`,
       SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
       FROM daily_sales ds
-      WHERE ds.\`幹部\` = ?`;
+      JOIN cadres cad ON ds.\`幹部編號\` = cad.\`幹部編號\`
+      WHERE cad.\`姓名\` = ?`;
     const params = [cadre];
     
     if (month) {

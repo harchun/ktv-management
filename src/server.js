@@ -240,6 +240,24 @@ app.get('/api/stats/table-usage', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/stats/table-usage-details', authenticate, async (req, res) => {
+  try {
+    const { cadre, month } = req.query;
+    let sql = `SELECT
+      ds.\`日期\`, ds.\`客戶名\`,
+      SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
+      FROM daily_sales ds
+      JOIN cadres cad ON ds.\`幹部編號\` = cad.\`幹部編號\`
+      WHERE cad.\`姓名\` = ?`;
+    const params = [cadre];
+    if (month) { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
+    else { sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)'; }
+    sql += ' GROUP BY ds.\`日期\`, ds.\`客戶名\` ORDER BY ds.\`日期\` DESC';
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
   try {
     const { month, level } = req.query;

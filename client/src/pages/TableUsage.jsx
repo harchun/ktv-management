@@ -139,21 +139,8 @@ export default function TableUsage() {
         ${details.length > 0 ? `<div class="detail-label">明細（${details.length} 筆）</div>` : ''}
         ${detailTable}
       </div>`;
-      // Height estimate (mm): summary base 28 + customer-list wrap + detail rows 6.5mm each
-      const listLen = (row.客戶列表 || '').length;
-      const est = 28 + Math.ceil(listLen / 18) * 5 + (details.length ? 6 + details.length * 6.5 : 0) + 6;
-      return { html: htmlBlock, est };
-    });
-
-    // Greedy packing: multiple cadres per A4 frame (not one per page); page 1 reserves 40mm for title
-    const frames = [];
-    let cur = '', curH = 40;
-    cadreBlocks.forEach((cb) => {
-      if (cur !== '' && curH + cb.est > 257) { frames.push(cur); cur = ''; curH = 0; }
-      cur += cb.html;
-      curH += cb.est;
-    });
-    if (cur !== '') frames.push(cur);
+      return htmlBlock;
+    }).join('\n');
 
     const html = `
 <!DOCTYPE html>
@@ -185,16 +172,17 @@ export default function TableUsage() {
       font-size: 18px;
       margin-bottom: 4px;
       border-bottom: 2px solid #000;
-      padding-bottom: 8px;
+      padding: 15mm 12mm 8px;
     }
     .subtitle {
       text-align: center;
       font-size: 11px;
       color: #666;
-      margin-bottom: 12px;
+      padding: 0 12mm;
+      margin-bottom: 4mm;
     }
     .cadre-block {
-      margin: 0 0 6mm 0;
+      padding: 15mm 12mm 8mm;
       page-break-inside: avoid;
     }
     table {
@@ -242,23 +230,20 @@ export default function TableUsage() {
       page-break-after: avoid;
     }
     .footer {
-      margin-top: 15px;
+      margin-top: 5mm;
       text-align: center;
       font-size: 10px;
       color: #999;
       border-top: 1px solid #eee;
-      padding-top: 8px;
+      padding: 8px 12mm 15mm;
     }
   </style>
 </head>
 <body>
-  ${frames.map((f, i) => `
-  <div class="tu-page">
-    ${i === 0 ? `<h1>自訂桌統計</h1>
-    <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>` : ''}
-    ${f}
-    ${i === frames.length - 1 ? `<div class="footer">日月星辰酒店 KTV　|　列印日期：${new Date().toLocaleDateString('zh-TW')}</div>` : ''}
-  </div>`).join('')}
+  <h1>自訂桌統計</h1>
+  <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>
+  ${cadreBlocks}
+  <div class="footer">日月星辰酒店 KTV　|　列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
   <script>
     window.onload = function() { window.print(); window.close(); };
   </script>
