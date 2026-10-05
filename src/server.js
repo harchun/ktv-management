@@ -278,6 +278,27 @@ app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+
+app.get('/api/stats/cadre-table-details', authenticate, async (req, res) => {
+  try {
+    const { gossip, month } = req.query;
+    let sql = `SELECT
+      ds.\`日期\`,
+      ds.\`客戶名\`,
+      g.\`姓名\` as 公關,
+      SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
+      FROM daily_sales ds
+      LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
+      WHERE g.\`姓名\` = ?`;
+    const params = [gossip];
+    if (month && month !== '全部') { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
+    else { sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)'; }
+    sql += ' GROUP BY ds.\`日期\`, ds.\`客戶名\`, g.\`姓名\` ORDER BY ds.\`日期\` DESC';
+    const [rows] = await pool.execute(sql, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/stats/summary', authenticate, async (req, res) => {
   try {
     const { start, end } = req.query;
