@@ -56,21 +56,48 @@ export default function CadreTable() {
   const totalConsumption = data.reduce((sum, row) => sum + (Number(row.總消費) || 0), 0);
   const totalRecords = data.reduce((sum, r) => sum + (Number(r.紀錄數) || 0), 0);
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    // Fetch details for every row (parallel) so the workbook includes 明細
+    const detailsMap = {};
+    await Promise.all(data.map(async (row) => {
+      try {
+        const params = { gossip: row.公關 };
+        if (selectedMonth) params.month = selectedMonth;
+        const res = await API.get('/stats/cadre-table-details', { params });
+        detailsMap[row.公關] = res.data || [];
+      } catch (e2) {
+        detailsMap[row.公關] = [];
+      }
+    }));
+
     const monthStr = selectedMonth || '全部';
     const levelStr = selectedLevel || '全部';
     const wb = XLSX.utils.book_new();
-    const aoa = [
+
+    // Sheet 1: 彙總
+    const summary = [
       ['幹桌統計'],
       [`月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 紀錄數：${totalRecords}`],
       [],
       ['排名', '公關', '消費金額', '紀錄數'],
       ...data.map((row, idx) => [idx + 1, row.公關, row.總消費 || 0, row.紀錄數 || 0]),
     ];
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 14 }, { wch: 8 }];
-    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }];
-    XLSX.utils.book_append_sheet(wb, ws, '幹桌統計');
+    const ws1 = XLSX.utils.aoa_to_sheet(summary);
+    ws1['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 14 }, { wch: 8 }];
+    ws1['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }];
+    XLSX.utils.book_append_sheet(wb, ws1, '幹桌統計');
+
+    // Sheet 2: 明細
+    const detailRows = [['公關', '日期', '客戶名', '消費金額']];
+    data.forEach((row) => {
+      (detailsMap[row.公關] || []).forEach((d) => {
+        detailRows.push([row.公關, String(d.日期 || '').slice(0, 10), d.客戶名 || '', d.總消費 || 0]);
+      });
+    });
+    const ws2 = XLSX.utils.aoa_to_sheet(detailRows);
+    ws2['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 14 }];
+    XLSX.utils.book_append_sheet(wb, ws2, '明細');
+
     const safeMonth = monthStr.replace(/[\\/:*?"<>|]/g, '-');
     XLSX.writeFile(wb, `幹桌統計_${safeMonth}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
