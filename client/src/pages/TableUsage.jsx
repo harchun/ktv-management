@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Table, Card, Select, Space, Row, Col, Statistic, Spin, Button } from 'antd';
-import { PrinterOutlined } from '@ant-design/icons';
+import { DownloadOutlined } from '@ant-design/icons';
+import * as XLSX from 'xlsx';
 import axios from 'axios';
 
 const API = axios.create({ baseURL: '/api' });
@@ -71,8 +72,8 @@ export default function TableUsage() {
   const totalVisits = data.reduce((sum, row) => sum + (Number(row.次數) || 0), 0);
   const uniqueCustomers = new Set(data.map(r => r.客戶列表?.split(', ')).flat().filter(Boolean)).size;
 
-  const handlePrint = async () => {
-    // Fetch details for every cadre (parallel) so the print includes 明細
+  const handleExport = async () => {
+    // Fetch details for every cadre (parallel) so the workbook includes 明細
     const detailsMap = {};
     await Promise.all(data.map(async (row) => {
       try {
@@ -85,173 +86,36 @@ export default function TableUsage() {
       }
     }));
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert('請允許彈出視窗以列印');
-      return;
-    }
-
     const monthStr = selectedMonth || '全部';
     const levelStr = selectedLevel || '全部';
-    const cadreBlocks = data.map((row, idx) => {
-      const details = detailsMap[row.幹部] || [];
-      const detailRows = details.map(d => `
-        <tr>
-          <td>${d.日期 ? String(d.日期).slice(0, 10) : '-'}</td>
-          <td>${d.客戶名 || '-'}</td>
-          <td style="text-align:right">NT$ ${Math.round(d.總消費 || 0).toLocaleString('zh-TW')}</td>
-        </tr>`).join('\n');
-      const detailTable = details.length > 0 ? `
-      <table class="detail-table">
-        <thead>
-          <tr>
-            <th style="width:20%">日期</th>
-            <th style="width:40%">客戶名</th>
-            <th style="width:40%">消費金額</th>
-          </tr>
-        </thead>
-        <tbody>${detailRows}</tbody>
-      </table>` : '';
-      const htmlBlock = `
-      <div class="cadre-block">
-        <div class="cadre-summary">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:8%">排名</th>
-                <th style="width:14%">幹部</th>
-                <th style="width:38%">客戶列表</th>
-                <th style="width:24%">消費金額</th>
-                <th style="width:16%">桌數</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="text-align:center">${idx + 1}</td>
-                <td>${row.幹部 || '-'}</td>
-                <td>${row.客戶列表 || '-'}</td>
-                <td style="text-align:right">NT$ ${Math.round(row.總消費 || 0).toLocaleString('zh-TW')}</td>
-                <td style="text-align:center">${row.次數 || 0}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        ${details.length > 0 ? `<div class="detail-label">明細（${details.length} 筆）</div>` : ''}
-        ${detailTable}
-      </div>`;
-      return htmlBlock;
-    }).join('\n');
+    const wb = XLSX.utils.book_new();
 
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>自訂桌統計 ${monthStr}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    @page { size: A4; margin: 0; }
-    html, body {
-      font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
-      background: white;
-      color: #000;
-      font-size: 12px;
-    }
-    .tu-page {
-      width: 210mm;
-      height: 297mm;
-      padding: 15mm;
-      page-break-after: always;
-      background: white;
-      overflow: hidden;
-    }
-    .tu-page:last-child { page-break-after: avoid; }
-    h1 {
-      text-align: center;
-      font-size: 18px;
-      margin-bottom: 4px;
-      border-bottom: 2px solid #000;
-      padding: 15mm 12mm 8px;
-    }
-    .subtitle {
-      text-align: center;
-      font-size: 11px;
-      color: #666;
-      padding: 0 12mm;
-      margin-bottom: 4mm;
-    }
-    .cadre-block {
-      padding: 15mm 12mm 8mm;
-      page-break-inside: avoid;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
-    th, td {
-      border: 1px solid #000;
-      padding: 5px 8px;
-      text-align: left;
-      overflow-wrap: break-word;
-      word-break: break-word;
-      font-size: 11px;
-    }
-    th {
-      background: #f0f0f0;
-      font-weight: bold;
-      text-align: center;
-    }
-    .detail-table {
-      margin-top: 4px;
-      font-size: 11px;
-    }
-    .detail-table thead {
-      display: table-header-group;
-    }
-    .detail-table tr {
-      page-break-inside: avoid;
-    }
-    .detail-table th, .detail-table td {
-      border: 1px solid #ccc;
-      padding: 3px 8px;
-      font-size: 10px;
-    }
-    .detail-table th {
-      background: #f5f5f5;
-      font-size: 10px;
-    }
-    .detail-label {
-      font-size: 11px;
-      font-weight: bold;
-      color: #333;
-      margin: 6px 0 2px;
-      page-break-after: avoid;
-    }
-    .footer {
-      margin-top: 5mm;
-      text-align: center;
-      font-size: 10px;
-      color: #999;
-      border-top: 1px solid #eee;
-      padding: 8px 12mm 15mm;
-    }
-  </style>
-</head>
-<body>
-  <h1>自訂桌統計</h1>
-  <div class="subtitle">月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}</div>
-  ${cadreBlocks}
-  <div class="footer">日月星辰酒店 KTV　|　列印日期：${new Date().toLocaleDateString('zh-TW')}</div>
-  <script>
-    window.onload = function() { window.print(); window.close(); };
-  </script>
-</body>
-</html>`;
+    // Sheet 1: 彙總
+    const summary = [
+      ['自訂桌統計'],
+      [`月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}`],
+      [],
+      ['排名', '幹部', '客戶列表', '消費金額', '桌數'],
+      ...data.map((row, idx) => [idx + 1, row.幹部, row.客戶列表 || '', row.總消費 || 0, row.次數 || 0]),
+    ];
+    const ws1 = XLSX.utils.aoa_to_sheet(summary);
+    ws1['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 42 }, { wch: 14 }, { wch: 8 }];
+    ws1['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }];
+    XLSX.utils.book_append_sheet(wb, ws1, '自訂桌統計');
 
-    printWindow.document.write(html);
-    printWindow.document.close();
+    // Sheet 2: 明細
+    const detailRows = [['幹部', '日期', '客戶名', '消費金額']];
+    data.forEach((row) => {
+      (detailsMap[row.幹部] || []).forEach((d) => {
+        detailRows.push([row.幹部, String(d.日期 || '').slice(0, 10), d.客戶名 || '', d.總消費 || 0]);
+      });
+    });
+    const ws2 = XLSX.utils.aoa_to_sheet(detailRows);
+    ws2['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 14 }];
+    XLSX.utils.book_append_sheet(wb, ws2, '明細');
+
+    const safeMonth = monthStr.replace(/[\\/:*?"<>|]/g, '-');
+    XLSX.writeFile(wb, `自訂桌統計_${safeMonth}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const columns = [
@@ -295,8 +159,8 @@ export default function TableUsage() {
             >
               {LEVELS.map(l => <Option key={l} value={l}>{l}</Option>)}
             </Select>
-            <Button icon={<PrinterOutlined />} onClick={handlePrint} style={{ background: '#e74c3c', borderColor: '#e74c3c', color: '#fff', marginLeft: 8 }}>
-              列印
+            <Button icon={<DownloadOutlined />} onClick={handleExport} style={{ background: '#27ae60', borderColor: '#27ae60', color: '#fff', marginLeft: 8 }}>
+              Excel 下載
             </Button>
           </Space>
         }
