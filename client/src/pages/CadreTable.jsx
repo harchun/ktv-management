@@ -88,14 +88,14 @@ export default function CadreTable() {
     XLSX.utils.book_append_sheet(wb, ws1, '幹桌統計');
 
     // Sheet 2: 明細
-    const detailRows = [['公關', '日期', '客戶名', '消費金額']];
+    const detailRows = [['公關', '幹部', '日期', '客戶名', '消費金額']];
     data.forEach((row) => {
       (detailsMap[row.公關] || []).forEach((d) => {
-        detailRows.push([row.公關, String(d.日期 || '').slice(0, 10), d.客戶名 || '', d.總消費 || 0]);
+        detailRows.push([row.公關, d.幹部 || '', String(d.日期 || '').slice(0, 10), d.客戶名 || '', d.總消費 || 0]);
       });
     });
     const ws2 = XLSX.utils.aoa_to_sheet(detailRows);
-    ws2['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 14 }];
+    ws2['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 14 }];
     XLSX.utils.book_append_sheet(wb, ws2, '明細');
 
     const safeMonth = monthStr.replace(/[\\/:*?"<>|]/g, '-');
