@@ -23,6 +23,7 @@ export default function TableUsage() {
   const [loading, setLoading] = useState(false);
   const [expandedRows, setExpandedRows] = useState({});
   const [loadingDetails, setLoadingDetails] = useState({});
+  const [cadreFilter, setCadreFilter] = useState([]);
 
   const fetchMonths = async () => {
     try {
@@ -73,9 +74,12 @@ export default function TableUsage() {
   const uniqueCustomers = new Set(data.map(r => r.客戶列表?.split(', ')).flat().filter(Boolean)).size;
 
   const handleExport = async () => {
+    // Filter rows to selected cadres (if any), else all
+    const exportData = cadreFilter.length ? data.filter((row) => cadreFilter.includes(row.幹部)) : data;
+
     // Fetch details for every cadre (parallel) so the workbook includes 明細
     const detailsMap = {};
-    await Promise.all(data.map(async (row) => {
+    await Promise.all(exportData.map(async (row) => {
       try {
         const params = { cadre: row.幹部 };
         if (selectedMonth) params.month = selectedMonth;
@@ -88,15 +92,16 @@ export default function TableUsage() {
 
     const monthStr = selectedMonth || '全部';
     const levelStr = selectedLevel || '全部';
+    const cadreStr = cadreFilter.length ? cadreFilter.join('、') : '全部';
     const wb = XLSX.utils.book_new();
 
     // Sheet 1: 彙總
     const summary = [
       ['自訂桌統計'],
-      [`月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}`],
+      [`月份：${monthStr} | 等級：${levelStr} | 幹部：${cadreStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}`],
       [],
       ['排名', '幹部', '客戶列表', '消費金額', '桌數'],
-      ...data.map((row, idx) => [idx + 1, row.幹部, row.客戶列表 || '', row.總消費 || 0, row.次數 || 0]),
+      ...exportData.map((row, idx) => [idx + 1, row.幹部, row.客戶列表 || '', row.總消費 || 0, row.次數 || 0]),
     ];
     const ws1 = XLSX.utils.aoa_to_sheet(summary);
     ws1['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 42 }, { wch: 14 }, { wch: 8 }];
@@ -105,7 +110,7 @@ export default function TableUsage() {
 
     // Sheet 2: 明細
     const detailRows = [['幹部', '日期', '客戶名', '消費金額']];
-    data.forEach((row) => {
+    exportData.forEach((row) => {
       (detailsMap[row.幹部] || []).forEach((d) => {
         detailRows.push([row.幹部, String(d.日期 || '').slice(0, 10), d.客戶名 || '', d.總消費 || 0]);
       });
@@ -115,7 +120,8 @@ export default function TableUsage() {
     XLSX.utils.book_append_sheet(wb, ws2, '明細');
 
     const safeMonth = monthStr.replace(/[\\/:*?"<>|]/g, '-');
-    XLSX.writeFile(wb, `自訂桌統計_${safeMonth}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    const safeCadre = cadreFilter.length ? cadreFilter.join('-') : '全部';
+    XLSX.writeFile(wb, `自訂桌統計_${safeCadre}_${safeMonth}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const columns = [
@@ -159,6 +165,17 @@ export default function TableUsage() {
             >
               {LEVELS.map(l => <Option key={l} value={l}>{l}</Option>)}
             </Select>
+            <span style={{ color: '#aaa', marginLeft: 16 }}>幹部:</span>
+            <Select
+              mode="multiple"
+              value={cadreFilter}
+              onChange={setCadreFilter}
+              allowClear
+              placeholder="指定幹部(可多選)"
+              style={{ width: 220, maxWidth: 300 }}
+              options={[...new Set(data.map((r) => r.幹部).filter(Boolean))].map((c) => ({ label: c, value: c }))}
+              optionFilterProp="label"
+            />
             <Button icon={<DownloadOutlined />} onClick={handleExport} style={{ background: '#27ae60', borderColor: '#27ae60', color: '#fff', marginLeft: 8 }}>
               Excel 下載
             </Button>
