@@ -220,7 +220,7 @@ app.get('/api/stats/months', authenticate, async (req, res) => {
 
 app.get('/api/stats/table-usage', authenticate, async (req, res) => {
   try {
-    const { month, level } = req.query;
+    const { month, level, start, end } = req.query;
     let sql = `SELECT
       cad.\`幹部編號\`,
       cad.\`姓名\` as 幹部,
@@ -233,6 +233,7 @@ app.get('/api/stats/table-usage', authenticate, async (req, res) => {
       WHERE 1=1 AND cad.\`等級\` = '公關'`;
     const params = [];
     if (month) { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
+    if (start && end) { sql += ' AND LEFT(ds.\`日期\`, 10) >= ? AND LEFT(ds.\`日期\`, 10) <= ?'; params.push(start, end); }
     if (level && level !== '全部') { sql += ' AND cad.\`等級\` = ?'; params.push(level); }
     sql += ' GROUP BY cad.\`幹部編號\`, cad.\`姓名\`, cad.\`等級\` ORDER BY 總消費 DESC';
     const [rows] = await pool.execute(sql, params);
@@ -242,7 +243,7 @@ app.get('/api/stats/table-usage', authenticate, async (req, res) => {
 
 app.get('/api/stats/table-usage-details', authenticate, async (req, res) => {
   try {
-    const { cadre, month } = req.query;
+    const { cadre, month, start, end } = req.query;
     let sql = `SELECT
       ds.\`日期\`, ds.\`客戶名\`,
       SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
@@ -250,7 +251,8 @@ app.get('/api/stats/table-usage-details', authenticate, async (req, res) => {
       JOIN cadres cad ON ds.\`幹部編號\` = cad.\`幹部編號\`
       WHERE cad.\`姓名\` = ?`;
     const params = [cadre];
-    if (month) { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
+    if (start && end) { sql += ' AND LEFT(ds.\`日期\`, 10) BETWEEN ? AND ?'; params.push(start, end); }
+    else if (month) { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
     else { sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)'; }
     sql += ' GROUP BY ds.\`日期\`, ds.\`客戶名\` ORDER BY ds.\`日期\` DESC';
     const [rows] = await pool.execute(sql, params);
@@ -260,7 +262,7 @@ app.get('/api/stats/table-usage-details', authenticate, async (req, res) => {
 
 app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
   try {
-    const { month, level } = req.query;
+    const { month, level, start, end } = req.query;
     let sql = `SELECT
       g.\`姓名\` as 公關,
       COUNT(DISTINCT CONCAT(LEFT(ds.\`日期\`, 10), ds.\`客戶名\`)) as 紀錄數,
@@ -270,7 +272,8 @@ app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
       LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
       WHERE ds.\`公關訂桌\` IS NOT NULL AND ds.\`公關訂桌\` != ''`;
     const params = [];
-    if (month) { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
+    if (start && end) { sql += ' AND LEFT(ds.\`日期\`, 10) BETWEEN ? AND ?'; params.push(start, end); }
+    else if (month) { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
     if (level && level !== '全部') { sql += ' AND cad.\`等級\` = ?'; params.push(level); }
     sql += ' GROUP BY g.\`姓名\` ORDER BY 總消費 DESC';
     const [rows] = await pool.execute(sql, params);
@@ -281,7 +284,7 @@ app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
 
 app.get('/api/stats/cadre-table-details', authenticate, async (req, res) => {
   try {
-    const { gossip, month } = req.query;
+    const { gossip, month, start, end } = req.query;
     let sql = `SELECT
       ds.\`日期\`,
       ds.\`客戶名\`,
@@ -292,7 +295,8 @@ app.get('/api/stats/cadre-table-details', authenticate, async (req, res) => {
       LEFT JOIN gossip g ON ds.\`公關訂桌\` = g.\`公關編號\`
       WHERE g.\`姓名\` = ?`;
     const params = [gossip];
-    if (month && month !== '全部') { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
+    if (start && end) { sql += ' AND LEFT(ds.\`日期\`, 10) BETWEEN ? AND ?'; params.push(start, end); }
+    else if (month && month !== '全部') { sql += ' AND LEFT(ds.\`日期\`, 7) = ?'; params.push(month); }
     else { sql += ' AND ds.\`日期\` >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)'; }
     sql += ' GROUP BY ds.\`日期\`, ds.\`客戶名\`, g.\`姓名\`, ds.\`幹部\` ORDER BY ds.\`日期\` DESC';
     const [rows] = await pool.execute(sql, params);

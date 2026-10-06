@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Card, Select, Row, Col, Statistic, Spin, Space, Button, message } from 'antd';
+import { Table, Card, Select, Row, Col, Statistic, Spin, Space, Button, message, DatePicker } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
@@ -21,6 +21,7 @@ export default function CadreTable() {
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('全部');
   const [loading, setLoading] = useState(false);
+  const [range, setRange] = useState(null);
 
   const fetchMonths = async () => {
     try {
@@ -32,12 +33,22 @@ export default function CadreTable() {
     } catch (e) { console.error('載入月份失敗', e); }
   };
 
-  const fetchData = async (month, level) => {
+  const getParams = () => {
+    const p = {};
+    if (range && range.length === 2 && range[0] && range[1]) {
+      p.start = range[0].format('YYYY-MM-DD');
+      p.end = range[1].format('YYYY-MM-DD');
+    } else if (selectedMonth) {
+      p.month = selectedMonth;
+    }
+    if (selectedLevel && selectedLevel !== '全部') p.level = selectedLevel;
+    return p;
+  };
+
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const params = { month };
-      if (level && level !== '全部') params.level = level;
-      const res = await API.get('/stats/cadre-table', { params });
+      const res = await API.get('/stats/cadre-table', { params: getParams() });
       setData(res.data);
     } catch (e) { message.error('載入失敗'); }
     finally { setLoading(false); }
@@ -48,10 +59,8 @@ export default function CadreTable() {
   }, []);
 
   useEffect(() => {
-    if (selectedMonth) {
-      fetchData(selectedMonth, selectedLevel);
-    }
-  }, [selectedMonth, selectedLevel]);
+    if (range || selectedMonth) fetchData();
+  }, [selectedMonth, selectedLevel, range]);
 
   const totalConsumption = data.reduce((sum, row) => sum + (Number(row.總消費) || 0), 0);
   const totalRecords = data.reduce((sum, r) => sum + (Number(r.紀錄數) || 0), 0);
@@ -61,8 +70,7 @@ export default function CadreTable() {
     const detailsMap = {};
     await Promise.all(data.map(async (row) => {
       try {
-        const params = { gossip: row.公關 };
-        if (selectedMonth) params.month = selectedMonth;
+        const params = { gossip: row.公關, ...getParams() };
         const res = await API.get('/stats/cadre-table-details', { params });
         detailsMap[row.公關] = res.data || [];
       } catch (e2) {
@@ -70,14 +78,16 @@ export default function CadreTable() {
       }
     }));
 
-    const monthStr = selectedMonth || '全部';
+    const periodStr = (range && range.length === 2)
+      ? `${range[0].format('YYYY/MM/DD')} ~ ${range[1].format('YYYY/MM/DD')}`
+      : (selectedMonth || '全部');
     const levelStr = selectedLevel || '全部';
     const wb = XLSX.utils.book_new();
 
     // Sheet 1: 彙總
     const summary = [
       ['幹桌統計'],
-      [`月份：${monthStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 紀錄數：${totalRecords}`],
+      [`時間：${periodStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 紀錄數：${totalRecords}`],
       [],
       ['排名', '公關', '消費金額', '紀錄數'],
       ...data.map((row, idx) => [idx + 1, row.公關, row.總消費 || 0, row.紀錄數 || 0]),
@@ -98,8 +108,8 @@ export default function CadreTable() {
     ws2['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 14 }];
     XLSX.utils.book_append_sheet(wb, ws2, '明細');
 
-    const safeMonth = monthStr.replace(/[\\/:*?"<>|]/g, '-');
-    XLSX.writeFile(wb, `幹桌統計_${safeMonth}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    const safePeriod = periodStr.replace(/[\\/:*?"<>|~]/g, '-');
+    XLSX.writeFile(wb, `幹桌統計_${safePeriod}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const columns = [
@@ -145,6 +155,13 @@ export default function CadreTable() {
             >
               {LEVELS.map(l => <Option key={l} value={l}>{l}</Option>)}
             </Select>
+            <span style={{ color: '#aaa', marginLeft: 16 }}>時間區間:</span>
+            <DatePicker.RangePicker
+              value={range}
+              onChange={setRange}
+              allowClear
+              placeholder={['開始','結束']}
+            />
           </Space>
         }
       >
@@ -167,8 +184,8 @@ export default function CadreTable() {
           </Col>
           <Col span={8}>
             <Statistic 
-              title="統計月份" 
-              value={selectedMonth || '全部'} 
+              title="統計期間" 
+              value={range && range.length === 2 ? `${range[0].format('MM/DD')}~${range[1].format('MM/DD')}` : (selectedMonth || '全部')} 
               valueStyle={{ color: '#fff' }}
             />
           </Col>
