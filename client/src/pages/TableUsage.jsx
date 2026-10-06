@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Card, Select, Space, Row, Col, Statistic, Spin, Button } from 'antd';
+import { Table, Card, Select, Space, Row, Col, Statistic, Spin, Button, DatePicker, message } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
@@ -24,6 +24,7 @@ export default function TableUsage() {
   const [expandedRows, setExpandedRows] = useState({});
   const [loadingDetails, setLoadingDetails] = useState({});
   const [cadreFilter, setCadreFilter] = useState([]);
+  const [range, setRange] = useState(null);
 
   const fetchMonths = async () => {
     try {
@@ -35,12 +36,22 @@ export default function TableUsage() {
     } catch (e) { console.error('載入月份失敗', e); }
   };
 
-  const fetchData = async (month, level) => {
+  const getParams = () => {
+    const p = {};
+    if (range && range.length === 2 && range[0] && range[1]) {
+      p.start = range[0].format('YYYY-MM-DD');
+      p.end = range[1].format('YYYY-MM-DD');
+    } else if (selectedMonth) {
+      p.month = selectedMonth;
+    }
+    if (selectedLevel && selectedLevel !== '全部') p.level = selectedLevel;
+    return p;
+  };
+
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const params = { month };
-      if (level && level !== '全部') params.level = level;
-      const res = await API.get('/stats/table-usage', { params });
+      const res = await API.get('/stats/table-usage', { params: getParams() });
       setData(res.data);
       setExpandedRows({});
     } catch (e) { message.error('載入失敗'); }
@@ -51,8 +62,7 @@ export default function TableUsage() {
     if (expandedRows[cadre]) return;
     setLoadingDetails(prev => ({ ...prev, [cadre]: true }));
     try {
-      const params = { cadre };
-      if (selectedMonth) params.month = selectedMonth;
+      const params = { cadre, ...getParams() };
       const res = await API.get('/stats/table-usage-details', { params });
       setExpandedRows(prev => ({ ...prev, [cadre]: res.data }));
     } catch (e) { message.error('載入明細失敗'); }
@@ -64,10 +74,10 @@ export default function TableUsage() {
   }, []);
 
   useEffect(() => {
-    if (selectedMonth) {
-      fetchData(selectedMonth, selectedLevel);
+    if (range || selectedMonth) {
+      fetchData();
     }
-  }, [selectedMonth, selectedLevel]);
+  }, [selectedMonth, selectedLevel, range]);
 
   const totalConsumption = data.reduce((sum, row) => sum + (Number(row.總消費) || 0), 0);
   const totalVisits = data.reduce((sum, row) => sum + (Number(row.次數) || 0), 0);
@@ -81,8 +91,7 @@ export default function TableUsage() {
     const detailsMap = {};
     await Promise.all(exportData.map(async (row) => {
       try {
-        const params = { cadre: row.幹部 };
-        if (selectedMonth) params.month = selectedMonth;
+        const params = { cadre: row.幹部, ...getParams() };
         const res = await API.get('/stats/table-usage-details', { params });
         detailsMap[row.幹部] = res.data || [];
       } catch (e) {
@@ -90,7 +99,9 @@ export default function TableUsage() {
       }
     }));
 
-    const monthStr = selectedMonth || '全部';
+    const periodStr = (range && range.length === 2)
+      ? `${range[0].format('YYYY/MM/DD')} ~ ${range[1].format('YYYY/MM/DD')}`
+      : (selectedMonth || '全部');
     const levelStr = selectedLevel || '全部';
     const cadreStr = cadreFilter.length ? cadreFilter.join('、') : '全部';
     const wb = XLSX.utils.book_new();
@@ -98,7 +109,7 @@ export default function TableUsage() {
     // Sheet 1: 彙總
     const summary = [
       ['自訂桌統計'],
-      [`月份：${monthStr} | 等級：${levelStr} | 幹部：${cadreStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}`],
+      [`時間：${periodStr} | 等級：${levelStr} | 幹部：${cadreStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 桌數：${totalVisits} | 客戶數：${uniqueCustomers}`],
       [],
       ['排名', '幹部', '客戶列表', '消費金額', '桌數'],
       ...exportData.map((row, idx) => [idx + 1, row.幹部, row.客戶列表 || '', row.總消費 || 0, row.次數 || 0]),
@@ -119,9 +130,9 @@ export default function TableUsage() {
     ws2['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 14 }];
     XLSX.utils.book_append_sheet(wb, ws2, '明細');
 
-    const safeMonth = monthStr.replace(/[\\/:*?"<>|]/g, '-');
+    const safePeriod = periodStr.replace(/[\\/:*?"<>|~]/g, '-');
     const safeCadre = cadreFilter.length ? cadreFilter.join('-') : '全部';
-    XLSX.writeFile(wb, `自訂桌統計_${safeCadre}_${safeMonth}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `自訂桌統計_${safeCadre}_${safePeriod}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const columns = [
@@ -176,6 +187,13 @@ export default function TableUsage() {
               options={[...new Set(data.map((r) => r.幹部).filter(Boolean))].map((c) => ({ label: c, value: c }))}
               optionFilterProp="label"
             />
+            <span style={{ color: '#aaa', marginLeft: 16 }}>時間區間:</span>
+            <DatePicker.RangePicker
+              value={range}
+              onChange={setRange}
+              allowClear
+              placeholder={['開始','結束']}
+            />
             <Button icon={<DownloadOutlined />} onClick={handleExport} style={{ background: '#27ae60', borderColor: '#27ae60', color: '#fff', marginLeft: 8 }}>
               Excel 下載
             </Button>
@@ -208,8 +226,8 @@ export default function TableUsage() {
           </Col>
           <Col span={6}>
             <Statistic 
-              title="統計月份" 
-              value={selectedMonth || '全部'} 
+              title="統計期間" 
+              value={range && range.length === 2 ? `${range[0].format('MM/DD')}~${range[1].format('MM/DD')}` : (selectedMonth || '全部')} 
               valueStyle={{ color: '#fff' }}
             />
           </Col>
