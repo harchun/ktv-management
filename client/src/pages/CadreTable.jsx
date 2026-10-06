@@ -22,6 +22,7 @@ export default function CadreTable() {
   const [selectedLevel, setSelectedLevel] = useState('全部');
   const [loading, setLoading] = useState(false);
   const [range, setRange] = useState(null);
+  const [gossipFilter, setGossipFilter] = useState([]);
 
   const fetchMonths = async () => {
     try {
@@ -66,9 +67,12 @@ export default function CadreTable() {
   const totalRecords = data.reduce((sum, r) => sum + (Number(r.紀錄數) || 0), 0);
 
   const handleExport = async () => {
+    // Filter rows to selected gossip (if any), else all
+    const exportData = gossipFilter.length ? data.filter((row) => gossipFilter.includes(row.公關)) : data;
+
     // Fetch details for every row (parallel) so the workbook includes 明細
     const detailsMap = {};
-    await Promise.all(data.map(async (row) => {
+    await Promise.all(exportData.map(async (row) => {
       try {
         const params = { gossip: row.公關, ...getParams() };
         const res = await API.get('/stats/cadre-table-details', { params });
@@ -82,15 +86,16 @@ export default function CadreTable() {
       ? `${range[0].format('YYYY/MM/DD')} ~ ${range[1].format('YYYY/MM/DD')}`
       : (selectedMonth || '全部');
     const levelStr = selectedLevel || '全部';
+    const gossipStr = gossipFilter.length ? gossipFilter.join('、') : '全部';
     const wb = XLSX.utils.book_new();
 
     // Sheet 1: 彙總
     const summary = [
       ['幹桌統計'],
-      [`時間：${periodStr} | 等級：${levelStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 紀錄數：${totalRecords}`],
+      [`時間：${periodStr} | 等級：${levelStr} | 公關：${gossipStr} | 總消費：NT$ ${totalConsumption.toLocaleString('zh-TW')} | 紀錄數：${totalRecords}`],
       [],
       ['排名', '公關', '消費金額', '紀錄數'],
-      ...data.map((row, idx) => [idx + 1, row.公關, row.總消費 || 0, row.紀錄數 || 0]),
+      ...exportData.map((row, idx) => [idx + 1, row.公關, row.總消費 || 0, row.紀錄數 || 0]),
     ];
     const ws1 = XLSX.utils.aoa_to_sheet(summary);
     ws1['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 14 }, { wch: 8 }];
@@ -99,7 +104,7 @@ export default function CadreTable() {
 
     // Sheet 2: 明細
     const detailRows = [['公關', '幹部', '日期', '客戶名', '消費金額']];
-    data.forEach((row) => {
+    exportData.forEach((row) => {
       (detailsMap[row.公關] || []).forEach((d) => {
         detailRows.push([row.公關, d.幹部 || '', String(d.日期 || '').slice(0, 10), d.客戶名 || '', d.總消費 || 0]);
       });
@@ -109,7 +114,8 @@ export default function CadreTable() {
     XLSX.utils.book_append_sheet(wb, ws2, '明細');
 
     const safePeriod = periodStr.replace(/[\\/:*?"<>|~]/g, '-');
-    XLSX.writeFile(wb, `幹桌統計_${safePeriod}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    const safeGossip = gossipFilter.length ? gossipFilter.join('-') : '全部';
+    XLSX.writeFile(wb, `幹桌統計_${safeGossip}_${safePeriod}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const columns = [
@@ -155,6 +161,17 @@ export default function CadreTable() {
             >
               {LEVELS.map(l => <Option key={l} value={l}>{l}</Option>)}
             </Select>
+            <span style={{ color: '#aaa', marginLeft: 16 }}>公關:</span>
+            <Select
+              mode="multiple"
+              value={gossipFilter}
+              onChange={setGossipFilter}
+              allowClear
+              placeholder="指定公關(可多選)"
+              style={{ width: 220, maxWidth: 300 }}
+              options={[...new Set(data.map((r) => r.公關).filter(Boolean))].map((g) => ({ label: g, value: g }))}
+              optionFilterProp="label"
+            />
             <span style={{ color: '#aaa', marginLeft: 16 }}>時間區間:</span>
             <DatePicker.RangePicker
               value={range}
