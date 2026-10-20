@@ -45,8 +45,10 @@
   background: #fff;
   page-break-after: always;
   page-break-inside: avoid;
-  width: 794px;  /* A4 width: 210mm */
-  height: 1123px; /* A4 height: 297mm */
+  width: 210mm;
+  height: 297mm;
+  box-sizing: border-box;
+  padding: 15mm;
   margin: 0 auto 20px;
   overflow: hidden;
   position: relative;
@@ -58,8 +60,6 @@
 
 /* ==================== Cover Page ==================== */
 .cover-page {
-  height: 1123px;
-  min-height: 1123px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,9 +124,6 @@
 
 /* ==================== Summary Page ==================== */
 .summary-page {
-  padding: 20mm 15mm;
-  height: 1123px;
-  min-height: 1123px;
 }
 
 .page-header {
@@ -298,8 +295,6 @@
 
 /* ==================== Footer Page ==================== */
 .footer-page {
-  height: 1123px;
-  min-height: 1123px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -443,10 +438,11 @@
     margin: 0;
     page-break-after: always;
     page-break-inside: avoid;
-    height: 1123px;
-    width: 794px;
+    width: 210mm;
+    height: 297mm;
+    box-sizing: border-box;
+    padding: 15mm;
     overflow: hidden;
-    min-height: 1123px;
   }
 
   .page:last-child {
