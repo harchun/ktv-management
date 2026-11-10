@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Table, Input, Card, Statistic, Row, Col, Tag, Typography, Collapse, Alert, Button, DatePicker } from 'antd';
-import { SearchOutlined, TrophyOutlined, UserOutlined, TeamOutlined, WarningOutlined, PrinterOutlined } from '@ant-design/icons';
+import { SearchOutlined, TrophyOutlined, UserOutlined, TeamOutlined, WarningOutlined, PrinterOutlined, DownloadOutlined } from '@ant-design/icons';
 import api from '../utils/api';
 import { formatDate } from '../utils/formatDate';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-tw';
 import { zhTW } from 'antd/locale';
+import * as XLSX from 'xlsx';
 import './CustomerRelations.css';
 
 const cardStyle = {
@@ -442,6 +443,83 @@ export default function CustomerRelations() {
     };
   };
 
+  const handleExcelExport = async () => {
+    // respect current search filter
+    const exportActive = searchText
+      ? dataSource.filter(item =>
+          (item.幹部 || '').toLowerCase().includes(searchText.toLowerCase()) ||
+          item.客戶列表?.some(c => (c.客戶名 || '').toLowerCase().includes(searchText.toLowerCase()))
+        )
+      : dataSource;
+    const exportInactive = searchText
+      ? inactiveCustomers.filter(item =>
+          (item.幹部 || '').toLowerCase().includes(searchText.toLowerCase()) ||
+          item.客戶列表?.some(c => (c.客戶名 || '').toLowerCase().includes(searchText.toLowerCase()))
+        )
+      : inactiveCustomers;
+
+    const rangeStr = dateRange && dateRange[0] && dateRange[1]
+      ? `${dateRange[0].format('YYYY/MM/DD')} ~ ${dateRange[1].format('YYYY/MM/DD')}`
+      : '全部';
+
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: 主客名單彙總
+    const activeSummary = [
+      ['客戶關係 - 主客名單（60天內單客戶來訪3次以上）'],
+      [`時間：${rangeStr} | 幹部：${exportActive.length} | 客戶：${exportActive.reduce((s, c) => s + (c.客戶列表?.length || 0), 0)}`],
+      [],
+      ['幹部', '幹部暱稱', '客戶數', '來訪次數'],
+      ...exportActive.map((c, i) => [c.幹部, c.幹部暱稱 || '', c.客戶列表?.length || 0, c.來訪次數 || 0]),
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(activeSummary), '主客名單彙總');
+
+    // Sheet 2: 主客名單明細
+    const activeDetailRows = [];
+    exportActive.forEach((cadre) => {
+      (cadre.客戶列表 || []).forEach((c) => {
+        activeDetailRows.push([cadre.幹部, c.客戶名 || c.客户名, c.來訪次數 || c.来访次数 || 0]);
+      });
+    });
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet([['幹部', '客戶名', '來訪次數'], ...activeDetailRows]),
+      '主客名單明細'
+    );
+
+    // Sheet 3: 40天無來訪彙總
+    const inactiveSummary = [
+      ['近40天無來訪客戶'],
+      [`時間：${rangeStr} | 幹部：${exportInactive.length} | 客戶：${exportInactive.reduce((s, c) => s + (c.客戶列表?.length || 0), 0)}`],
+      [],
+      ['幹部', '客戶數'],
+      ...exportInactive.map((c) => [c.幹部, c.客戶列表?.length || 0]),
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(inactiveSummary), '40天無來訪彙總');
+
+    // Sheet 4: 40天無來訪明細
+    const inactiveDetailRows = [];
+    exportInactive.forEach((cadre) => {
+      (cadre.客戶列表 || []).forEach((c) => {
+        inactiveDetailRows.push([
+          cadre.幹部,
+          c.客戶名 || c.客户名,
+          c.最後來訪 ? formatDate(c.最後來訪) : '-',
+          c.公關訂桌 || c.公关订桌 || '-',
+        ]);
+      });
+    });
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet([['幹部', '客戶名', '最後來訪', '公關訂桌'], ...inactiveDetailRows]),
+      '40天無來訪明細'
+    );
+
+    const safeRange = rangeStr.replace(/[\\/:*?"<>|~]/g, '-');
+    XLSX.writeFile(wb, `客戶關係_${safeRange}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    message.success('Excel 下載完成');
+  };
+
   const handleBack = () => {
     setShowPrintView(false);
   };
@@ -575,6 +653,14 @@ export default function CustomerRelations() {
               style={{ background: '#e74c3c', borderColor: '#e74c3c', flexShrink: 0 }}
             >
               列印
+            </Button>
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              onClick={handleExcelExport}
+              style={{ background: '#3498db', borderColor: '#3498db', flexShrink: 0 }}
+            >
+              Excel
             </Button>
           </div>
 
