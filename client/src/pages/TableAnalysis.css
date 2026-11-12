@@ -2,58 +2,130 @@
    Table Analysis - Dashboard (screen) + A4 (print)
    ============================================ */
 
+/* ==================== Dashboard (dark theme, matches site) ==================== */
 .ta-page {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: transparent;
 }
 
-/* ==================== Control Panel ==================== */
-.ta-controls {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px 32px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.ta-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.ta-title {
-  color: #fff !important;
-  margin: 0 !important;
-  font-size: 22px !important;
-}
-
-/* ==================== Dashboard ==================== */
 .ta-dashboard {
   max-width: 1200px;
   margin: 20px auto;
   padding: 0 16px;
+  color: rgba(255, 255, 255, 0.87);
 }
 
 .ta-dashboard .ant-row {
   margin-bottom: 16px;
 }
 
+/* Dark cards (same look as other pages) */
 .metric-card,
 .chart-card {
-  background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%) !important;
-  border: 1px solid #e8e8e8 !important;
+  background: rgba(26, 26, 46, 0.8) !important;
+  border: 1px solid #333 !important;
   border-radius: 12px !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.chart-card .ant-card-head {
+  border-bottom: 1px solid #333 !important;
+}
+
+.chart-card .ant-card-head-title > span {
+  color: #fff !important;
 }
 
 .metric-card .ant-statistic-title {
   font-size: 13px !important;
-  color: #666 !important;
+  color: #888 !important;
+}
+
+.metric-card .ant-statistic-content {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Dark table */
+.ta-dashboard .ant-table {
+  background: transparent;
+}
+
+.ta-dashboard .ant-table-thead > tr > th {
+  background: #232336 !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-bottom: 1px solid #333 !important;
+}
+
+.ta-dashboard .ant-table-tbody > tr > td {
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.ta-dashboard .ant-table-tbody > tr:hover > td {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ta-dashboard .ant-table-placeholder {
+  background: transparent;
+  color: #888;
+}
+
+.ta-dashboard .ant-table-cell {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Pagination on dark */
+.ta-dashboard .ant-pagination .ant-pagination-item a,
+.ta-dashboard .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+.ta-dashboard .ant-pagination .ant-pagination-next .ant-pagination-item-link {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.ta-dashboard .ant-pagination .ant-pagination-item {
+  background: transparent;
+}
+
+.ta-dashboard .ant-pagination .ant-pagination-item a {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.ta-dashboard .ant-pagination .ant-pagination-item-active,
+.ta-dashboard .ant-pagination .ant-pagination-item-active a {
+  background: #667eea;
+  color: #fff;
+}
+
+/* Typography + Empty on dark */
+.ta-dashboard .ant-typography {
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.ta-dashboard .ant-typography-secondary {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.ta-dashboard .ant-empty-description {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ta-dashboard .ant-spin-dot {
+  background: #667eea;
+}
+
+.ta-dashboard .ant-card-body {
+  background: transparent;
+}
+
+/* Table filters/expanders readability */
+.ta-dashboard .ant-table .ant-table-row-expand-icon {
+  color: rgba(255, 255, 255, 0.65);
+  background: transparent;
+}
+
+/* Recharts labels on dark */
+.ta-dashboard .recharts-legend-item-text {
+  color: #ccc !important;
 }
 
 /* Suggestions (dashboard + print) */
@@ -64,9 +136,9 @@
   padding: 10px 12px;
   margin-bottom: 8px;
   border-radius: 6px;
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  color: #1a1a2e;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #333;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -78,23 +150,23 @@
 }
 
 .suggestion-item.positive {
-  background: #f6ffed;
-  border: 1px solid #b7eb8f;
+  background: rgba(82, 196, 26, 0.12);
+  border: 1px solid rgba(82, 196, 26, 0.4);
 }
 
 .suggestion-item.critical {
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
+  background: rgba(255, 77, 79, 0.12);
+  border: 1px solid rgba(255, 77, 79, 0.4);
 }
 
 .suggestion-item.warning {
-  background: #fffbe6;
-  border: 1px solid #ffe58f;
+  background: rgba(255, 193, 7, 0.12);
+  border: 1px solid rgba(255, 193, 7, 0.4);
 }
 
 .suggestion-item.action {
-  background: #e6f7ff;
-  border: 1px solid #91d5ff;
+  background: rgba(52, 152, 219, 0.12);
+  border: 1px solid rgba(52, 152, 219, 0.4);
 }
 
 /* ==================== A4 Report (print only) ==================== */
