@@ -1,13 +1,13 @@
 /* ============================================
-   Table Analysis - Professional A4 Print Report
+   Table Analysis - Dashboard (screen) + A4 (print)
    ============================================ */
 
-/* ==================== Screen Styles ==================== */
 .ta-page {
   min-height: 100vh;
   background: #f5f7fa;
 }
 
+/* ==================== Control Panel ==================== */
 .ta-controls {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px 32px;
@@ -20,6 +20,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -27,20 +29,79 @@
 .ta-title {
   color: #fff !important;
   margin: 0 !important;
-  font-size: 24px !important;
+  font-size: 22px !important;
 }
 
-.ta-title .ant-typography {
-  color: #fff !important;
+/* ==================== Dashboard ==================== */
+.ta-dashboard {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 16px;
 }
 
-/* ==================== A4 Report Styles ==================== */
+.ta-dashboard .ant-row {
+  margin-bottom: 16px;
+}
+
+.metric-card,
+.chart-card {
+  background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%) !important;
+  border: 1px solid #e8e8e8 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+.metric-card .ant-statistic-title {
+  font-size: 13px !important;
+  color: #666 !important;
+}
+
+/* Suggestions (dashboard + print) */
+.suggestions-list .suggestion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  color: #1a1a2e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.suggestion-item svg {
+  font-size: 15px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.suggestion-item.positive {
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+}
+
+.suggestion-item.critical {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+}
+
+.suggestion-item.warning {
+  background: #fffbe6;
+  border: 1px solid #ffe58f;
+}
+
+.suggestion-item.action {
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+}
+
+/* ==================== A4 Report (print only) ==================== */
 .a4-report {
-  max-width: 210mm;
-  margin: 0 auto;
+  display: none;
 }
 
-/* ==================== Page Base ==================== */
 .page {
   background: #fff;
   page-break-after: always;
@@ -49,7 +110,7 @@
   height: 297mm;
   box-sizing: border-box;
   padding: 15mm;
-  margin: 0 auto 20px;
+  margin: 0 auto;
   overflow: hidden;
   position: relative;
 }
@@ -58,7 +119,7 @@
   page-break-after: auto;
 }
 
-/* ==================== Cover Page ==================== */
+/* Cover */
 .cover-page {
   display: flex;
   align-items: center;
@@ -122,10 +183,7 @@
   font-weight: 600;
 }
 
-/* ==================== Summary Page ==================== */
-.summary-page {
-}
-
+/* Page header */
 .page-header {
   display: flex;
   align-items: center;
@@ -147,11 +205,7 @@
   margin: 0;
 }
 
-/* ==================== Data Table ==================== */
-.summary-table {
-  margin-bottom: 24px;
-}
-
+/* Data table */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -160,7 +214,7 @@
 
 .data-table th {
   background: #f8f9fa;
-  padding: 10px 12px;
+  padding: 9px 12px;
   text-align: left;
   font-weight: 600;
   color: #1a1a2e;
@@ -168,65 +222,28 @@
 }
 
 .data-table td {
-  padding: 10px 12px;
+  padding: 9px 12px;
   border-bottom: 1px solid #f0f0f0;
   color: #1a1a2e;
 }
 
-.data-table tr.latest {
-  background: #fafbfc;
-  font-weight: 600;
-}
-
-.data-table tr.section-header {
-  background: #667eea;
-  color: #fff;
-  font-weight: 600;
-}
-
-.data-table tr.section-header td {
-  border-bottom: none;
-}
-
-.col-month {
-  width: 20%;
-}
-
-.col-amount {
-  width: 35%;
+.data-table .amount {
   text-align: right;
   font-family: 'Courier New', monospace;
-}
-
-.col-count {
-  width: 20%;
-}
-
-.col-growth {
-  width: 25%;
-}
-
-.amount {
   font-weight: 600;
-}
-
-.growth {
-  font-weight: 600;
-}
-
-.growth.up {
-  color: #52c41a;
 }
 
 .growth.down {
   color: #ff4d4f;
+  font-weight: 600;
 }
 
-/* ==================== Summary Cards ==================== */
+/* Summary cards */
 .summary-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  margin-bottom: 24px;
 }
 
 .summary-card {
@@ -293,7 +310,35 @@
   color: #ff4d4f;
 }
 
-/* ==================== Footer Page ==================== */
+/* Alert blocks */
+.alert-block {
+  margin-bottom: 20px;
+}
+
+.alert-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #667eea;
+}
+
+.alert-title svg {
+  margin-right: 6px;
+  color: #f39c12;
+}
+
+.alert-block table.data-table {
+  font-size: 11px;
+}
+
+.alert-block .muted {
+  color: #999;
+  font-size: 12px;
+}
+
+/* Footer */
 .footer-page {
   display: flex;
   align-items: center;
@@ -319,93 +364,7 @@
   margin: 0;
 }
 
-/* ==================== Operation Analysis ==================== */
-.operation-analysis {
-  margin: 20px 32px;
-}
-
-.section-title {
-  color: #1a1a2e !important;
-  font-size: 20px !important;
-  margin-bottom: 20px !important;
-}
-
-.metrics-row {
-  margin-bottom: 20px;
-}
-
-.metric-card {
-  background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%) !important;
-  border: 1px solid #e8e8e8 !important;
-  border-radius: 12px !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
-}
-
-.metric-card .ant-statistic-title {
-  font-size: 13px !important;
-  color: #666 !important;
-}
-
-.metric-card .ant-statistic-content {
-  font-size: 24px !important;
-}
-
-.charts-row {
-  margin-bottom: 20px;
-}
-
-.chart-card, .analysis-card, .suggestions-card {
-  border-radius: 12px !important;
-  margin-bottom: 20px !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
-}
-
-.analysis-content .analysis-item {
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: #fff;
-  border-radius: 6px;
-  border: 1px solid #e8e8e8;
-  color: #1a1a2e;
-}
-
-.analysis-content .analysis-item text,
-.analysis-content .analysis-item Text {
-  color: #1a1a2e !important;
-}
-
-.suggestions-list .suggestion-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  color: #1a1a2e;
-}
-
-.suggestions-list .suggestion-item.positive {
-  background: #f6ffed;
-  border: 1px solid #b7eb8f;
-}
-
-.suggestions-list .suggestion-item.negative {
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-}
-
-.suggestions-list .suggestion-item.warning {
-  background: #fffbe6;
-  border: 1px solid #ffe58f;
-}
-
-.suggestions-list .suggestion-item svg {
-  font-size: 16px;
-}
-
-/* Print styles */
+/* ==================== Print ==================== */
 @media print {
   @page {
     size: A4 portrait;
@@ -418,18 +377,15 @@
     background: #fff;
   }
 
-  .ta-controls {
-    display: none !important;
-  }
-
-  .operation-analysis {
+  .no-print,
+  .ta-controls,
+  .ta-dashboard {
     display: none !important;
   }
 
   .a4-report {
+    display: block;
     max-width: 100%;
-    margin: 0;
-    padding: 0;
   }
 
   .page {
@@ -449,7 +405,6 @@
     page-break-after: auto;
   }
 
-  /* Force white background for all elements */
   .cover-page,
   .footer-page {
     background: #fff !important;
@@ -460,18 +415,19 @@
   .cover-subtitle,
   .cover-period .value,
   .cover-date .value,
-  .footer-text {
+  .footer-text,
+  .footer-date {
     color: #000 !important;
+    opacity: 1 !important;
+  }
+
+  .cover-period,
+  .cover-date {
+    opacity: 0.85;
   }
 
   .data-table th {
     background: #f0f0f0 !important;
-  }
-
-  .data-table tr.section-header {
-    background: #fff !important;
-    color: #000 !important;
-    border-bottom: 2px solid #000;
   }
 
   .summary-card {
@@ -482,21 +438,15 @@
   .card-icon {
     background: #f0f0f0 !important;
   }
-}
 
-/* Screen preview */
-@media screen {
-  .a4-report {
-    max-width: 210mm;
+  .suggestion-item {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    color: #000 !important;
   }
-  
-  .page {
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    margin-bottom: 20px;
-  }
-  
-  .operation-analysis {
-    max-width: 1200px;
-    margin: 20px auto;
+
+  .alert-title {
+    color: #000 !important;
+    border-bottom-color: #000 !important;
   }
 }

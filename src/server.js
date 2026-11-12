@@ -304,6 +304,126 @@ app.get('/api/stats/cadre-table-details', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ==================== TABLE ANALYSIS (警覺項目) ====================
+app.get('/api/stats/table-analysis', authenticate, async (req, res) => {
+  try {
+    const { start, end } = req.query;
+    if (!start || !end) return res.status(400).json({ error: 'start/end required' });
+
+    // Equal-length previous period
+    const s = new Date(start);
+    const e = new Date(end);
+    const daysInclusive = Math.floor((e - s) / 86400000) + 1;
+    const prevEnd = new Date(s.getTime() - 86400000);
+    const prevStart = new Date(prevEnd.getTime() - (daysInclusive - 1) * 86400000);
+    const iso = (d) => d.toISOString().slice(0, 10);
+    const prevStartIso = iso(prevStart), prevEndIso = iso(prevEnd);
+    const amt = 'SUM(ds.`現金` + ds.`信用` + ds.`簽帳` + ds.`其它`)';
+    const cust = "COALESCE(NULLIF(TRIM(ds.`客戶名`), ''), '未知')";
+
+    // Per-cadre totals, both periods
+    const [cadresCurr] = await pool.execute(
+      `SELECT ds.\`幹部\` as cadre, ${amt} as amount,
+        COUNT(DISTINCT CONCAT(LEFT(ds.\`日期\`, 10), ds.\`客戶名\`)) as tables
+       FROM daily_sales ds WHERE LEFT(ds.\`日期\`, 10) BETWEEN ? AND ?
+       GROUP BY ds.\`幹部\``, [start, end]);
+    const [cadresPrev] = await pool.execute(
+      `SELECT ds.\`幹部\` as cadre, ${amt} as amount,
+        COUNT(DISTINCT CONCAT(LEFT(ds.\`日期\`, 10), ds.\`客戶名\`)) as tables
+       FROM daily_sales ds WHERE LEFT(ds.\`日期\`, 10) BETWEEN ? AND ?
+       GROUP BY ds.\`幹部\``, [prevStartIso, prevEndIso]);
+
+    const currMap = new Map(cadresCurr.map((r) => [r.cadre, r]));
+    const prevMap = new Map(cadresPrev.map((r) => [r.cadre, r]));
+    const allCadres = new Set([...currMap.keys(), ...prevMap.keys()]);
+
+    const declining_cadres = [];
+    for (const c of allCadres) {
+      const prev = prevMap.get(c) || {};
+      const curr = currMap.get(c) || {};
+      const prevAmount = Number(prev.amount) || 0;
+      const currAmount = Number(curr.amount) || 0;
+      if (prevAmount > 0 && ((prevAmount - currAmount) / prevAmount) >= 0.3) {
+        declining_cadres.push({
+          cadre: c,
+          prev_amount: prevAmount,
+          curr_amount: currAmount,
+          prev_tables: prev.tables || 0,
+          curr_tables: curr.tables || 0,
+        });
+      }
+    }
+    declining_cadres.sort((a, b) => (b.prev_amount - b.curr_amount) - (a.prev_amount - a.curr_amount));
+
+    // Churned customers: in prev period, absent in curr period (per cadre)
+    const [custPrev] = await pool.execute(
+      `SELECT ds.\`幹部\` as cadre, ${cust} as 客戶名, ${amt} as prev_a, MAX(LEFT(ds.\`日期\`, 10)) as last_visit
+       FROM daily_sales ds WHERE LEFT(ds.\`日期\`, 10) BETWEEN ? AND ?
+       GROUP BY ds.\`幹部\`, ${cust}
+       ORDER BY prev_a DESC
+       LIMIT 500`, [prevStartIso, prevEndIso]);
+    const [custCurr] = await pool.execute(
+      `SELECT DISTINCT ds.\`幹部\` as cadre, ${cust} as 客戶名
+       FROM daily_sales ds WHERE LEFT(ds.\`日期\`, 10) BETWEEN ? AND ?`, [start, end]);
+    const currCustSet = new Set(custCurr.map((r) => `${r.cadre}|${r.客戶名}`));
+    const churned_customers = custPrev
+      .filter((r) => r.客戶名 !== '未知' && !currCustSet.has(`${r.cadre}|${r.客戶名}`))
+      .map((r) => ({ 客戶名: r.客戶名, cadre: r.cadre, prev_a: Number(r.prev_a) || 0, last_visit: r.last_visit }));
+
+    // Top customers in current period
+    const [topRaw] = await pool.execute(
+      `SELECT ${cust} as 客戶名, ds.\`幹部\` as cadre,
+        COUNT(DISTINCT CONCAT(LEFT(ds.\`日期\`, 10), ds.\`客戶名\`)) as 訪次,
+        ${amt} as 金額
+       FROM daily_sales ds WHERE LEFT(ds.\`日期\`, 10) BETWEEN ? AND ?
+       GROUP BY ds.\`幹部\`, ${cust}
+       ORDER BY 金額 DESC
+       LIMIT 20`, [start, end]);
+    const top_customers = topRaw.filter((r) => r.客戶名 !== '未知');
+
+    // Overview
+    const ov = (rows, m) => Number(rows[0]?.[m] ?? 0) || 0;
+    const [ovCurr] = await pool.execute(
+      `SELECT ${amt} as total,
+        COUNT(DISTINCT CONCAT(LEFT(ds.\`日期\`, 10), ds.\`客戶名\`)) as tables,
+        COUNT(DISTINCT ${cust}) as customers
+       FROM daily_sales ds WHERE LEFT(ds.\`日期\`, 10) BETWEEN ? AND ?`, [start, end]);
+    const [ovPrev] = await pool.execute(
+      `SELECT ${amt} as total,
+        COUNT(DISTINCT CONCAT(LEFT(ds.\`日期\`, 10), ds.\`客戶名\`)) as tables,
+        COUNT(DISTINCT ${cust}) as customers
+       FROM daily_sales ds WHERE LEFT(ds.\`日期\`, 10) BETWEEN ? AND ?`, [prevStartIso, prevEndIso]);
+
+    const overview = {
+      curr_total: ov(ovCurr, 'total'),
+      curr_tables: ov(ovCurr, 'tables'),
+      curr_customers: ov(ovCurr, 'customers'),
+      prev_total: ov(ovPrev, 'total'),
+      prev_tables: ov(ovPrev, 'tables'),
+      prev_customers: ov(ovPrev, 'customers'),
+      growth: ov(ovPrev, 'total') > 0
+        ? ((ov(ovCurr, 'total') - ov(ovPrev, 'total')) / ov(ovPrev, 'total')) * 100
+        : 0,
+    };
+
+    // Monthly trend across start..end
+    const [monthly_trend] = await pool.execute(
+      `SELECT LEFT(ds.\`日期\`, 7) as 月份, ${amt} as 總消費,
+        COUNT(DISTINCT CONCAT(LEFT(ds.\`日期\`, 10), ds.\`客戶名\`)) as 桌數
+       FROM daily_sales ds WHERE LEFT(ds.\`日期\`, 10) BETWEEN ? AND ?
+       GROUP BY LEFT(ds.\`日期\`, 7) ORDER BY 月份`, [start, end]);
+
+    res.json({
+      period: { start, end, prevStart: prevStartIso, prevEnd: prevEndIso },
+      overview,
+      declining_cadres,
+      churned_customers,
+      top_customers,
+      monthly_trend,
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/stats/summary', authenticate, async (req, res) => {
   try {
     const { start, end } = req.query;
