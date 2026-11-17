@@ -37,7 +37,7 @@ export default function ApiPanel() {
   const baseUrl = index ? index.base : 'https://ktv.fakertw.com/api';
 
   useEffect(() => {
-    fetch('/api')
+    fetch('/api/')
       .then((r) => r.json())
       .then(setIndex)
       .catch(() => setIndex(null));
