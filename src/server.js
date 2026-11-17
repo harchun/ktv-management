@@ -209,7 +209,31 @@ app.delete('/api/daily-sales/:id', authenticate, async (req, res) => {
 });
 
 // Stats
-app.get('/api/stats/months', authenticate, async (req, res) => {
+// ==================== PUBLIC STATS API (no auth, rate-limited) ====================
+const publicHitMap = new Map();
+const publicRateLimit = (req, res, next) => {
+  if (req.headers.authorization) return next(); // authenticated requests are not limited
+  const ip = req.ip;
+  const now = Date.now();
+  const hits = (publicHitMap.get(ip) || []).filter(t => now - t < 60000);
+  if (hits.length >= 120) return res.status(429).json({ error: 'request too frequent, please retry later' });
+  hits.push(now);
+  publicHitMap.set(ip, hits);
+  next();
+};
+app.use('/api/stats', publicRateLimit);
+app.use('/api/customer-relations', publicRateLimit);
+app.use('/api/inactive-customers', publicRateLimit);
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, hits] of publicHitMap) {
+    const keep = hits.filter(t => now - t < 60000);
+    if (keep.length) publicHitMap.set(ip, keep); else publicHitMap.delete(ip);
+  }
+}, 5 * 60000).unref();
+
+app.get('/api/stats/months', async (req, res) => {
   try {
     const [rows] = await pool.execute(
       'SELECT DISTINCT LEFT(`日期`, 7) as month FROM daily_sales ORDER BY month DESC'
@@ -218,7 +242,7 @@ app.get('/api/stats/months', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/stats/table-usage', authenticate, async (req, res) => {
+app.get('/api/stats/table-usage', async (req, res) => {
   try {
     const { month, level, start, end } = req.query;
     let sql = `SELECT
@@ -241,7 +265,7 @@ app.get('/api/stats/table-usage', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/stats/table-usage-details', authenticate, async (req, res) => {
+app.get('/api/stats/table-usage-details', async (req, res) => {
   try {
     const { cadre, month, start, end } = req.query;
     let sql = `SELECT
@@ -260,7 +284,7 @@ app.get('/api/stats/table-usage-details', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
+app.get('/api/stats/cadre-table', async (req, res) => {
   try {
     const { month, level, start, end } = req.query;
     let sql = `SELECT
@@ -282,7 +306,7 @@ app.get('/api/stats/cadre-table', authenticate, async (req, res) => {
 });
 
 
-app.get('/api/stats/cadre-table-details', authenticate, async (req, res) => {
+app.get('/api/stats/cadre-table-details', async (req, res) => {
   try {
     const { gossip, month, start, end } = req.query;
     let sql = `SELECT
@@ -305,7 +329,7 @@ app.get('/api/stats/cadre-table-details', authenticate, async (req, res) => {
 });
 
 // ==================== TABLE ANALYSIS (警覺項目) ====================
-app.get('/api/stats/table-analysis', authenticate, async (req, res) => {
+app.get('/api/stats/table-analysis', async (req, res) => {
   try {
     const { start, end } = req.query;
     if (!start || !end) return res.status(400).json({ error: 'start/end required' });
@@ -424,7 +448,7 @@ app.get('/api/stats/table-analysis', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/stats/summary', authenticate, async (req, res) => {
+app.get('/api/stats/summary', async (req, res) => {
   try {
     const { start, end } = req.query;
     let sql = 'SELECT SUM(業績) as total, SUM(現金) as cash, SUM(信用) as credit, SUM(簽帳) as sign, SUM(餐酒) as meal, SUM(包廂費) as room FROM daily_sales WHERE 1=1';
@@ -437,7 +461,7 @@ app.get('/api/stats/summary', authenticate, async (req, res) => {
 });
 
 // Company table statistics
-app.get('/api/stats/company-table', authenticate, async (req, res) => {
+app.get('/api/stats/company-table', async (req, res) => {
   try {
     const { month } = req.query;
     let sql = `SELECT
@@ -456,7 +480,7 @@ app.get('/api/stats/company-table', authenticate, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/stats/company-table-details', authenticate, async (req, res) => {
+app.get('/api/stats/company-table-details', async (req, res) => {
   try {
     const { customer } = req.query;
     const { month } = req.query;
@@ -477,7 +501,7 @@ app.get('/api/stats/company-table-details', authenticate, async (req, res) => {
 });
 
 // Cadre performance report
-app.get('/api/stats/cadre-performance', authenticate, async (req, res) => {
+app.get('/api/stats/cadre-performance', async (req, res) => {
   try {
     const { start, end } = req.query;
     let sql = `SELECT 
@@ -505,7 +529,7 @@ app.get('/api/stats/cadre-performance', authenticate, async (req, res) => {
 });
 
 // Daily revenue summary
-app.get('/api/stats/daily-summary', authenticate, async (req, res) => {
+app.get('/api/stats/daily-summary', async (req, res) => {
   try {
     const { start, end } = req.query;
     let sql = `SELECT 
@@ -612,7 +636,7 @@ app.put('/api/settings', authenticate, async (req, res) => {
 });
 
 // ==================== CUSTOMER RELATIONS ====================
-app.get('/api/customer-relations', authenticate, async (req, res) => {
+app.get('/api/customer-relations', async (req, res) => {
   try {
     const { start, end } = req.query;
     // Calculate date range: default to last 60 days if not specified
@@ -672,7 +696,7 @@ app.get('/api/customer-relations', authenticate, async (req, res) => {
 });
 
 // ==================== INACTIVE CUSTOMERS ====================
-app.get('/api/inactive-customers', authenticate, async (req, res) => {
+app.get('/api/inactive-customers', async (req, res) => {
   try {
     // Get cadre list (only 一線)
     const [cadres] = await pool.execute("SELECT `幹部編號`, `姓名`, `暱稱` FROM cadres WHERE `等級` = '一線' ORDER BY `幹部編號`");
