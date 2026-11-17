@@ -211,28 +211,86 @@ app.delete('/api/daily-sales/:id', authenticate, async (req, res) => {
 // Stats
 // ==================== PUBLIC STATS API (no auth, rate-limited) ====================
 // API discovery: public index of available JSON endpoints
-app.get('/api', (req, res) => {
-  res.json({
-    name: '日月星辰 KTV 管理系統 JSON API',
-    base: 'https://ktv.fakertw.com/api',
-    auth: '以下 GET 端點免登入（限流 120次/分鐘/IP）；寫入端點仍需 Bearer token',
-    endpoints: [
-      { path: '/stats/months', desc: '有資料的月份列表（新→舊）' },
-      { path: '/stats/summary', desc: '總消費彙總', params: 'start, end' },
-      { path: '/stats/table-usage', desc: '自訂桌統計（按公關）', params: 'month 或 start/end, level' },
-      { path: '/stats/table-usage-details', desc: '自訂桌明細', params: 'cadre + month 或 start/end' },
-      { path: '/stats/cadre-table', desc: '幹桌統計（按公關訂桌）', params: 'month 或 start/end' },
-      { path: '/stats/cadre-table-details', desc: '幹桌明細', params: 'gossip + month 或 start/end' },
-      { path: '/stats/company-table', desc: '公司桌統計', params: 'month 或 start/end' },
-      { path: '/stats/company-table-details', desc: '公司桌明細', params: 'cadre + month 或 start/end' },
-      { path: '/stats/cadre-performance', desc: '幹部業績', params: 'month' },
-      { path: '/stats/daily-summary', desc: '每日消費彙總', params: 'month 或 start/end' },
-      { path: '/stats/table-analysis', desc: '訂桌分析（下滑幹部/流失客戶/建議動作）', params: 'start, end（必需）' },
-      { path: '/customer-relations', desc: '主客名單（60天3次以上）', params: 'start, end（選填）' },
-      { path: '/inactive-customers', desc: '40天無來訪客戶' },
-    ],
-    example: 'https://ktv.fakertw.com/api/stats/table-usage?month=2026-09',
-  });
+const apiDocs = {
+  name: '日月星辰 KTV 管理系統 JSON API',
+  base: 'https://ktv.fakertw.com/api',
+  auth: '以下 GET 端點免登入（限流 120次/分鐘/IP）；寫入端點仍需 Bearer token',
+  endpoints: [
+    { path: '/stats/months', desc: '有資料的月份列表（新→舊）' },
+    { path: '/stats/summary', desc: '總消費彙總', params: 'start, end' },
+    { path: '/stats/table-usage', desc: '自訂桌統計（按公關）', params: 'month 或 start/end, level' },
+    { path: '/stats/table-usage-details', desc: '自訂桌明細', params: 'cadre + month 或 start/end' },
+    { path: '/stats/cadre-table', desc: '幹桌統計（按公關訂桌）', params: 'month 或 start/end' },
+    { path: '/stats/cadre-table-details', desc: '幹桌明細', params: 'gossip + month 或 start/end' },
+    { path: '/stats/company-table', desc: '公司桌統計', params: 'month 或 start/end' },
+    { path: '/stats/company-table-details', desc: '公司桌明細', params: 'cadre + month 或 start/end' },
+    { path: '/stats/cadre-performance', desc: '幹部業績', params: 'month' },
+    { path: '/stats/daily-summary', desc: '每日消費彙總', params: 'month 或 start/end' },
+    { path: '/stats/table-analysis', desc: '訂桌分析（下滑幹部/流失客戶/建議動作）', params: 'start, end（必需）' },
+    { path: '/customer-relations', desc: '主客名單（60天3次以上）', params: 'start, end（選填）' },
+    { path: '/inactive-customers', desc: '40天無來訪客戶' },
+  ],
+  example: 'https://ktv.fakertw.com/api/stats/table-usage?month=2026-09',
+};
+app.get('/api', (req, res) => { res.json(apiDocs); });
+
+// HTML documentation page
+app.get('/api/docs', (req, res) => {
+  const rows = apiDocs.endpoints.map((e) => `
+    <tr>
+      <td class="p"><code>GET ${e.path}</code></td>
+      <td>${e.desc}</td>
+      <td>${e.params || '—'}</td>
+    </tr>`).join('');
+  const html = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API 文件 - 日月星辰 KTV</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "Microsoft JhengHei", "PingFang TC", sans-serif; background: #0c0c1d; color: #eee; padding: 32px 16px; }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 26px; margin-bottom: 8px; background: linear-gradient(90deg, #f39c12, #e74c3c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .sub { color: #888; margin-bottom: 20px; font-size: 14px; }
+  .card { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .card h2 { font-size: 16px; margin-bottom: 12px; color: #f39c12; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; border-bottom: 2px solid #333; color: #888; font-weight: 600; }
+  td { padding: 10px 12px; border-bottom: 1px solid #2a2a3e; vertical-align: top; }
+  .p code { color: #4ECDC4; font-family: Consolas, monospace; font-size: 12px; }
+  .note { background: rgba(52, 152, 219, 0.1); border: 1px solid rgba(52, 152, 219, 0.4); border-radius: 8px; padding: 12px 16px; font-size: 13px; margin-bottom: 20px; color: #9fd3f5; }
+  pre { background: #0c0c1d; border: 1px solid #333; border-radius: 8px; padding: 12px; overflow-x: auto; font-size: 12px; color: #96CEB4; font-family: Consolas, monospace; }
+  a { color: #f39c12; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>日月星辰 KTV JSON API</h1>
+  <div class="sub">${apiDocs.base} ・公開端點免登入・限流 120次/分鐘/IP</div>
+  <div class="note">
+    寫入端點（增刪改）仍需 Bearer token：<br>
+    1. POST <code>/api/auth/login</code> 取得 token<br>
+    2. 請求頭加 <code>Authorization: Bearer &lt;token&gt;</code>
+  </div>
+  <div class="card">
+    <h2>端點清單</h2>
+    <table>
+      <thead><tr><th>端點</th><th>說明</th><th>參數</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h2>curl 範例</h2>
+    <pre>curl https://ktv.fakertw.com/api/stats/table-usage?month=2026-09
+curl "https://ktv.fakertw.com/api/stats/table-analysis?start=2026-09-01&amp;end=2026-09-30"
+curl -H "Authorization: Bearer &lt;token&gt;" https://ktv.fakertw.com/api/daily-sales</pre>
+  </div>
+</div>
+</body>
+</html>`;
+  res.type('html').send(html);
 });
 const publicHitMap = new Map();
 const publicRateLimit = (req, res, next) => {
