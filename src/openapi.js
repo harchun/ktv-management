@@ -91,7 +91,7 @@ module.exports = function buildOpenApi() {
         get: { tags: ['公開統計'], summary: '公司桌統計', ...noAuth, parameters: [monthP, startP, endP], responses: { 200: { description: '彙總', content: { 'application/json': { schema: statArray } } } } },
       },
       '/stats/company-table-details': {
-        get: { tags: ['公開統計'], summary: '公司桌明細', ...noAuth, parameters: [p('cadre', '幹部姓名（必需）'), monthP, startP, endP], responses: { 200: { description: '明細', content: { 'application/json': { schema: statArray } } } } },
+        get: { tags: ['公開統計'], summary: '公司桌明細', ...noAuth, parameters: [p('customer', '客戶名（必需）'), monthP, startP, endP], responses: { 200: { description: '明細', content: { 'application/json': { schema: statArray } } }, 400: { description: '缺少 customer 參數' } } } },
       },
       '/stats/cadre-performance': {
         get: { tags: ['公開統計'], summary: '幹部業績', ...noAuth, parameters: [monthP], responses: { 200: { description: '業績', content: { 'application/json': { schema: statArray } } } } },

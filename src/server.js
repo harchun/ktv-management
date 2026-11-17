@@ -224,7 +224,7 @@ const apiDocs = {
     { path: '/stats/cadre-table', desc: '幹桌統計（按公關訂桌）', params: 'month 或 start/end' },
     { path: '/stats/cadre-table-details', desc: '幹桌明細', params: 'gossip + month 或 start/end' },
     { path: '/stats/company-table', desc: '公司桌統計', params: 'month 或 start/end' },
-    { path: '/stats/company-table-details', desc: '公司桌明細', params: 'cadre + month 或 start/end' },
+    { path: '/stats/company-table-details', desc: '公司桌明細', params: 'customer（客戶名） + month 或 start/end' },
     { path: '/stats/cadre-performance', desc: '幹部業績', params: 'month' },
     { path: '/stats/daily-summary', desc: '每日消費彙總', params: 'month 或 start/end' },
     { path: '/stats/table-analysis', desc: '訂桌分析（下滑幹部/流失客戶/建議動作）', params: 'start, end（必需）' },
@@ -339,6 +339,7 @@ app.get('/api/stats/table-usage', async (req, res) => {
 app.get('/api/stats/table-usage-details', async (req, res) => {
   try {
     const { cadre, month, start, end } = req.query;
+    if (!cadre) return res.status(400).json({ error: 'cadre required (幹部 姓名)' });
     let sql = `SELECT
       ds.\`日期\`, ds.\`客戶名\`,
       SUM(ds.\`現金\` + ds.\`信用\` + ds.\`簽帳\` + ds.\`其它\`) as 總消費
@@ -380,6 +381,7 @@ app.get('/api/stats/cadre-table', async (req, res) => {
 app.get('/api/stats/cadre-table-details', async (req, res) => {
   try {
     const { gossip, month, start, end } = req.query;
+    if (!gossip) return res.status(400).json({ error: 'gossip required (公關 姓名)' });
     let sql = `SELECT
       ds.\`日期\`,
       ds.\`客戶名\`,
@@ -555,6 +557,7 @@ app.get('/api/stats/company-table-details', async (req, res) => {
   try {
     const { customer } = req.query;
     const { month } = req.query;
+    if (!customer) return res.status(400).json({ error: 'customer required (客戶名)' });
     let sql = `SELECT
       \`日期\`,
       \`房號\`,

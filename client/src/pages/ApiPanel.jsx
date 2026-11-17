@@ -33,6 +33,7 @@ export default function ApiPanel() {
   const [results, setResults] = useState({});
   const [modal, setModal] = useState(null);
   const [testing, setTesting] = useState({});
+  const [samples, setSamples] = useState({});
 
   const baseUrl = index ? index.base : 'https://ktv.fakertw.com/api';
 
@@ -41,7 +42,59 @@ export default function ApiPanel() {
       .then((r) => r.json())
       .then(setIndex)
       .catch(() => setIndex(null));
+    // Sample values so the 測試 button always calls endpoints with valid params
+    Promise.all([
+      fetch('/api/stats/months').then((r) => r.json()),
+      fetch('/api/cadres').then((r) => r.json()),
+      fetch('/api/gossip').then((r) => r.json()),
+      fetch('/api/customers').then((r) => r.json()),
+      fetch('/api/stats/company-table').then((r) => r.json()).catch(() => []),
+    ])
+      .then(([months, cadres, gossip, customers, companyTable]) => {
+        const firstCustomer = customers.find((c) => c['客戶編號']) || {};
+        const companyCust = (Array.isArray(companyTable) && companyTable[0] && companyTable[0]['客戶名'])
+          ? companyTable[0]['客戶名']
+          : (firstCustomer['客戶姓名'] || '');
+        setSamples({
+          month: Array.isArray(months) && months[0] ? months[0] : '',
+          cadre: (cadres.find((c) => c['姓名']) || {})['姓名'] || '',
+          gossip: (gossip.find((g) => g['姓名']) || {})['姓名'] || '',
+          customer: firstCustomer['客戶編號'] || '',
+          companyCustomer: companyCust,
+        });
+      })
+      .catch(() => {});
   }, []);
+
+  // Build a working test call for each endpoint (path + query string)
+  const testTarget = (path) => {
+    const m = samples.month || '';
+    const qs = (o) =>
+      Object.entries(o)
+        .filter(([, v]) => v !== '' && v != null)
+        .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+        .join('&');
+    switch (path) {
+      case '/stats/table-usage':
+      case '/stats/cadre-table':
+      case '/stats/company-table':
+      case '/stats/cadre-performance':
+      case '/stats/daily-summary':
+        return { path, q: qs({ month: m }) };
+      case '/stats/table-usage-details':
+        return { path, q: qs({ cadre: samples.cadre, month: m }) };
+      case '/stats/cadre-table-details':
+        return { path, q: qs({ gossip: samples.gossip, month: m }) };
+      case '/stats/company-table-details':
+        return { path, q: qs({ customer: samples.companyCustomer || samples.customer, month: m }) };
+      case '/stats/table-analysis':
+        return { path, q: m ? `start=${m}-01&end=${m}-31` : '' };
+      case '/customers/:id/visits':
+        return { path: samples.customer ? `/customers/${samples.customer}/visits` : path, q: '' };
+      default:
+        return { path, q: '' };
+    }
+  };
 
   const copyUrl = (url) => {
     navigator.clipboard.writeText(url).then(
@@ -51,14 +104,16 @@ export default function ApiPanel() {
   };
 
   const testEndpoint = async (path) => {
-    const needsAuth = !path.startsWith('/stats') && !['/customer-relations', '/inactive-customers', '/users', '/settings', '/gossip', '/brokers', '/cadres', '/customers', '/daily-sales'].includes(path);
+    const { path: p, q } = testTarget(path);
     const token = localStorage.getItem('token');
     const headers = {};
-    if (needsAuth && token) headers.Authorization = `Bearer ${token}`;
+    if (!p.startsWith('/stats') && !['/customer-relations', '/inactive-customers', '/users', '/settings', '/gossip', '/brokers', '/cadres', '/customers'].includes(p) && token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
     setTesting((t) => ({ ...t, [path]: true }));
     try {
       const t0 = Date.now();
-      const res = await fetch(baseUrl + path, { headers });
+      const res = await fetch(baseUrl + p + (q ? `?${q}` : ''), { headers });
       const body = await res.text();
       let parsed = body;
       try { parsed = JSON.parse(body); } catch (e) { /* keep raw */ }
@@ -70,6 +125,7 @@ export default function ApiPanel() {
           ms: Date.now() - t0,
           size: body.length,
           data: parsed,
+          called: p + (q ? `?${q}` : ''),
         },
       }));
       if (res.status === 401) {
@@ -193,6 +249,7 @@ export default function ApiPanel() {
                             <Text type="success" style={{ fontSize: 12 }}>
                               HTTP {res.status} · {res.ms}ms · {res.size} 字元
                             </Text>
+                            {res.called && <div style={{ marginTop: 4 }}><Text type="secondary" style={{ fontSize: 11 }}>{res.called}</Text></div>}
                             <pre style={{ margin: '8px 0 0', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                               {JSON.stringify(res.data, null, 2).slice(0, 3000)}
                               {res.data && JSON.stringify(res.data).length > 3000 && '\n…（已截斷）'}
