@@ -623,7 +623,7 @@ app.get('/api/stats/daily-summary', async (req, res) => {
 });
 
 // ==================== USERS ====================
-app.get('/api/users', authenticate, async (req, res) => {
+app.get('/api/users', async (req, res) => {
   try {
     const [rows] = await pool.execute(
       'SELECT `用戶編號`, `帳號`, `角色`, `顯示名稱`, `是否啟用`, `最後登入時間`, `建立時間` FROM users ORDER BY `建立時間` DESC'
