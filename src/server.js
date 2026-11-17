@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 const app = express();
+const buildOpenApi = require('./openapi');
 app.use(cors());
 app.use(express.json());
 
@@ -291,6 +292,11 @@ curl -H "Authorization: Bearer &lt;token&gt;" https://ktv.fakertw.com/api/daily-
 </body>
 </html>`;
   res.type('html').send(html);
+});
+
+// OpenAPI 3.0 spec (importable by n8n / Postman / Swagger)
+app.get('/api/openapi.json', (req, res) => {
+  res.json(buildOpenApi());
 });
 const publicHitMap = new Map();
 const publicRateLimit = (req, res, next) => {
