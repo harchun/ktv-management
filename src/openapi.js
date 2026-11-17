@@ -133,21 +133,21 @@ module.exports = function buildOpenApi() {
         get: { tags: ['客戶關係'], summary: '近40天無來訪客戶', ...noAuth, responses: { 200: { description: '幹部+客戶列表', content: { 'application/json': { schema: statArray } } } } },
       },
       '/daily-sales': {
-        get: { tags: ['CRUD(需登入)'], summary: '每日銷售明細（全量）', ...token, parameters: [startP, endP], responses: { 200: { description: '明細' }, 401: { description: '未授權' } } },
+        get: { tags: ['公開統計'], summary: '每日銷售明細（全量逐筆）', ...noAuth, parameters: [startP, endP], responses: { 200: { description: '明細' } } },
         post: { tags: ['CRUD(需登入)'], summary: '新增一筆', ...token, requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/DailySalesRow' } } } }, responses: { 200: { description: '建立成功' }, 401: { description: '未授權' } } },
       },
       '/cadres': {
-        get: { tags: ['CRUD(需登入)'], summary: '幹部名單', ...token, responses: { 200: { description: '幹部' }, 401: { description: '未授權' } } },
+        get: { tags: ['公開統計'], summary: '幹部名單', ...noAuth, responses: { 200: { description: '幹部' } },
         post: { tags: ['CRUD(需登入)'], summary: '新增幹部', ...token, responses: { 200: { description: '建立成功' }, 401: { description: '未授權' } } },
       },
       '/customers': {
-        get: { tags: ['CRUD(需登入)'], summary: '客戶名單', ...token, responses: { 200: { description: '客戶' }, 401: { description: '未授權' } } },
+        get: { tags: ['公開統計'], summary: '客戶名單', ...noAuth, responses: { 200: { description: '客戶' } } },
       },
       '/gossip': {
-        get: { tags: ['CRUD(需登入)'], summary: '公關名單', ...token, responses: { 200: { description: '公關' }, 401: { description: '未授權' } } },
+        get: { tags: ['公開統計'], summary: '公關名單', ...noAuth, responses: { 200: { description: '公關' } } },
       },
       '/brokers': {
-        get: { tags: ['CRUD(需登入)'], summary: '經紀人名單', ...token, responses: { 200: { description: '經紀人' }, 401: { description: '未授權' } } },
+        get: { tags: ['公開統計'], summary: '經紀人名單', ...noAuth, responses: { 200: { description: '經紀人' } } },
       },
       '/settings': {
         get: { tags: ['CRUD(需登入)'], summary: '系統設定', ...token, responses: { 200: { description: '設定' }, 401: { description: '未授權' } } },

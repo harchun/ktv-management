@@ -50,7 +50,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // ==================== CADRES ====================
-app.get('/api/cadres', authenticate, async (req, res) => {
+app.get('/api/cadres', async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT * FROM cadres ORDER BY CAST(幹部編號 AS UNSIGNED)');
     res.json(rows);
@@ -90,7 +90,7 @@ app.delete('/api/cadres/:id', authenticate, async (req, res) => {
 });
 
 // ==================== CUSTOMERS ====================
-app.get('/api/customers', authenticate, async (req, res) => {
+app.get('/api/customers', async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT * FROM customer_contacts ORDER BY `客戶編號`');
     res.json(rows);
@@ -129,7 +129,7 @@ app.delete('/api/customers/:id', authenticate, async (req, res) => {
 });
 
 // Customer visit history
-app.get('/api/customers/:id/visits', authenticate, async (req, res) => {
+app.get('/api/customers/:id/visits', async (req, res) => {
   try {
     const { id } = req.params;
     const [visits] = await pool.execute(
@@ -143,7 +143,7 @@ app.get('/api/customers/:id/visits', authenticate, async (req, res) => {
 });
 
 // ==================== DAILY SALES ====================
-app.get('/api/daily-sales', authenticate, async (req, res) => {
+app.get('/api/daily-sales', async (req, res) => {
   try {
     const { start, end, cadre, customer } = req.query;
     let sql = `SELECT ds.*, c.\`客戶姓名\` as 客戶姓名, cad.\`姓名\` as 幹部姓名 
@@ -215,7 +215,7 @@ app.delete('/api/daily-sales/:id', authenticate, async (req, res) => {
 const apiDocs = {
   name: '日月星辰 KTV 管理系統 JSON API',
   base: 'https://ktv.fakertw.com/api',
-  auth: '以下 GET 端點免登入（限流 120次/分鐘/IP）；寫入端點仍需 Bearer token',
+  auth: '以下 GET 端點免登入；寫入端點仍需 Bearer token',
   endpoints: [
     { path: '/stats/months', desc: '有資料的月份列表（新→舊）' },
     { path: '/stats/summary', desc: '總消費彙總', params: 'start, end' },
@@ -230,6 +230,12 @@ const apiDocs = {
     { path: '/stats/table-analysis', desc: '訂桌分析（下滑幹部/流失客戶/建議動作）', params: 'start, end（必需）' },
     { path: '/customer-relations', desc: '主客名單（60天3次以上）', params: 'start, end（選填）' },
     { path: '/inactive-customers', desc: '40天無來訪客戶' },
+    { path: '/daily-sales', desc: '每日銷售明細（全量逐筆）', params: 'start, end（選填）' },
+    { path: '/cadres', desc: '幹部名單' },
+    { path: '/customers', desc: '客戶名單' },
+    { path: '/customers/:id/visits', desc: '客戶來訪紀錄' },
+    { path: '/gossip', desc: '公關名單' },
+    { path: '/brokers', desc: '經紀人名單' },
   ],
   example: 'https://ktv.fakertw.com/api/stats/table-usage?month=2026-09',
 };
@@ -678,7 +684,7 @@ app.delete('/api/users/:id', authenticate, async (req, res) => {
 });
 
 // ==================== SETTINGS ====================
-app.get('/api/settings', authenticate, async (req, res) => {
+app.get('/api/settings', async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT * FROM system_settings');
     const settings = {};
@@ -816,7 +822,7 @@ app.get('/api/inactive-customers', async (req, res) => {
 });
 
 // ==================== BROKERS ====================
-app.get('/api/brokers', authenticate, async (req, res) => {
+app.get('/api/brokers', async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT * FROM brokers ORDER BY 經紀人編號');
     res.json(rows);
@@ -854,7 +860,7 @@ app.delete('/api/brokers/:id', authenticate, async (req, res) => {
 });
 
 // ==================== GOSSIP ====================
-app.get('/api/gossip', authenticate, async (req, res) => {
+app.get('/api/gossip', async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT * FROM gossip ORDER BY 公關編號');
     res.json(rows);
