@@ -5,6 +5,7 @@ import {
   DashboardOutlined, TrophyOutlined, ContactsOutlined,
   UserOutlined, LogoutOutlined, MenuFoldOutlined,
   MenuUnfoldOutlined, SettingOutlined, FileTextOutlined,
+  ApiOutlined,
 } from '@ant-design/icons';
 import Login from './pages/Login';
 import DailySales from './pages/DailySales';
@@ -25,6 +26,7 @@ import MobileRelations from './pages/MobileRelations';
 import MobileGossip from './pages/MobileGossip';
 import MobileBroker from './pages/MobileBroker';
 import MobileDashboard from './pages/MobileDashboard';
+import ApiPanel from './pages/ApiPanel';
 
 const { Header, Sider, Content } = Layout;
 
@@ -74,6 +76,7 @@ function AppContent() {
     { key: '/table-analysis', icon: <TrophyOutlined />, label: '訂桌分析' },
     { key: isMobile ? '/mobile/gossip' : '/gossip-management', icon: <UserOutlined />, label: '公關管理' },
     { key: isMobile ? '/mobile/broker' : '/broker-management', icon: <UserOutlined />, label: '經紀人管理' },
+    { key: '/api-panel', icon: <ApiOutlined />, label: 'API 面板' },
     { key: '/settings', icon: <SettingOutlined />, label: '系統設定' },
   ];
 
@@ -200,6 +203,7 @@ function AppContent() {
             <Route path="/table-analysis" element={<TableAnalysis />} />
             <Route path="/gossip-management" element={<GossipManagement />} />
             <Route path="/broker-management" element={<BrokerManagement />} />
+            <Route path="/api-panel" element={<ApiPanel />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="*" element={<Navigate to="/daily-sales" replace />} />
