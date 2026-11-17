@@ -269,7 +269,7 @@ app.get('/api/docs', (req, res) => {
 <body>
 <div class="wrap">
   <h1>日月星辰 KTV JSON API</h1>
-  <div class="sub">${apiDocs.base} ・公開端點免登入・限流 120次/分鐘/IP</div>
+  <div class="sub">${apiDocs.base} ・公開端點免登入</div>
   <div class="note">
     寫入端點（增刪改）仍需 Bearer token：<br>
     1. POST <code>/api/auth/login</code> 取得 token<br>
@@ -298,29 +298,6 @@ curl -H "Authorization: Bearer &lt;token&gt;" https://ktv.fakertw.com/api/daily-
 app.get('/api/openapi.json', (req, res) => {
   res.json(buildOpenApi());
 });
-const publicHitMap = new Map();
-const publicRateLimit = (req, res, next) => {
-  if (req.headers.authorization) return next(); // authenticated requests are not limited
-  const ip = req.ip;
-  const now = Date.now();
-  const hits = (publicHitMap.get(ip) || []).filter(t => now - t < 60000);
-  if (hits.length >= 120) return res.status(429).json({ error: 'request too frequent, please retry later' });
-  hits.push(now);
-  publicHitMap.set(ip, hits);
-  next();
-};
-app.use('/api/stats', publicRateLimit);
-app.use('/api/customer-relations', publicRateLimit);
-app.use('/api/inactive-customers', publicRateLimit);
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, hits] of publicHitMap) {
-    const keep = hits.filter(t => now - t < 60000);
-    if (keep.length) publicHitMap.set(ip, keep); else publicHitMap.delete(ip);
-  }
-}, 5 * 60000).unref();
-
 app.get('/api/stats/months', async (req, res) => {
   try {
     const [rows] = await pool.execute(

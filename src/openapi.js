@@ -13,7 +13,7 @@ module.exports = function buildOpenApi() {
     info: {
       title: '日月星辰 KTV 管理系統 API',
       version: '1.0.0',
-      description: '公開統計端點免登入（限流 120次/分鐘/IP）；CRUD 端點需 Bearer token（先 POST /auth/login 取得）。',
+      description: '公開統計端點免登入；CRUD 端點需 Bearer token（先 POST /auth/login 取得）。',
     },
     servers: [{ url: 'https://ktv.fakertw.com/api' }],
     tags: [
