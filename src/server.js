@@ -210,6 +210,30 @@ app.delete('/api/daily-sales/:id', authenticate, async (req, res) => {
 
 // Stats
 // ==================== PUBLIC STATS API (no auth, rate-limited) ====================
+// API discovery: public index of available JSON endpoints
+app.get('/api', (req, res) => {
+  res.json({
+    name: '日月星辰 KTV 管理系統 JSON API',
+    base: 'https://ktv.fakertw.com/api',
+    auth: '以下 GET 端點免登入（限流 120次/分鐘/IP）；寫入端點仍需 Bearer token',
+    endpoints: [
+      { path: '/stats/months', desc: '有資料的月份列表（新→舊）' },
+      { path: '/stats/summary', desc: '總消費彙總', params: 'start, end' },
+      { path: '/stats/table-usage', desc: '自訂桌統計（按公關）', params: 'month 或 start/end, level' },
+      { path: '/stats/table-usage-details', desc: '自訂桌明細', params: 'cadre + month 或 start/end' },
+      { path: '/stats/cadre-table', desc: '幹桌統計（按公關訂桌）', params: 'month 或 start/end' },
+      { path: '/stats/cadre-table-details', desc: '幹桌明細', params: 'gossip + month 或 start/end' },
+      { path: '/stats/company-table', desc: '公司桌統計', params: 'month 或 start/end' },
+      { path: '/stats/company-table-details', desc: '公司桌明細', params: 'cadre + month 或 start/end' },
+      { path: '/stats/cadre-performance', desc: '幹部業績', params: 'month' },
+      { path: '/stats/daily-summary', desc: '每日消費彙總', params: 'month 或 start/end' },
+      { path: '/stats/table-analysis', desc: '訂桌分析（下滑幹部/流失客戶/建議動作）', params: 'start, end（必需）' },
+      { path: '/customer-relations', desc: '主客名單（60天3次以上）', params: 'start, end（選填）' },
+      { path: '/inactive-customers', desc: '40天無來訪客戶' },
+    ],
+    example: 'https://ktv.fakertw.com/api/stats/table-usage?month=2026-09',
+  });
+});
 const publicHitMap = new Map();
 const publicRateLimit = (req, res, next) => {
   if (req.headers.authorization) return next(); // authenticated requests are not limited
