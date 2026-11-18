@@ -5,7 +5,7 @@ import {
   DashboardOutlined, TrophyOutlined, ContactsOutlined,
   UserOutlined, LogoutOutlined, MenuFoldOutlined,
   MenuUnfoldOutlined, SettingOutlined, FileTextOutlined,
-  ApiOutlined,
+  ApiOutlined, TeamOutlined, BarChartOutlined, CustomerOutlined, LineChartOutlined,
 } from '@ant-design/icons';
 import Login from './pages/Login';
 import DailySales from './pages/DailySales';
@@ -65,19 +65,31 @@ function AppContent() {
     items: [{ key: 'logout', icon: <LogoutOutlined />, label: '登出', onClick: handleLogout }],
   };
 
+  const group = (label, children) => ({ type: 'group', label, children });
+
   const menuItems = [
-    { key: isMobile ? '/mobile/daily-sales' : '/daily-sales', icon: <FileTextOutlined />, label: '每日營業表' },
-    { key: isMobile ? '/mobile/cadres' : '/cadres', icon: <TrophyOutlined />, label: '幹部管理' },
-    { key: isMobile ? '/mobile/customers' : '/customers', icon: <ContactsOutlined />, label: '客戶管理' },
-    { key: isMobile ? '/mobile/relations' : '/customer-relations', icon: <ContactsOutlined />, label: '客戶關係' },
-    { key: isMobile ? '/mobile/table-usage' : '/table-usage', icon: <TrophyOutlined />, label: '自訂桌統計' },
-    { key: isMobile ? '/mobile/cadre-table' : '/cadre-table', icon: <TrophyOutlined />, label: '幹桌統計' },
-    { key: isMobile ? '/mobile/company-table' : '/company-table', icon: <TrophyOutlined />, label: '公司桌統計' },
-    { key: '/table-analysis', icon: <TrophyOutlined />, label: '訂桌分析' },
-    { key: isMobile ? '/mobile/gossip' : '/gossip-management', icon: <UserOutlined />, label: '公關管理' },
-    { key: isMobile ? '/mobile/broker' : '/broker-management', icon: <UserOutlined />, label: '經紀人管理' },
-    { key: '/api-panel', icon: <ApiOutlined />, label: 'API 面板' },
-    { key: '/settings', icon: <SettingOutlined />, label: '系統設定' },
+    group('營業', [
+      { key: isMobile ? '/mobile/daily-sales' : '/daily-sales', icon: <FileTextOutlined />, label: '每日營業表' },
+      { key: '/table-analysis', icon: <LineChartOutlined />, label: '訂桌分析' },
+    ]),
+    group('人事', [
+      { key: isMobile ? '/mobile/cadres' : '/cadres', icon: <TeamOutlined />, label: '幹部管理' },
+      { key: isMobile ? '/mobile/gossip' : '/gossip-management', icon: <UserOutlined />, label: '公關管理' },
+      { key: isMobile ? '/mobile/broker' : '/broker-management', icon: <UserOutlined />, label: '經紀人管理' },
+    ]),
+    group('客戶', [
+      { key: isMobile ? '/mobile/customers' : '/customers', icon: <CustomerOutlined />, label: '客戶管理' },
+      { key: isMobile ? '/mobile/relations' : '/customer-relations', icon: <ContactsOutlined />, label: '客戶關係' },
+    ]),
+    group('統計報表', [
+      { key: isMobile ? '/mobile/table-usage' : '/table-usage', icon: <BarChartOutlined />, label: '自訂桌統計' },
+      { key: isMobile ? '/mobile/cadre-table' : '/cadre-table', icon: <BarChartOutlined />, label: '幹桌統計' },
+      { key: isMobile ? '/mobile/company-table' : '/company-table', icon: <BarChartOutlined />, label: '公司桌統計' },
+    ]),
+    group('系統', [
+      { key: '/api-panel', icon: <ApiOutlined />, label: 'API 面板' },
+      { key: '/settings', icon: <SettingOutlined />, label: '系統設定' },
+    ]),
   ];
 
   if (!token) {
