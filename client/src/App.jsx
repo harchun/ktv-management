@@ -5,7 +5,7 @@ import {
   DashboardOutlined, TrophyOutlined, ContactsOutlined,
   UserOutlined, LogoutOutlined, MenuFoldOutlined,
   MenuUnfoldOutlined, SettingOutlined, FileTextOutlined,
-  ApiOutlined, TeamOutlined, BarChartOutlined, CustomerOutlined, LineChartOutlined,
+  ApiOutlined, TeamOutlined, BarChartOutlined, UsergroupAddOutlined, LineChartOutlined,
 } from '@ant-design/icons';
 import Login from './pages/Login';
 import DailySales from './pages/DailySales';
@@ -70,7 +70,6 @@ function AppContent() {
   const menuItems = [
     group('營業', [
       { key: isMobile ? '/mobile/daily-sales' : '/daily-sales', icon: <FileTextOutlined />, label: '每日營業表' },
-      { key: '/table-analysis', icon: <LineChartOutlined />, label: '訂桌分析' },
     ]),
     group('人事', [
       { key: isMobile ? '/mobile/cadres' : '/cadres', icon: <TeamOutlined />, label: '幹部管理' },
@@ -78,13 +77,14 @@ function AppContent() {
       { key: isMobile ? '/mobile/broker' : '/broker-management', icon: <UserOutlined />, label: '經紀人管理' },
     ]),
     group('客戶', [
-      { key: isMobile ? '/mobile/customers' : '/customers', icon: <CustomerOutlined />, label: '客戶管理' },
+      { key: isMobile ? '/mobile/customers' : '/customers', icon: <UsergroupAddOutlined />, label: '客戶管理' },
       { key: isMobile ? '/mobile/relations' : '/customer-relations', icon: <ContactsOutlined />, label: '客戶關係' },
     ]),
     group('統計報表', [
       { key: isMobile ? '/mobile/table-usage' : '/table-usage', icon: <BarChartOutlined />, label: '自訂桌統計' },
       { key: isMobile ? '/mobile/cadre-table' : '/cadre-table', icon: <BarChartOutlined />, label: '幹桌統計' },
       { key: isMobile ? '/mobile/company-table' : '/company-table', icon: <BarChartOutlined />, label: '公司桌統計' },
+      { key: '/table-analysis', icon: <LineChartOutlined />, label: '訂桌分析' },
     ]),
     group('系統', [
       { key: '/api-panel', icon: <ApiOutlined />, label: 'API 面板' },
