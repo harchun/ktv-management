@@ -100,6 +100,17 @@ app.get('/api/customers', async (req, res) => {
 app.post('/api/customers', authenticate, async (req, res) => {
   try {
     const { 客戶姓名, 暱稱, 類別, 電話, 行動電話, LINE_ID, 生日, 特徵, 備註 } = req.body;
+    if (!客戶姓名 || !String(客戶姓名).trim()) {
+      return res.status(400).json({ error: '客戶姓名 為必填' });
+    }
+    // Duplicate name guard: reject if 客戶姓名 already exists
+    const [dup] = await pool.execute(
+      'SELECT `客戶編號`, `客戶姓名`, `類別` FROM customer_contacts WHERE TRIM(`客戶姓名`) = TRIM(?) LIMIT 1',
+      [客戶姓名]
+    );
+    if (dup.length > 0) {
+      return res.status(409).json({ error: `客戶「${dup[0].客戶姓名}」已存在（${dup[0].客戶編號}）`, existing: dup[0] });
+    }
     const 客戶編號 = 'C' + Date.now().toString().slice(-8);
     await pool.execute(
       'INSERT INTO customer_contacts (`客戶編號`, `客戶姓名`, `暱稱`, `類別`, `電話`, `行動電話`, `LINE_ID`, `生日`, `特徵`, `備註`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',

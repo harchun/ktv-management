@@ -474,7 +474,18 @@ export default function DailySales() {
             form.setFieldValue('客戶名', newCustomer.客戶姓名);
             message.success('已新增並填入');
           } catch (err) {
-            message.error(err.response?.data?.error || '新增失敗');
+            // 409 duplicate: reuse the existing customer instead of erroring
+            const body = err.response?.data;
+            if (err.response?.status === 409 && body?.existing) {
+              const ex = body.existing;
+              setCustomers(prev => prev.some(c => c['客戶編號'] === ex['客戶編號']) ? prev : [...prev, ex]);
+              setCustomerQuickVisible(false);
+              form.setFieldValue('客戶編號', ex['客戶編號']);
+              form.setFieldValue('客戶名', ex['客戶姓名']);
+              message.info(`客戶「${ex['客戶姓名']}」已存在，已自動填入`);
+            } else {
+              message.error(body?.error || '新增失敗');
+            }
           } finally {
             setSubmitting(false);
           }
