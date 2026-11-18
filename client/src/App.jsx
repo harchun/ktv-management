@@ -33,7 +33,7 @@ const { Header, Sider, Content } = Layout;
 function AppContent() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [user, setUser] = useState(null);
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -141,7 +141,7 @@ function AppContent() {
         mode="inline"
         selectedKeys={[location.pathname]}
         items={menuItems}
-        onClick={({ key }) => { navigate(key); if (isMobile) setCollapsed(true); }}
+        onClick={({ key }) => { navigate(key); }}
         inlineCollapsed={collapsed && !isMobile}
         style={{ touchAction: 'manipulation' }}
         />
