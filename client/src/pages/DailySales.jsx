@@ -29,6 +29,8 @@ export default function DailySales() {
   const [currentPage, setCurrentPage] = useState(1);
   const [form] = Form.useForm();
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  const LAST_DATE_KEY = 'kvt_lastSalesDate';
+  const lastDate = () => localStorage.getItem(LAST_DATE_KEY);
   const [gossipPersons, setGossipPersons] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const submitLock = useRef(false);
@@ -111,6 +113,8 @@ export default function DailySales() {
         await api.post('/daily-sales', payload);
         message.success('新增成功');
       }
+      // Remember the date used, preselect it next time
+      if (payload.日期) localStorage.setItem(LAST_DATE_KEY, payload.日期);
       setModalVisible(false);
       form.resetFields();
       fetchData();
@@ -281,7 +285,7 @@ export default function DailySales() {
                   background: '#2ecc71',
                   border: 'none',
                 }}
-                onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}
+                onClick={() => { setEditing(null); form.resetFields(); const ld = lastDate(); if (ld) form.setFieldValue('日期', dayjs(ld)); setModalVisible(true); }}
               >
                 {isMobile ? '+ 新增' : '新增營業紀錄'}
               </Button>
@@ -335,6 +339,7 @@ export default function DailySales() {
         footer={null}
         width={isMobile ? '100%' : 900}
         style={{ top: isMobile ? 0 : 20 }}
+        forceRender
       >
         <Form form={form} layout="vertical" onFinish={handleSave}>
           <Row gutter={16}>
@@ -589,6 +594,7 @@ export default function DailySales() {
             setEditing(null);
             form.resetFields();
             if (currentDate) form.setFieldValue('日期', currentDate);
+            else { const ld = lastDate(); if (ld) form.setFieldValue('日期', dayjs(ld)); }
             // Open main modal with new cadre filled
             setModalVisible(true);
             // Set cadre after modal is open
