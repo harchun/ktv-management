@@ -73,7 +73,7 @@ function AppContent() {
     ]),
     group('人事', [
       { key: isMobile ? '/mobile/cadres' : '/cadres', icon: <TeamOutlined />, label: '幹部管理' },
-      { key: isMobile ? '/mobile/gossip' : '/gossip-management', icon: <UserOutlined />, label: '公關管理' },
+      { key: isMobile ? '/mobile/gossip' : '/gossip-management', icon: <UserOutlined />, label: '小姐管理' },
       { key: isMobile ? '/mobile/broker' : '/broker-management', icon: <UserOutlined />, label: '經紀人管理' },
     ]),
     group('客戶', [

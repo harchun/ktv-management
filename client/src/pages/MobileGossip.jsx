@@ -47,7 +47,7 @@ export default function MobileGossip() {
   return (
     <div style={{ padding: 16, background: '#0a0a1a', minHeight: '100vh' }}>
       <Title level={3} style={{ color: '#9b59b6', textAlign: 'center', marginBottom: 20 }}>
-        👠 公關管理
+        👠 小姐管理
       </Title>
 
       {/* 統計 */}

@@ -85,8 +85,8 @@ export default function GossipManagement() {
   };
 
   const columns = [
-    { title: '暱稱', dataIndex: '暱稱', key: 'nickname', width: 100 },
-    { title: '姓名', dataIndex: '姓名', key: 'name', width: 100 },
+    { title: '本名', dataIndex: '暱稱', key: 'nickname', width: 100 },
+    { title: '藝名', dataIndex: '姓名', key: 'name', width: 100 },
     { title: '經紀人', dataIndex: '經紀人', key: 'broker', width: 100 },
     { title: '手機', dataIndex: '手機', key: 'phone', width: 120 },
     { title: 'LINE ID', dataIndex: 'LINE_ID', key: 'line', width: 120 },
@@ -130,7 +130,7 @@ export default function GossipManagement() {
             flexDirection: isMobile ? 'column' : 'row',
             gap: isMobile ? 12 : 0,
           }}>
-            <h2 style={{ color: '#9b59b6', margin: 0, fontSize: isMobile ? 18 : undefined }} className="page-title">👠 公關管理</h2>
+            <h2 style={{ color: '#9b59b6', margin: 0, fontSize: isMobile ? 18 : undefined }} className="page-title">👠 小姐管理</h2>
             <div style={{
               display: 'flex',
               flexWrap: 'wrap',
@@ -154,7 +154,7 @@ export default function GossipManagement() {
                 }}
                 onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}
               >
-                {isMobile ? '+ 新增' : '新增公關'}
+                {isMobile ? '+ 新增' : '新增小姐'}
               </Button>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function GossipManagement() {
       </Card>
 
       <Modal
-        title={editing ? '編輯公關' : '新增公關'}
+        title={editing ? '編輯小姐' : '新增小姐'}
         open={modalVisible && !submitting}
         onCancel={() => { setModalVisible(false); setSubmitting(false); }}
         footer={null}
@@ -184,13 +184,13 @@ export default function GossipManagement() {
         <Form form={form} layout="vertical" onFinish={handleSave}>
           <Row gutter={16}>
             <Col span={isMobile ? 24 : 12}>
-              <Form.Item name="暱稱" label="暱稱">
-                <Input placeholder="請輸入暱稱" />
+              <Form.Item name="暱稱" label="本名">
+                <Input placeholder="請輸入本名" />
               </Form.Item>
             </Col>
             <Col span={isMobile ? 24 : 12}>
-              <Form.Item name="姓名" label="姓名">
-                <Input placeholder="請輸入姓名" />
+              <Form.Item name="姓名" label="藝名">
+                <Input placeholder="請輸入藝名" />
               </Form.Item>
             </Col>
           </Row>
