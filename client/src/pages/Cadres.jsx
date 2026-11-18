@@ -15,6 +15,7 @@ export default function Cadres() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState(null);
   const [searchText, setSearchText] = useState('');
+  const [levelFilter, setLevelFilter] = useState([]);
   const [form] = Form.useForm();
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
 
@@ -77,9 +78,15 @@ export default function Cadres() {
     )},
   ];
 
-  const filteredData = searchText
-    ? dataSource.filter(c => (c.姓名 || '').toLowerCase().includes(searchText.toLowerCase()) || (c.暱稱 || '').toLowerCase().includes(searchText.toLowerCase()))
+  const filteredData = searchText || levelFilter.length
+    ? dataSource.filter(c => {
+        const matchText = !searchText || (c.姓名 || '').toLowerCase().includes(searchText.toLowerCase()) || (c.暱稱 || '').toLowerCase().includes(searchText.toLowerCase());
+        const matchLevel = !levelFilter.length || levelFilter.includes(c.等級);
+        return matchText && matchLevel;
+      })
     : dataSource;
+
+  const levelOptions = ['一線', '常董', '公關', '管理層', '行政', '場部', '一般'].map((l) => ({ value: l, label: l }));
 
   return (
     <div>
@@ -106,6 +113,16 @@ export default function Cadres() {
                 style={{ width: isMobile ? '100%' : 250 }}
                 prefix={<SearchOutlined style={{ color: '#3498db' }} />}
                 onChange={(e) => setSearchText(e.target.value)}
+              />
+              <Select
+                mode="multiple"
+                allowClear
+                placeholder="篩選等級"
+                options={levelOptions}
+                value={levelFilter}
+                onChange={setLevelFilter}
+                style={{ minWidth: isMobile ? '100%' : 220, width: isMobile ? '100%' : 'auto' }}
+                maxTagCount="responsive"
               />
               <Button
                 type="primary"
